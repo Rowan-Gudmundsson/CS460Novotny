@@ -33,3 +33,6 @@
 
 # Local config files
 .editorconfig
+
+# Build folder
+*build/
