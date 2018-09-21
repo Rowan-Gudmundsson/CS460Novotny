@@ -52,11 +52,39 @@ bool Symbol::insert(const BinaryTree<VarType>& val) {
 }
 
 /**
+ * Return a copy of the head of the list.
+ * @param None.
+ * @return {BinaryTree<T>} - The copy of the head data;
+ */
+template<typename T>
+BinaryTree<T> BinaryTree<T>::peek() {
+	return *head->value;
+}
+
+/**
+ * Remove the item from the head of the list.
+ * @param None.
+ * @return {bool} - Whether or not the pop was successful.
+ */
+template<typename T>
+bool BinaryTree<T>::pop() {
+	if (head == nullptr) {
+		return false;
+	}
+
+	Node* tmp = head;
+	head = head->next;
+	delete tmp->value;
+	delete tmp;
+	tmp = nullptr;
+
+	return true;
+}
+/**
  * Clear the table
  * @param None
  * @return {bool} - If the clear was successful
  */
-
 bool Symbol::clear() {
 	Node* tmp = head;
 	while(head != nullptr) {

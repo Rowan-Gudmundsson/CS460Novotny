@@ -18,8 +18,15 @@ class BinaryTree {
 
   private:
     struct Node {
+      Node() {};
+      Node(NodeVal val, Node* left_ptr, Node* right_ptr, bool is_red):
+        data(val),
+        left(left_ptr),
+        right(right_ptr),
+        red(is_red) {}
       NodeVal data;
       Node* left, right;
+      bool red;
     };
 
     Node* root;

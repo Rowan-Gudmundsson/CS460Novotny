@@ -26,6 +26,9 @@ class Symbol {
     bool insert(const BinaryTree<VarType>& val);
     bool clear();
 
+    BinaryTree<VarType> peek();
+    bool pop();
+
     // Destructor
     ~Symbol();
   private:
