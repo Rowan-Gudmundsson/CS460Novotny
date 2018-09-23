@@ -22,7 +22,8 @@ class BinaryTree {
 
 		NodeVal* find(const NodeVal& key);
 
-		friend std::ostream& operator << (std::ostream& stream, const BinaryTree<NodeVal>& rhs);
+		template <typename T>
+		friend std::ostream& operator<< (std::ostream& stream, const BinaryTree<T>& rhs);
 
 		// Destructors
 		~BinaryTree();
@@ -50,7 +51,7 @@ class BinaryTree {
 		void rotateLeft(Node* about);
 		void rotateRight(Node* about);
 
-		void outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft);
+		void outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) const;
 };
 
 /**
@@ -92,8 +93,10 @@ template<typename T>
 bool BinaryTree<T>::insert(const T& val) {
 	Node* newNode = new Node(val, nullptr, nullptr, nullptr, true);
 	Node* parentNode = root;
-	Node*& newLocation;
+	Node** newLocation;
 	Node* newRoot;
+
+	std::cout << "Inserting " << val << std::endl;
 
 	if(root == nullptr) {
 		// If there is no root - easy this is now root
@@ -103,19 +106,19 @@ bool BinaryTree<T>::insert(const T& val) {
 		// Otherwise find where we need to put it
 		while(newNode->parent == nullptr) {
 			// Do comparison
-			if(val < parentNode->val) {
-				newLocation = parentNode->left;
+			if(val < parentNode->data) {
+				newLocation = &parentNode->left;
 			} else {
-				newLocation = parentNode->right;
+				newLocation = &parentNode->right;
 			}
 
 			// If we've found a leaf, put it there
 			// Otherwise keep going
-			if(newLocation == nullptr) {
-				newLocation = newNode;
+			if(*newLocation == nullptr) {
+				*newLocation = newNode;
 				newNode->parent = parentNode;
 			} else {
-				parentNode = newLocation;
+				parentNode = *newLocation;
 			}
 		}
 
@@ -136,8 +139,9 @@ template<typename T>
 void BinaryTree<T>::insertRepair(Node* repairFrom) {
 	Node* uncy;
 	Node* grandpa;
+	Node* nextFlip;
 	// We only need to repair if there are now two reds in a row
-	while(repairFrom->parent->red) {
+	while(repairFrom->red && repairFrom->parent != nullptr && repairFrom->parent->red) {
 		uncy = uncle(repairFrom);
 		grandpa = repairFrom->parent->parent;
 
@@ -145,21 +149,33 @@ void BinaryTree<T>::insertRepair(Node* repairFrom) {
 		if(uncy != nullptr && uncy->red) {
 			repairFrom->parent->red = false;
 			uncy->red = false;
-			grandpa->red = true;
+			if(root != grandpa) grandpa->red = true;
 			repairFrom = grandpa;
 		} 
 		// Case 2: uncle is black
 		else {
-			if(grandpa->left = uncy && grandpa->right->left == repairFrom) {
+			nextFlip = repairFrom;
+			if(grandpa->left == uncy && grandpa->right->left == repairFrom) {
 				rotateRight(repairFrom->parent);
+				nextFlip = repairFrom->right;
 				rotateLeft(repairFrom->parent);
 				repairFrom->left->red = true;
-			} else if(grandpa->right = uncy && grandpa->left->right == repairFrom) {
+				repairFrom->red = false;
+			} else if(grandpa->right == uncy && grandpa->left->right == repairFrom) {
 				rotateLeft(repairFrom->parent);
+				nextFlip = repairFrom->left;
 				rotateRight(repairFrom->parent);
 				repairFrom->right->red = true;
+				repairFrom->red = false;
+			} else if(repairFrom == repairFrom->parent->left) {
+				repairFrom->parent->red = false;
+				grandpa->red = true;
+				rotateRight(grandpa);
+			} else {
+				repairFrom->parent->red = false;
+				grandpa->red = true;
+				rotateLeft(grandpa);
 			}
-			repairFrom->red = false;
 		}
 	}
 }
@@ -180,42 +196,44 @@ typename BinaryTree<T>::Node* BinaryTree<T>::uncle(Node* nephew) {
 
 template<typename T>
 void BinaryTree<T>::rotateLeft(Node* about) {
-	Node*& branch;
+	Node** branch;
 	Node* parent = about->parent;
 	if(about->parent == nullptr) {
-		branch = root;
+		branch = &root;
 	} else if(about == about->parent->left) {
-		branch = parent->left;
+		branch = &parent->left;
 	} else {
-		branch = parent->right;
+		branch = &parent->right;
 	}
 
-	branch = about->right;
+	*branch = about->right;
 	about->right->parent = parent;
-	about->right = branch->left;
-	about->right->parent = about;
-	branch->left = about;
-	about->parent = branch;
+	about->right = (*branch)->left;
+	if(about->right != nullptr)
+		about->right->parent = about;
+	(*branch)->left = about;
+	about->parent = *branch;
 }
 
 template<typename T>
 void BinaryTree<T>::rotateRight(Node* about) {
-	Node*& branch;
+	Node** branch;
 	Node* parent = about->parent;
 	if(about->parent == nullptr) {
-		branch = root;
+		branch = &root;
 	} else if(about == about->parent->left) {
-		branch = parent->left;
+		branch = &parent->left;
 	} else {
-		branch = parent->right;
+		branch = &parent->right;
 	}
 
-	branch = about->left;
+	*branch = about->left;
 	about->left->parent = parent;
-	about->left = branch->right;
-	about->left->parent = about;
-	branch->right = about;
-	about->parent = branch;
+	about->left = (*branch)->right;
+	if(about->left != nullptr)
+		about->left->parent = about;
+	(*branch)->right = about;
+	about->parent = *branch;
 }
 
 /**
@@ -266,17 +284,16 @@ BinaryTree<T>::~BinaryTree() {
 }
 
 template <typename T>
-void BinaryTree<T>::outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) {
+void BinaryTree<T>::outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) const {
 	if(node == nullptr) return;
 	outputHelper(spaces +(isLeft ? " |   " : "     ") , node->right, out, false);
 	out << spaces << (isLeft ? " \\" : " /") << "--- ";
-	if(node->red) out << COLOR << RED << node->data << COLOR << BLACK << std::endl;
-	else out << node->data << std::endl;
+	out << node->data << (node->red ? "(r)" : "(b)") << std::endl;
 	outputHelper(spaces + (!isLeft ? " |   " : "     ") , node->left, out, true);
 }
 
 template <typename T>
-std::ostream& operator << (std::ostream& stream, const BinaryTree<T>& rhs) {
+std::ostream& operator<< (std::ostream& stream, const BinaryTree<T>& rhs) {
 	std::string spaces = " \t ";
 	rhs.outputHelper(spaces, rhs.root, stream, true);
 	return stream;
