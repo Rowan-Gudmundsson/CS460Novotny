@@ -72,7 +72,6 @@ bool BinaryTree<T>::insert(const T& val) {
 
 }
 
-template<typename
 /**
  * Create a new binary tree and return a pointer to that new tree.
  * @param None
