@@ -1,6 +1,33 @@
 #include "Symbol.h"
 
 /**
+ * Equality operator for VarType.
+ * @param {const VarType&} rhs - The right hand side of the operator
+ * @return {bool} - the value of the comparison
+ */
+bool Symbol::VarType::operator == (const VarType& rhs) const {
+	return name == rhs.name;
+}
+
+/**
+ * Less than operator for VarType.
+ * @param {const VarType&} rhs - The right hand side of the operator
+ * @return {bool} - the value of the comparison
+ */
+bool Symbol::VarType::operator < (const VarType& rhs) const {
+	return name < rhs.name;
+}
+
+/**
+ * Greater than operator for VarType.
+ * @param {const VarType&} rhs - The right hand side of the operator
+ * @return {bool} - the value of the comparison
+ */
+bool Symbol::VarType::operator > (const VarType& rhs) const {
+	return name > rhs.name;
+}
+
+/**
  * Constructor.
  * @param None
  * @return None
@@ -52,13 +79,22 @@ bool Symbol::insert(const BinaryTree<VarType>& val) {
 }
 
 /**
- * Return a copy of the head of the list.
+ * Return a pointer to the VarType which matches the key given.
  * @param None.
- * @return {BinaryTree<T>} - The copy of the head data;
+ * @return {T*} - The address of the value found, nullptr if nothing.
  */
-template<typename T>
-BinaryTree<T> BinaryTree<T>::peek() {
-	return *head->value;
+Symbol::VarType* Symbol::find(std::string key) {
+	Node* conductor = head;
+	VarType* result;
+	VarType keyVal(key);
+	while(conductor != nullptr) {
+		result = conductor->value->find(keyVal);
+		if (result != nullptr) {
+			return result;
+		}
+		conductor = conductor->next;
+	}
+	return nullptr;
 }
 
 /**
@@ -66,8 +102,7 @@ BinaryTree<T> BinaryTree<T>::peek() {
  * @param None.
  * @return {bool} - Whether or not the pop was successful.
  */
-template<typename T>
-bool BinaryTree<T>::pop() {
+bool Symbol::pop() {
 	if (head == nullptr) {
 		return false;
 	}
@@ -94,6 +129,7 @@ bool Symbol::clear() {
 		delete tmp;
 	}
 	head = nullptr;
+	return true;
 }
 /**
  * Destructor
@@ -102,4 +138,9 @@ bool Symbol::clear() {
  */
 Symbol::~Symbol() {
 	clear();
+}
+
+std::ostream& operator << (std::ostream& stream, const Symbol::VarType& rhs) {
+	stream << rhs.name;
+	return stream;
 }

@@ -2,42 +2,50 @@
 
 #include "BinaryTree.h"
 #include <string>
+#include <iostream>
 
 class Symbol {
-  public:
-    // Var type
-    struct VarType {
-      std::string name;
-      enum Type {
-        INT,
-        FLOAT,
-        CHAR
-      } type;
-    };
+	public:
+		// Var type
+		class VarType {
+			public:
+				VarType() {}
+				VarType(std::string key): name(key) {}
+				bool operator < (const VarType& rhs) const;
+				bool operator > (const VarType& rhs) const;
+				bool operator == (const VarType& rhs) const;
 
-    // Constructor
-    Symbol();
-    Symbol(const Symbol& other);
+				std::string name;
+				enum Type {
+					INT,
+					FLOAT,
+					CHAR
+				} type;
+		};
 
-    // Operators
-    Symbol& operator = (const Symbol& other);
+		// Constructor
+		Symbol();
+		Symbol(const Symbol& other);
 
-    // Member functions
-    bool insert(const BinaryTree<VarType>& val);
-    bool clear();
+		// Operators
+		Symbol& operator = (const Symbol& other);
 
-    BinaryTree<VarType> peek();
-    bool pop();
+		// Member functions
+		bool insert(const BinaryTree<VarType>& val);
+		bool clear();
 
-    // Destructor
-    ~Symbol();
-  private:
-    struct Node {
-      Node() {}
-      Node(BinaryTree<VarType>* val, Node* next_ptr): value(val), next(next_ptr) {}
-      BinaryTree<VarType>* value;
-      Node* next;
-    };
+		VarType* find(std::string name);
+		bool pop();
 
-    Node* head;
+		// Destructor
+		~Symbol();
+	private:
+		struct Node {
+			Node() {}
+			Node(BinaryTree<VarType>* val, Node* next_ptr): value(val), next(next_ptr) {}
+			BinaryTree<VarType>* value;
+			Node* next;
+		};
+
+		Node* head;
 };
