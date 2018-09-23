@@ -3,7 +3,7 @@
 /**
  * Equality operator for VarType.
  * @param {const VarType&} rhs - The right hand side of the operator
- * @return {bool} - the value of the comparison
+ * @return {bool} - the tree of the comparison
  */
 bool Symbol::VarType::operator == (const VarType& rhs) const {
 	return name == rhs.name;
@@ -12,7 +12,7 @@ bool Symbol::VarType::operator == (const VarType& rhs) const {
 /**
  * Less than operator for VarType.
  * @param {const VarType&} rhs - The right hand side of the operator
- * @return {bool} - the value of the comparison
+ * @return {bool} - the tree of the comparison
  */
 bool Symbol::VarType::operator < (const VarType& rhs) const {
 	return name < rhs.name;
@@ -21,7 +21,7 @@ bool Symbol::VarType::operator < (const VarType& rhs) const {
 /**
  * Greater than operator for VarType.
  * @param {const VarType&} rhs - The right hand side of the operator
- * @return {bool} - the value of the comparison
+ * @return {bool} - the tree of the comparison
  */
 bool Symbol::VarType::operator > (const VarType& rhs) const {
 	return name > rhs.name;
@@ -55,7 +55,7 @@ Symbol& Symbol::operator = (const Symbol& other) {
 	Node* other_conduct = other.head;
 	Node* this_conduct = head;
 	while(other_conduct != nullptr) {
-		this_conduct = new Node(other_conduct->value->copy(), other_conduct->next);
+		this_conduct = new Node(other_conduct->tree->copy(), other_conduct->next);
 		other_conduct = other_conduct->next;
 		this_conduct = other_conduct->next;
 	}
@@ -63,32 +63,41 @@ Symbol& Symbol::operator = (const Symbol& other) {
 }
 
 /**
- * Insert a BT into the linked list based stack.
- * @param {const BinaryTree<VarType>&} val - The value to insert.
- * @return {bool} - Whether or not the value was successfully inserted.
+ * Push a new scope onto the stack.
+ * @param None.
+ * @return {bool} - successful or not.
  */
-bool Symbol::insert(const BinaryTree<VarType>& val) {
+bool Symbol::pushScope() {
 	if (head == nullptr) {
-		head = new Node(val.copy(), nullptr);
+		head = new Node(new BinaryTree<VarType>(), nullptr);
 		return true;
 	}
 
-	Node* tmp = new Node(val.copy(), head);
+	Node* tmp = new Node(new BinaryTree<VarType>(), head);
 	head = tmp;
 	return true;
 }
 
 /**
+ * Insert a BT into the linked list based stack.
+ * @param {const BinaryTree<VarType>&} val - The tree to insert.
+ * @return {bool} - Whether or not the tree was successfully inserted.
+ */
+bool Symbol::insert(const VarType& val) {
+	return head->tree->insert(val);
+}
+
+/**
  * Return a pointer to the VarType which matches the key given.
  * @param None.
- * @return {T*} - The address of the value found, nullptr if nothing.
+ * @return {T*} - The address of the tree found, nullptr if nothing.
  */
 Symbol::VarType* Symbol::find(std::string key) {
 	Node* conductor = head;
 	VarType* result;
 	VarType keyVal(key);
 	while(conductor != nullptr) {
-		result = conductor->value->find(keyVal);
+		result = conductor->tree->find(keyVal);
 		if (result != nullptr) {
 			return result;
 		}
@@ -102,14 +111,14 @@ Symbol::VarType* Symbol::find(std::string key) {
  * @param None.
  * @return {bool} - Whether or not the pop was successful.
  */
-bool Symbol::pop() {
+bool Symbol::popScope() {
 	if (head == nullptr) {
 		return false;
 	}
 
 	Node* tmp = head;
 	head = head->next;
-	delete tmp->value;
+	delete tmp->tree;
 	delete tmp;
 	tmp = nullptr;
 
@@ -125,12 +134,13 @@ bool Symbol::clear() {
 	while(head != nullptr) {
 		tmp = head;
 		head = head->next;
-		delete tmp->value;
+		delete tmp->tree;
 		delete tmp;
 	}
 	head = nullptr;
 	return true;
 }
+
 /**
  * Destructor
  * @param None

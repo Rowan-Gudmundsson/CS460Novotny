@@ -5,6 +5,7 @@
 #define COLOR "\033"
 #define BLACK "[1;30m"
 #define RED "[1;31m"
+#define BNODE typename BinaryTree<T>::Node
 
 template <typename NodeVal>
 class BinaryTree {
@@ -51,6 +52,7 @@ class BinaryTree {
 		void rotateLeft(Node* about);
 		void rotateRight(Node* about);
 
+		Node* assignmentHelper(const Node* node, Node* parent);
 		void outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) const;
 };
 
@@ -81,7 +83,25 @@ BinaryTree<T>::BinaryTree(const BinaryTree<T>& other) {
  */
 template<typename T>
 BinaryTree<T>& BinaryTree<T>::operator = (const BinaryTree<T>& other) {
+	root = assignmentHelper(other.root, nullptr);
+}
 
+/**
+ * Assignment helper.
+ * @param {const Node*} node - The current node being copied.
+ * @return {Node*} - Pointer to the node to be linked.
+ */
+template<typename T>
+BNODE* BinaryTree<T>::assignmentHelper(const Node* node, Node* parent) {
+	if (node == nullptr) {
+		return nullptr;
+	}
+	Node* result = new Node(node->data, nullptr, nullptr, parent, node->red);
+	Node* left = assignmentHelper(node->left, result);
+	Node* right = assignmentHelper(node->right, result);
+	result->left = left;
+	result->right = right;
+	return result;
 }
 
 /**
@@ -151,7 +171,7 @@ void BinaryTree<T>::insertRepair(Node* repairFrom) {
 			uncy->red = false;
 			if(root != grandpa) grandpa->red = true;
 			repairFrom = grandpa;
-		} 
+		}
 		// Case 2: uncle is black
 		else {
 			nextFlip = repairFrom;
@@ -186,7 +206,7 @@ typename BinaryTree<T>::Node* BinaryTree<T>::uncle(Node* nephew) {
 	if(parent == nullptr) return nullptr;
 	Node* grandpa = parent->parent;
 	if(grandpa == nullptr) return nullptr;
-	
+
 	if(grandpa->left == parent) {
 		return grandpa->right;
 	} else {

@@ -16,6 +16,7 @@ class Symbol {
 				bool operator == (const VarType& rhs) const;
 
 				std::string name;
+				unsigned int lineNumber;
 				enum Type {
 					INT,
 					FLOAT,
@@ -31,19 +32,20 @@ class Symbol {
 		Symbol& operator = (const Symbol& other);
 
 		// Member functions
-		bool insert(const BinaryTree<VarType>& val);
+		bool pushScope();
+		bool insert(const VarType& val);
 		bool clear();
 
 		VarType* find(std::string name);
-		bool pop();
+		bool popScope();
 
 		// Destructor
 		~Symbol();
 	private:
 		struct Node {
 			Node() {}
-			Node(BinaryTree<VarType>* val, Node* next_ptr): value(val), next(next_ptr) {}
-			BinaryTree<VarType>* value;
+			Node(BinaryTree<VarType>* val, Node* next_ptr): tree(val), next(next_ptr) {}
+			BinaryTree<VarType>* tree;
 			Node* next;
 		};
 
