@@ -1,5 +1,11 @@
 #pragma once
 
+#include <iostream>
+
+#define COLOR "\033"
+#define BLACK "[1;30m"
+#define RED "[1;31m"
+
 template <typename NodeVal>
 class BinaryTree {
 	public:
@@ -15,6 +21,8 @@ class BinaryTree {
 		BinaryTree<NodeVal>* copy() const;
 
 		NodeVal* find(const NodeVal& key);
+
+		friend std::ostream& operator << (std::ostream& stream, const BinaryTree<NodeVal>& rhs);
 		// Destructors
 		~BinaryTree();
 
@@ -32,6 +40,7 @@ class BinaryTree {
 			bool red;
 		};
 
+		void outputHelper(std::string spaces, Node* tree, std::ostream& out, bool isLeft);
 		Node* root;
 };
 
@@ -120,4 +129,21 @@ T* BinaryTree<T>::find(const T& key) {
 template<typename T>
 BinaryTree<T>::~BinaryTree() {
 
+}
+
+template <typename T>
+void BinaryTree<T>::outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) {
+	if(node == nullptr) return;
+	outputHelper(spaces +(isLeft ? " |   " : "     ") , node->right, out, false);
+	out << spaces << (isLeft ? " \\" : " /") << "--- ";
+	if(node->red) out << COLOR << RED << node->data << COLOR << BLACK << std::endl;
+	else out << node->data << std::endl;
+	outputHelper(spaces + (!isLeft ? " |   " : "     ") , node->left, out, true);
+}
+
+template <typename T>
+std::ostream& operator << (std::ostream& stream, const BinaryTree<T>& rhs) {
+	std::string spaces = " \t ";
+	rhs.outputHelper(spaces, rhs.root, stream, true);
+	return stream;
 }

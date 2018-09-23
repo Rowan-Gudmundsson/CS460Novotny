@@ -2,6 +2,7 @@
 
 #include "BinaryTree.h"
 #include <string>
+#include <iostream>
 
 class Symbol {
 	public:
@@ -13,7 +14,7 @@ class Symbol {
 				bool operator < (const VarType& rhs) const;
 				bool operator > (const VarType& rhs) const;
 				bool operator == (const VarType& rhs) const;
-			private:
+
 				std::string name;
 				enum Type {
 					INT,

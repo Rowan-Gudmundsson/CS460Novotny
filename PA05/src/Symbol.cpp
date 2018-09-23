@@ -139,3 +139,8 @@ bool Symbol::clear() {
 Symbol::~Symbol() {
 	clear();
 }
+
+std::ostream& operator << (std::ostream& stream, const Symbol::VarType& rhs) {
+	out << rhs.name;
+	return stream;
+}
