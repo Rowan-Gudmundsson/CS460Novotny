@@ -5,27 +5,30 @@ class BinaryTree {
 	public:
 		// Constructors
 		BinaryTree();
-		BinaryTree(const BinaryTree& other);
+		BinaryTree(const BinaryTree<NodeVal>& other);
 
 		// Operators
-		BinaryTree& operator = (const BinaryTree& other);
+		BinaryTree<NodeVal>& operator = (const BinaryTree<NodeVal>& other);
 
 		// Member functions
 		bool insert(const NodeVal& val);
-		BinaryTree* copy() const;
+		BinaryTree<NodeVal>* copy() const;
+
+		NodeVal* find(const NodeVal& key);
 		// Destructors
 		~BinaryTree();
 
 	private:
 		struct Node {
-			Node() {};
+			Node() {}
 			Node(NodeVal val, Node* left_ptr, Node* right_ptr, bool is_red):
 				data(val),
 				left(left_ptr),
 				right(right_ptr),
 				red(is_red) {}
 			NodeVal data;
-			Node* left, right;
+			Node* left;
+			Node* right;
 			bool red;
 		};
 
@@ -83,6 +86,30 @@ BinaryTree<T>* BinaryTree<T>::copy() const{
 		return nullptr;
 	}
 	return nullptr; // For now...
+}
+
+/**
+ * Find and return a pointer to the value pointed to by the key.
+ * @param {const NodeVal&} key - The key to search for.
+ * @return {NodeVal*} - The pointer to the node found.
+ */
+template<typename T>
+T* BinaryTree<T>::find(const T& key) {
+	if (root == nullptr) {
+		return nullptr;
+	}
+	Node* conductor = root;
+	while (conductor != nullptr) {
+		if (key == conductor->data) {
+			return &conductor->data;
+		}
+		if (key < conductor->data) {
+			conductor = conductor->left;
+		} else if (key > conductor->data) {
+			conductor = conductor->right;
+		}
+	}
+	return nullptr;
 }
 
 /**

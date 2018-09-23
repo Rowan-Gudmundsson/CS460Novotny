@@ -10,9 +10,9 @@ class Symbol {
 			public:
 				VarType() {}
 				VarType(std::string key): name(key) {}
-				bool operator < (const VarType& rhs);
-				bool operator > (const VarType& rhs);
-				bool operator == (const VarType& rhs);
+				bool operator < (const VarType& rhs) const;
+				bool operator > (const VarType& rhs) const;
+				bool operator == (const VarType& rhs) const;
 			private:
 				std::string name;
 				enum Type {

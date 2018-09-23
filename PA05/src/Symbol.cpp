@@ -5,7 +5,7 @@
  * @param {const VarType&} rhs - The right hand side of the operator
  * @return {bool} - the value of the comparison
  */
-bool Symbol::VarType::operator == (const VarType& rhs) {
+bool Symbol::VarType::operator == (const VarType& rhs) const {
 	return name == rhs.name;
 }
 
@@ -14,7 +14,7 @@ bool Symbol::VarType::operator == (const VarType& rhs) {
  * @param {const VarType&} rhs - The right hand side of the operator
  * @return {bool} - the value of the comparison
  */
-bool Symbol::VarType::operator < (const VarType& rhs) {
+bool Symbol::VarType::operator < (const VarType& rhs) const {
 	return name < rhs.name;
 }
 
@@ -23,7 +23,7 @@ bool Symbol::VarType::operator < (const VarType& rhs) {
  * @param {const VarType&} rhs - The right hand side of the operator
  * @return {bool} - the value of the comparison
  */
-bool Symbol::VarType::operator > (const VarType& rhs) {
+bool Symbol::VarType::operator > (const VarType& rhs) const {
 	return name > rhs.name;
 }
 
@@ -85,10 +85,10 @@ bool Symbol::insert(const BinaryTree<VarType>& val) {
  */
 Symbol::VarType* Symbol::find(std::string key) {
 	Node* conductor = head;
-	T* result;
+	VarType* result;
 	VarType keyVal(key);
 	while(conductor != nullptr) {
-		result = conductor->find(keyVal);
+		result = conductor->value->find(keyVal);
 		if (result != nullptr) {
 			return result;
 		}
@@ -102,7 +102,7 @@ Symbol::VarType* Symbol::find(std::string key) {
  * @param None.
  * @return {bool} - Whether or not the pop was successful.
  */
-bool BinaryTree<T>::pop() {
+bool Symbol::pop() {
 	if (head == nullptr) {
 		return false;
 	}
@@ -129,6 +129,7 @@ bool Symbol::clear() {
 		delete tmp;
 	}
 	head = nullptr;
+	return true;
 }
 /**
  * Destructor
