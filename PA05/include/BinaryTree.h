@@ -43,6 +43,13 @@ class BinaryTree {
 			Node* right;
 			Node* parent;
 			bool red;
+			~Node() {
+				if (left != nullptr) delete left;
+				if (right != nullptr) delete right;
+				left = nullptr;
+				right = nullptr;
+				parent = nullptr;
+			}
 		};
 
 		Node* root;
@@ -155,6 +162,11 @@ bool BinaryTree<T>::insert(const T& val) {
 	return true;
 }
 
+/**
+ * After inserting, fix the tree.
+ * @param {Node*} repairFrom - The node to start repairing from.
+ * @return None.
+ */
 template<typename T>
 void BinaryTree<T>::insertRepair(Node* repairFrom) {
 	Node* uncy;
@@ -200,6 +212,11 @@ void BinaryTree<T>::insertRepair(Node* repairFrom) {
 	}
 }
 
+/**
+ * Find the nephew's uncy.
+ * @param {Node*} nephew - The nephew.
+ * @param {Node*} - The uncle.
+ */
 template<typename T>
 typename BinaryTree<T>::Node* BinaryTree<T>::uncle(Node* nephew) {
 	Node* parent = nephew->parent;
@@ -214,6 +231,11 @@ typename BinaryTree<T>::Node* BinaryTree<T>::uncle(Node* nephew) {
 	}
 }
 
+/**
+ * Rotate left about a node.
+ * @param {Node*} about - The node to rotate about.
+ * @return None.
+ */
 template<typename T>
 void BinaryTree<T>::rotateLeft(Node* about) {
 	Node** branch;
@@ -235,6 +257,11 @@ void BinaryTree<T>::rotateLeft(Node* about) {
 	about->parent = *branch;
 }
 
+/**
+ * Rotate right about a node.
+ * @param {Node*} about - The node to rotate about.
+ * @return None.
+ */
 template<typename T>
 void BinaryTree<T>::rotateRight(Node* about) {
 	Node** branch;
@@ -300,7 +327,9 @@ T* BinaryTree<T>::find(const T& key) {
  */
 template<typename T>
 BinaryTree<T>::~BinaryTree() {
-
+	if (root != nullptr) {
+		delete root;
+	}
 }
 
 template <typename T>
