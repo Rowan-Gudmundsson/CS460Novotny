@@ -36,3 +36,6 @@
 
 # Build folder
 *build/
+
+# OSX Folder thing
+*.DS_Store
