@@ -34,6 +34,7 @@ bool Symbol::VarType::operator > (const VarType& rhs) const {
  */
 Symbol::Symbol() {
 	head = nullptr;
+	pushScope();
 }
 
 /**
@@ -52,10 +53,10 @@ Symbol::Symbol(const Symbol& other) {
  * @return {Symbol&} - To allow for A = B = C.
  */
 Symbol& Symbol::operator = (const Symbol& other) {
-	Node* other_conduct = other.head;
-	Node* this_conduct = head;
+	Scope* other_conduct = other.head;
+	Scope* this_conduct = head;
 	while(other_conduct != nullptr) {
-		this_conduct = new Node(other_conduct->tree->copy(), other_conduct->next);
+		this_conduct = new Scope(other_conduct->tree->copy(), other_conduct->next);
 		other_conduct = other_conduct->next;
 		this_conduct = other_conduct->next;
 	}
@@ -69,11 +70,11 @@ Symbol& Symbol::operator = (const Symbol& other) {
  */
 bool Symbol::pushScope() {
 	if (head == nullptr) {
-		head = new Node(new BinaryTree<std::string, VarType>(), nullptr);
+		head = new Scope(new BinaryTree<std::string, VarType>(), nullptr);
 		return true;
 	}
 
-	Node* tmp = new Node(new BinaryTree<std::string, VarType>(), head);
+	Scope* tmp = new Scope(new BinaryTree<std::string, VarType>(), head);
 	head = tmp;
 	return true;
 }
@@ -84,7 +85,7 @@ bool Symbol::pushScope() {
  * @return {bool} - Whether or not the tree was successfully inserted.
  */
 bool Symbol::insert(const VarType& val) {
-	return head->tree->insert(val.name, val);
+	return head->tree->insert(val.name, val) != nullptr;
 }
 
 /**
@@ -93,7 +94,7 @@ bool Symbol::insert(const VarType& val) {
  * @return {T*} - The address of the tree found, nullptr if nothing.
  */
 Symbol::VarType* Symbol::find(std::string key) {
-	Node* conductor = head;
+	Scope* conductor = head;
 	VarType* result;
 	while(conductor != nullptr) {
 		result = conductor->tree->find(key);
@@ -115,7 +116,7 @@ bool Symbol::popScope() {
 		return false;
 	}
 
-	Node* tmp = head;
+	Scope* tmp = head;
 	head = head->next;
 	delete tmp->tree;
 	delete tmp;
@@ -129,7 +130,7 @@ bool Symbol::popScope() {
  * @return {bool} - If the clear was successful
  */
 bool Symbol::clear() {
-	Node* tmp = head;
+	Scope* tmp = head;
 	while(head != nullptr) {
 		tmp = head;
 		head = head->next;

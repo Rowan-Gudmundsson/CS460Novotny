@@ -121,7 +121,7 @@ BNODE* BinaryTree<K,T>::assignmentHelper(const Node* node, Node* parent) {
  * Insert a value into the tree.
  * @param {const K&} key - The key of the value to insert the value with
  * @param {const T&} val - The value to insert into the tree.
- * @return {T*} - A pointer to the new location within the tree where the value has been inserted
+ * @return {T*} - A pointer to the new location within the tree where the value has been inserted, or nullptr if there was a match
  */
 template<typename K, typename T>
 T* BinaryTree<K,T>::insert(const K& key, const T& val) {
@@ -140,6 +140,10 @@ T* BinaryTree<K,T>::insert(const K& key, const T& val) {
 			// Do comparison
 			if(key < parentNode->pair.first) {
 				newLocation = &parentNode->left;
+			} else if(key == parentNode->pair.first) {
+				// Found match - don't insert
+				delete newNode;
+				return nullptr;
 			} else {
 				newLocation = &parentNode->right;
 			}

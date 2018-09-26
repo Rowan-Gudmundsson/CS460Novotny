@@ -42,12 +42,12 @@ class Symbol {
 		// Destructor
 		~Symbol();
 	private:
-		struct Node {
-			Node() {}
-			Node(BinaryTree<std::string, VarType>* val, Node* next_ptr): tree(val), next(next_ptr) {}
+		struct Scope {
+			Scope() {}
+			Scope(BinaryTree<std::string, VarType>* val, Scope* next_ptr): tree(val), next(next_ptr) {}
 			BinaryTree<std::string, VarType>* tree;
-			Node* next;
+			Scope* next;
 		};
 
-		Node* head;
+		Scope* head;
 };
