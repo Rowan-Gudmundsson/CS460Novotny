@@ -44,8 +44,8 @@ class Symbol {
 	private:
 		struct Node {
 			Node() {}
-			Node(BinaryTree<VarType>* val, Node* next_ptr): tree(val), next(next_ptr) {}
-			BinaryTree<VarType>* tree;
+			Node(BinaryTree<std::string, VarType>* val, Node* next_ptr): tree(val), next(next_ptr) {}
+			BinaryTree<std::string, VarType>* tree;
 			Node* next;
 		};
 

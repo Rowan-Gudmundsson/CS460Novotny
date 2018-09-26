@@ -69,11 +69,11 @@ Symbol& Symbol::operator = (const Symbol& other) {
  */
 bool Symbol::pushScope() {
 	if (head == nullptr) {
-		head = new Node(new BinaryTree<VarType>(), nullptr);
+		head = new Node(new BinaryTree<std::string, VarType>(), nullptr);
 		return true;
 	}
 
-	Node* tmp = new Node(new BinaryTree<VarType>(), head);
+	Node* tmp = new Node(new BinaryTree<std::string, VarType>(), head);
 	head = tmp;
 	return true;
 }
@@ -84,7 +84,7 @@ bool Symbol::pushScope() {
  * @return {bool} - Whether or not the tree was successfully inserted.
  */
 bool Symbol::insert(const VarType& val) {
-	return head->tree->insert(val);
+	return head->tree->insert(val.name, val);
 }
 
 /**
@@ -95,9 +95,8 @@ bool Symbol::insert(const VarType& val) {
 Symbol::VarType* Symbol::find(std::string key) {
 	Node* conductor = head;
 	VarType* result;
-	VarType keyVal(key);
 	while(conductor != nullptr) {
-		result = conductor->tree->find(keyVal);
+		result = conductor->tree->find(key);
 		if (result != nullptr) {
 			return result;
 		}

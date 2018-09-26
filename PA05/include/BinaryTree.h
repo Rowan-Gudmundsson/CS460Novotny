@@ -1,13 +1,11 @@
 #pragma once
 
 #include <iostream>
+#include <utility>
 
-#define COLOR "\033"
-#define BLACK "[1;30m"
-#define RED "[1;31m"
-#define BNODE typename BinaryTree<T>::Node
+#define BNODE typename BinaryTree<K,T>::Node
 
-template <typename NodeVal>
+template <typename KeyType, typename NodeVal>
 class BinaryTree {
 	public:
 		// Constructors
@@ -15,16 +13,16 @@ class BinaryTree {
 		BinaryTree(const BinaryTree& other);
 
 		// Operators
-		BinaryTree<NodeVal>& operator = (const BinaryTree<NodeVal>& other);
+		BinaryTree<KeyType, NodeVal>& operator = (const BinaryTree<KeyType, NodeVal>& other);
 
 		// Member functions
-		bool insert(const NodeVal& val);
-		BinaryTree<NodeVal>* copy() const;
+		NodeVal* insert(const KeyType& key, const NodeVal& val);
+		BinaryTree<KeyType, NodeVal>* copy() const;
 
-		NodeVal* find(const NodeVal& key);
+		NodeVal* find(const KeyType& key);
 
-		template <typename T>
-		friend std::ostream& operator<< (std::ostream& stream, const BinaryTree<T>& rhs);
+		template <typename K, typename T>
+		friend std::ostream& operator<< (std::ostream& stream, const BinaryTree<K,T>& rhs);
 
 		// Destructors
 		~BinaryTree();
@@ -32,17 +30,25 @@ class BinaryTree {
 	private:
 		struct Node {
 			Node() {};
-			Node(NodeVal val, Node* left_ptr, Node* right_ptr, Node* parent_ptr, bool is_red):
-				data(val),
+			Node(const std::pair<KeyType, NodeVal>& _pair, Node* left_ptr, Node* right_ptr, Node* parent_ptr, bool is_red):
+				pair(_pair),
 				left(left_ptr),
 				right(right_ptr),
 				parent(parent_ptr),
 				red(is_red) {}
-			NodeVal data;
+			Node(const KeyType& key, const NodeVal& val, Node* left_ptr, Node* right_ptr, Node* parent_ptr, bool is_red):
+				pair(key, val),
+				left(left_ptr),
+				right(right_ptr),
+				parent(parent_ptr),
+				red(is_red) {}
+
+			std::pair<KeyType, NodeVal> pair;
 			Node* left;
 			Node* right;
 			Node* parent;
 			bool red;
+
 			~Node() {
 				if (left != nullptr) delete left;
 				if (right != nullptr) delete right;
@@ -68,8 +74,8 @@ class BinaryTree {
  * @param None.
  * @return None.
  */
-template<typename T>
-BinaryTree<T>::BinaryTree() {
+template<typename K, typename T>
+BinaryTree<K,T>::BinaryTree() {
 	root = nullptr;
 }
 
@@ -78,18 +84,18 @@ BinaryTree<T>::BinaryTree() {
  * @param {const BinaryTree&} other - The BT to copy into this
  * @return None
  */
-template<typename T>
-BinaryTree<T>::BinaryTree(const BinaryTree<T>& other) {
+template<typename K, typename T>
+BinaryTree<K,T>::BinaryTree(const BinaryTree<K,T>& other) {
 	(*this) = other;
 }
 
 /**
  * Assignment operator.
  * @param {const BinaryTree&} other - The BT to assign to this
- * @return {BinaryTree&} - To allow A = B = C;
+ * @return {BinaryTree&} - K,To allow A = B = C;
  */
-template<typename T>
-BinaryTree<T>& BinaryTree<T>::operator = (const BinaryTree<T>& other) {
+template<typename K, typename T>
+BinaryTree<K,T>& BinaryTree<K,T>::operator = (const BinaryTree<K,T>& other) {
 	root = assignmentHelper(other.root, nullptr);
 }
 
@@ -98,12 +104,12 @@ BinaryTree<T>& BinaryTree<T>::operator = (const BinaryTree<T>& other) {
  * @param {const Node*} node - The current node being copied.
  * @return {Node*} - Pointer to the node to be linked.
  */
-template<typename T>
-BNODE* BinaryTree<T>::assignmentHelper(const Node* node, Node* parent) {
+template<typename K, typename T>
+BNODE* BinaryTree<K,T>::assignmentHelper(const Node* node, Node* parent) {
 	if (node == nullptr) {
 		return nullptr;
 	}
-	Node* result = new Node(node->data, nullptr, nullptr, parent, node->red);
+	Node* result = new Node(node->pair, nullptr, nullptr, parent, node->red);
 	Node* left = assignmentHelper(node->left, result);
 	Node* right = assignmentHelper(node->right, result);
 	result->left = left;
@@ -113,17 +119,16 @@ BNODE* BinaryTree<T>::assignmentHelper(const Node* node, Node* parent) {
 
 /**
  * Insert a value into the tree.
+ * @param {const K&} key - The key of the value to insert the value with
  * @param {const T&} val - The value to insert into the tree.
- * @return {bool} - Whether or not it ws successfully inserted.
+ * @return {T*} - A pointer to the new location within the tree where the value has been inserted
  */
-template<typename T>
-bool BinaryTree<T>::insert(const T& val) {
-	Node* newNode = new Node(val, nullptr, nullptr, nullptr, true);
+template<typename K, typename T>
+T* BinaryTree<K,T>::insert(const K& key, const T& val) {
+	Node* newNode = new Node(key, val, nullptr, nullptr, nullptr, true);
 	Node* parentNode = root;
 	Node** newLocation;
 	Node* newRoot;
-
-	std::cout << "Inserting " << val << std::endl;
 
 	if(root == nullptr) {
 		// If there is no root - easy this is now root
@@ -133,7 +138,7 @@ bool BinaryTree<T>::insert(const T& val) {
 		// Otherwise find where we need to put it
 		while(newNode->parent == nullptr) {
 			// Do comparison
-			if(val < parentNode->data) {
+			if(key < parentNode->pair.first) {
 				newLocation = &parentNode->left;
 			} else {
 				newLocation = &parentNode->right;
@@ -159,7 +164,7 @@ bool BinaryTree<T>::insert(const T& val) {
 		root = newRoot;
 	}
 
-	return true;
+	return &newNode->pair.second;
 }
 
 /**
@@ -167,8 +172,8 @@ bool BinaryTree<T>::insert(const T& val) {
  * @param {Node*} repairFrom - The node to start repairing from.
  * @return None.
  */
-template<typename T>
-void BinaryTree<T>::insertRepair(Node* repairFrom) {
+template<typename K, typename T>
+void BinaryTree<K,T>::insertRepair(Node* repairFrom) {
 	Node* uncy;
 	Node* grandpa;
 	Node* nextFlip;
@@ -217,8 +222,8 @@ void BinaryTree<T>::insertRepair(Node* repairFrom) {
  * @param {Node*} nephew - The nephew.
  * @param {Node*} - The uncle.
  */
-template<typename T>
-typename BinaryTree<T>::Node* BinaryTree<T>::uncle(Node* nephew) {
+template<typename K, typename T>
+typename BinaryTree<K,T>::Node* BinaryTree<K,T>::uncle(Node* nephew) {
 	Node* parent = nephew->parent;
 	if(parent == nullptr) return nullptr;
 	Node* grandpa = parent->parent;
@@ -236,8 +241,8 @@ typename BinaryTree<T>::Node* BinaryTree<T>::uncle(Node* nephew) {
  * @param {Node*} about - The node to rotate about.
  * @return None.
  */
-template<typename T>
-void BinaryTree<T>::rotateLeft(Node* about) {
+template<typename K, typename T>
+void BinaryTree<K,T>::rotateLeft(Node* about) {
 	Node** branch;
 	Node* parent = about->parent;
 	if(about->parent == nullptr) {
@@ -262,8 +267,8 @@ void BinaryTree<T>::rotateLeft(Node* about) {
  * @param {Node*} about - The node to rotate about.
  * @return None.
  */
-template<typename T>
-void BinaryTree<T>::rotateRight(Node* about) {
+template<typename K, typename T>
+void BinaryTree<K,T>::rotateRight(Node* about) {
 	Node** branch;
 	Node* parent = about->parent;
 	if(about->parent == nullptr) {
@@ -286,10 +291,10 @@ void BinaryTree<T>::rotateRight(Node* about) {
 /**
  * Create a new binary tree and return a pointer to that new tree.
  * @param None
- * @return {BinaryTree<T>*} - The pointer to the new tree.
+ * @return {BinaryTree<K,T>*} - The pointer to the new tree.
  */
-template<typename T>
-BinaryTree<T>* BinaryTree<T>::copy() const{
+template<typename K, typename T>
+BinaryTree<K,T>* BinaryTree<K,T>::copy() const{
 	if (root == nullptr) {
 		return nullptr;
 	}
@@ -301,19 +306,18 @@ BinaryTree<T>* BinaryTree<T>::copy() const{
  * @param {const NodeVal&} key - The key to search for.
  * @return {NodeVal*} - The pointer to the node found.
  */
-template<typename T>
-T* BinaryTree<T>::find(const T& key) {
+template<typename K, typename T>
+T* BinaryTree<K,T>::find(const K& key) {
 	if (root == nullptr) {
 		return nullptr;
 	}
 	Node* conductor = root;
 	while (conductor != nullptr) {
-		if (key == conductor->data) {
-			return &conductor->data;
-		}
-		if (key < conductor->data) {
+		if (key == conductor->pair.first) {
+			return &conductor->pair.second;
+		} else if (key < conductor->pair.first) {
 			conductor = conductor->left;
-		} else if (key > conductor->data) {
+		} else if (key > conductor->pair.first) {
 			conductor = conductor->right;
 		}
 	}
@@ -325,24 +329,24 @@ T* BinaryTree<T>::find(const T& key) {
  * @param None
  * @return None
  */
-template<typename T>
-BinaryTree<T>::~BinaryTree() {
+template<typename K, typename T>
+BinaryTree<K,T>::~BinaryTree() {
 	if (root != nullptr) {
 		delete root;
 	}
 }
 
-template <typename T>
-void BinaryTree<T>::outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) const {
+template <typename K, typename T>
+void BinaryTree<K,T>::outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) const {
 	if(node == nullptr) return;
 	outputHelper(spaces +(isLeft ? " |   " : "     ") , node->right, out, false);
 	out << spaces << (isLeft ? " \\" : " /") << "--- ";
-	out << node->data << (node->red ? "(r)" : "(b)") << std::endl;
+	out << "<" << node->pair.first << "," << node->pair.second << ">" << (node->red ? "(r)" : "(b)") << std::endl;
 	outputHelper(spaces + (!isLeft ? " |   " : "     ") , node->left, out, true);
 }
 
-template <typename T>
-std::ostream& operator<< (std::ostream& stream, const BinaryTree<T>& rhs) {
+template <typename K, typename T>
+std::ostream& operator<< (std::ostream& stream, const BinaryTree<K,T>& rhs) {
 	std::string spaces = " \t ";
 	rhs.outputHelper(spaces, rhs.root, stream, true);
 	return stream;
