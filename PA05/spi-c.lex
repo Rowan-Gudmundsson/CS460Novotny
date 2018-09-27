@@ -1,6 +1,6 @@
 %{
 	#include "bison_header.h"
-	#include "calc.tab.h"
+	#include "spi-c.tab.h"
 	#include <string>
 	#include <unordered_map>
 
@@ -14,7 +14,7 @@
 	int yyerror(char *s);
 
 	std::unordered_map<std::string, VarType> varTable;
-	
+
 %}
 
 %option nounput
@@ -60,7 +60,7 @@ ID [a-zA-Z](_[a-zA-Z0-9]*)?
 	} else {
 		yylval.vval = &(iter->second);
 	}
-	
+
 	EMATH(ID);
 }
 
@@ -79,4 +79,3 @@ ID [a-zA-Z](_[a-zA-Z0-9]*)?
 int yywrap(void) {
 	return 1;
 }
-

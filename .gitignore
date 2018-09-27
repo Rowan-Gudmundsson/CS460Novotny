@@ -29,7 +29,13 @@
 # Executables
 *.exe
 *.out
+*.output
 *.app
+
+# Generated C files
+*.tab.*
+lex.yy.c
+spi-c
 
 # Local config files
 .editorconfig

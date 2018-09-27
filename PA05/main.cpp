@@ -1,5 +1,7 @@
 #include "main.h"
 
+int yyerror(char* s) { return 1; }
+
 int main() {
 	//BinaryTree<std::string, int> table;
 	Symbol table;

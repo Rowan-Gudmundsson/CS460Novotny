@@ -1,4 +1,4 @@
-#include "Symbol.h"
+#include "symbol.h"
 
 /**
  * Equality operator for VarType.
