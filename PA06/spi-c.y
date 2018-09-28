@@ -2,6 +2,7 @@
 %{
 	#include <cstdio>
 	#include <cmath>
+	#include <string>
 	#include "symbol.h"
 
 	int yyerror(char *s);
@@ -12,6 +13,10 @@
 
 %union {
 	Symbol::SymbolType* sval;
+	int ival;
+	float fval;
+	char cval;
+	std::string strval;
 }
 
 %token IDENTIFIER
@@ -466,6 +471,6 @@ string
 	;
 
 identifier
-	: IDENTIFIER
+	: IDENTIFIER { std::cout << "Identifier found: " << yylval.sval->name << std::endl;}
 	;
 %%
