@@ -25,7 +25,7 @@ parser.o: spi-c.tab.c
 spi-c.tab.c: spi-c.y
 	bison -d -v spi-c.y
 
-main.o: main.cpp main.h spi-c.tab.h bison_header.h
+main.o: main.cpp main.h spi-c.tab.h
 	$(CC) $(CFLAGS) -c main.cpp -o main.o
 
 symbol.o: symbol.cpp symbol.h binary_tree.o
