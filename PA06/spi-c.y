@@ -468,6 +468,9 @@ string
 	;
 
 identifier
-	: IDENTIFIER { std::cout << "Identifier found: " << yylval.sval->name << std::endl;}
+	: IDENTIFIER {
+		std::cout << "Identifier found: " << yylval.sval->name;
+		std::cout << " on line: " << yylval.sval->lineNumber << std::endl;
+	}
 	;
 %%

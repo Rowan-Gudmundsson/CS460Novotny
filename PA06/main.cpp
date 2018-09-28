@@ -1,10 +1,10 @@
 #include "main.h"
 
-extern void yyparse();
+extern int yyparse();
 
-int yyerror(char* s) { 
+int yyerror(char* s) {
 	std::cout << s << std::endl;
-	return 1; 
+	return 1;
 }
 
 int main() {

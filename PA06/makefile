@@ -6,7 +6,7 @@ CFLAGS = -g -Wall -std=c++11
 .DELETE_ON_ERROR:
 .PHONY: all
 
-all: spi-c
+all: spi-c test
 
 # COMPILE PROGRAM
 
@@ -37,6 +37,11 @@ binary_tree.o: binary_tree.hpp
 scanner.o parser.o main.o : spi-c.tab.h
 
 # CLEAN
+
+.PHONY:
+test: compiler.test spi-c
+	./spi-c < compiler.test > compiler.out
+	# diff compiler.out master.out
 
 .PHONY: clean
 clean:
