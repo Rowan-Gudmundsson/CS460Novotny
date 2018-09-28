@@ -5,8 +5,8 @@ int yyerror(char* s) { return 1; }
 int main() {
 	//BinaryTree<std::string, int> table;
 	Symbol table;
-	Symbol::VarType newVar;
-	Symbol::VarType* varPtr;
+	Symbol::SymbolType newVar;
+	Symbol::SymbolType* symbolPtr;
 	std::string input;
 	bool inputMode = true;
 	unsigned lineNumber = 1;
@@ -30,11 +30,11 @@ int main() {
 			newVar.name = input;
 			newVar.lineNumber = lineNumber;
 			if(!table.insert(newVar)) {
-				varPtr = table.find(input);
-				std::cout << "Variable " << input << " was already declared on line " << varPtr->lineNumber << std::endl;
+				symbolPtr = table.find(input);
+				std::cout << "Variable " << input << " was already declared on line " << symbolPtr->lineNumber << std::endl;
 			}
-		} else if((varPtr = table.find(input)) != nullptr) {
-			std::cout << varPtr->name << " declared on " << varPtr->lineNumber << std::endl;
+		} else if((symbolPtr = table.find(input)) != nullptr) {
+			std::cout << symbolPtr->name << " declared on " << symbolPtr->lineNumber << std::endl;
 		} else {
 			std::cout << input << " not found " << std::endl;
 		}

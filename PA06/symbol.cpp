@@ -1,29 +1,29 @@
 #include "symbol.h"
 
 /**
- * Equality operator for VarType.
- * @param {const VarType&} rhs - The right hand side of the operator
+ * Equality operator for SymbolType.
+ * @param {const SymbolType&} rhs - The right hand side of the operator
  * @return {bool} - the tree of the comparison
  */
-bool Symbol::VarType::operator == (const VarType& rhs) const {
+bool Symbol::SymbolType::operator == (const SymbolType& rhs) const {
 	return name == rhs.name;
 }
 
 /**
- * Less than operator for VarType.
- * @param {const VarType&} rhs - The right hand side of the operator
+ * Less than operator for SymbolType.
+ * @param {const SymbolType&} rhs - The right hand side of the operator
  * @return {bool} - the tree of the comparison
  */
-bool Symbol::VarType::operator < (const VarType& rhs) const {
+bool Symbol::SymbolType::operator < (const SymbolType& rhs) const {
 	return name < rhs.name;
 }
 
 /**
- * Greater than operator for VarType.
- * @param {const VarType&} rhs - The right hand side of the operator
+ * Greater than operator for SymbolType.
+ * @param {const SymbolType&} rhs - The right hand side of the operator
  * @return {bool} - the tree of the comparison
  */
-bool Symbol::VarType::operator > (const VarType& rhs) const {
+bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
 	return name > rhs.name;
 }
 
@@ -70,32 +70,32 @@ Symbol& Symbol::operator = (const Symbol& other) {
  */
 bool Symbol::pushScope() {
 	if (head == nullptr) {
-		head = new Scope(new BinaryTree<std::string, VarType>(), nullptr);
+		head = new Scope(new BinaryTree<std::string, SymbolType>(), nullptr);
 		return true;
 	}
 
-	Scope* tmp = new Scope(new BinaryTree<std::string, VarType>(), head);
+	Scope* tmp = new Scope(new BinaryTree<std::string, SymbolType>(), head);
 	head = tmp;
 	return true;
 }
 
 /**
  * Insert a BT into the linked list based stack.
- * @param {const BinaryTree<VarType>&} val - The tree to insert.
+ * @param {const BinaryTree<SymbolType>&} val - The tree to insert.
  * @return {bool} - Whether or not the tree was successfully inserted.
  */
-bool Symbol::insert(const VarType& val) {
+bool Symbol::insert(const SymbolType& val) {
 	return head->tree->insert(val.name, val) != nullptr;
 }
 
 /**
- * Return a pointer to the VarType which matches the key given.
+ * Return a pointer to the SymbolType which matches the key given.
  * @param None.
  * @return {T*} - The address of the tree found, nullptr if nothing.
  */
-Symbol::VarType* Symbol::find(std::string key) {
+Symbol::SymbolType* Symbol::find(std::string key) {
 	Scope* conductor = head;
-	VarType* result;
+	SymbolType* result;
 	while(conductor != nullptr) {
 		result = conductor->tree->find(key);
 		if (result != nullptr) {
@@ -150,7 +150,7 @@ Symbol::~Symbol() {
 	clear();
 }
 
-std::ostream& operator << (std::ostream& stream, const Symbol::VarType& rhs) {
+std::ostream& operator << (std::ostream& stream, const Symbol::SymbolType& rhs) {
 	stream << rhs.name;
 	return stream;
 }

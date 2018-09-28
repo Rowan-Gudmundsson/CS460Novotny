@@ -7,13 +7,13 @@
 class Symbol {
 	public:
 		// Var type
-		class VarType {
+		class SymbolType {
 			public:
-				VarType() {}
-				VarType(std::string key): name(key) {}
-				bool operator < (const VarType& rhs) const;
-				bool operator > (const VarType& rhs) const;
-				bool operator == (const VarType& rhs) const;
+				SymbolType() {}
+				SymbolType(std::string key): name(key) {}
+				bool operator < (const SymbolType& rhs) const;
+				bool operator > (const SymbolType& rhs) const;
+				bool operator == (const SymbolType& rhs) const;
 
 				std::string name;
 				unsigned int lineNumber;
@@ -33,10 +33,10 @@ class Symbol {
 
 		// Member functions
 		bool pushScope();
-		bool insert(const VarType& val);
+		bool insert(const SymbolType& val);
 		bool clear();
 
-		VarType* find(std::string name);
+		SymbolType* find(std::string name);
 		bool popScope();
 
 		// Destructor
@@ -44,8 +44,8 @@ class Symbol {
 	private:
 		struct Scope {
 			Scope() {}
-			Scope(BinaryTree<std::string, VarType>* val, Scope* next_ptr): tree(val), next(next_ptr) {}
-			BinaryTree<std::string, VarType>* tree;
+			Scope(BinaryTree<std::string, SymbolType>* val, Scope* next_ptr): tree(val), next(next_ptr) {}
+			BinaryTree<std::string, SymbolType>* tree;
 			Scope* next;
 		};
 
