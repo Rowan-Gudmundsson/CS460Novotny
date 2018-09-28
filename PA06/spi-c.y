@@ -1,14 +1,11 @@
 
 %{
 	#include <cstdio>
-	#include <cmath>
 	#include <string>
 	#include "symbol.h"
 
 	int yyerror(char *s);
 	int yylex(void);
-
-	const double eps = 0.00001;
 %}
 
 %union {
@@ -16,7 +13,7 @@
 	int ival;
 	float fval;
 	char cval;
-	std::string strval;
+	std::string* strval;
 }
 
 %token IDENTIFIER
