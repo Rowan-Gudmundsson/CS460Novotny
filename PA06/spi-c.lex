@@ -1,6 +1,8 @@
 %{
 	#include "symbol.h"
 	#include "spi-c.tab.h"
+	#include <cstdlib>
+	#include <climits>
 
 	int yyerror(char *s);
 
@@ -20,13 +22,6 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 
 "\n"   { lineno++; column = 0; }
 {DELIM}+ {}
-"("    { return(LPAREN); }
-")"    { return(RPAREN); }
-"+"    { return(ADD); }
-"-"    { return(SUB); }
-"*"    { return(MULT); }
-"/"    { return(DIV); }
-";"    { return(SEMI); }
 
 {ID}   {
 	std::string varName = yytext;
@@ -39,7 +34,7 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 
 	yylval.sval = idPtr;
 
-	return(IDENTIFIER);
+	return IDENTIFIER;
 }
 
 {INTEGER} {
@@ -47,10 +42,48 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 	for(int i = 0; i < yyleng; i++)
 		printf("%c", *(yytext + i));
 	printf("\n"); */
-	// yylval.ival = atoi(yytext);
+	char* dummy;
+	long long num = strtoll(yytext, &dummy, 10);
+	if(num >= INT_MAX) {
+		return ERROR;
+	}
+	yylval.ival = num;
 	return INTEGER_CONSTANT;
 }
-. {return(ERROR);}
+
+"sizeof" { return SIZEOF; }
+"->"   { return PTR_OP; }
+"++"   { return INC_OP; }
+"--"   { return DEC_OP; }
+"<<"   { return LEFT_OP; }
+">>"   { return RIGHT_OP; }
+"<="   { return LE_OP; }
+">="   { return GE_OP; }
+"=="   { return EQ_OP; }
+"!="   { return NE_OP; }
+"&&"   { return AND_OP; }
+"||"   { return OR_OP; }
+"!"    { return LNOT; }
+"*="   { return MUL_ASSIGN; }
+"/="   { return DIV_ASSIGN; }
+"%="   { return MOD_ASSIGN; }
+"+="   { return ADD_ASSIGN; }
+"-="   { return SUB_ASSIGN; }
+"<<="  { return LEFT_ASSIGN; }
+">>="  { return RIGHT_ASSIGN; }
+"&="   { return AND_ASSIGN; }
+"^="   { return XOR_ASSIGN; }
+"|="   { return OR_ASSIGN; }
+
+
+"("    { return(LPAREN); }
+")"    { return(RPAREN); }
+"+"    { return(ADD); }
+"-"    { return(SUB); }
+"*"    { return(MULT); }
+"/"    { return(DIV); }
+";"    { return(SEMI); }
+.      { return(ERROR); }
 
 %%
 
