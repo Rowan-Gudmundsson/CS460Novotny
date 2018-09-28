@@ -33,7 +33,7 @@ class Symbol {
 
 		// Member functions
 		bool pushScope();
-		bool insert(const SymbolType& val);
+		SymbolType* insert(const SymbolType& val);
 		bool clear();
 
 		SymbolType* find(std::string name);

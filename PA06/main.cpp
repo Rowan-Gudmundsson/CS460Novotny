@@ -1,10 +1,16 @@
 #include "main.h"
 
-int yyerror(char* s) { return 1; }
+extern void yyparse();
+
+int yyerror(char* s) { 
+	std::cout << s << std::endl;
+	return 1; 
+}
 
 int main() {
 	//BinaryTree<std::string, int> table;
-	Symbol table;
+	yyparse();
+	/*Symbol table;
 	Symbol::SymbolType newVar;
 	Symbol::SymbolType* symbolPtr;
 	std::string input;
@@ -13,7 +19,7 @@ int main() {
 	unsigned tabs = 0;
 	while(true) {
 		std::cout << lineNumber << " ";
-		for(int i = 0; i < tabs; i++) std::cout << "\t";
+		for(unsigned i = 0; i < tabs; i++) std::cout << "\t";
 		std::cin >> input;
 		if(input == "{") {
 			table.pushScope();
@@ -39,6 +45,6 @@ int main() {
 			std::cout << input << " not found " << std::endl;
 		}
 		lineNumber++;
-	}
+	}*/
 	return 0;
 }

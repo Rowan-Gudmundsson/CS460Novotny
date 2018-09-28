@@ -53,6 +53,7 @@ Symbol::Symbol(const Symbol& other) {
  * @return {Symbol&} - To allow for A = B = C.
  */
 Symbol& Symbol::operator = (const Symbol& other) {
+	/* // TODO - This doesn't work - I don't wanna fix it right now
 	Scope* other_conduct = other.head;
 	Scope* this_conduct = head;
 	while(other_conduct != nullptr) {
@@ -60,6 +61,7 @@ Symbol& Symbol::operator = (const Symbol& other) {
 		other_conduct = other_conduct->next;
 		this_conduct = other_conduct->next;
 	}
+	*/
 	return (*this);
 }
 
@@ -84,8 +86,8 @@ bool Symbol::pushScope() {
  * @param {const BinaryTree<SymbolType>&} val - The tree to insert.
  * @return {bool} - Whether or not the tree was successfully inserted.
  */
-bool Symbol::insert(const SymbolType& val) {
-	return head->tree->insert(val.name, val) != nullptr;
+Symbol::SymbolType* Symbol::insert(const SymbolType& val) {
+	return head->tree->insert(val.name, val);
 }
 
 /**

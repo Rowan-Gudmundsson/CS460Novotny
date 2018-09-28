@@ -2,13 +2,17 @@
 %{
 	#include <cstdio>
 	#include <cmath>
-	#include "bison_header.h"
+	#include "symbol.h"
 
 	int yyerror(char *s);
 	int yylex(void);
 
 	const double eps = 0.00001;
 %}
+
+%union {
+	Symbol::SymbolType* sval;
+}
 
 %token IDENTIFIER
 %token INTEGER_CONSTANT FLOATING_CONSTANT CHARACTER_CONSTANT ENUMERATION_CONSTANT
@@ -22,7 +26,7 @@
 %token MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN
 %token LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 %token TYPEDEF_NAME
-%token SEMI_COLON
+%token SEMI
 %token LBRACE RBRACE
 %token LPAREN RPAREN
 %token LBRACKET RBRACKET
@@ -37,6 +41,7 @@
 %token TYPEDEF EXTERN STATIC AUTO REGISTER
 %token CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
 %token STRUCT UNION ENUM ELIPSIS RANGE
+%token ERROR
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
@@ -61,8 +66,8 @@ function_definition
 	;
 
 declaration
-	: declaration_specifiers SEMI_COLON
-	| declaration_specifiers init_declarator_list SEMI_COLON
+	: declaration_specifiers SEMI
+	| declaration_specifiers init_declarator_list SEMI
 	;
 
 declaration_list
@@ -134,7 +139,7 @@ init_declarator
 	;
 
 struct_declaration
-	: specifier_qualifier_list struct_declarator_list SEMI_COLON
+	: specifier_qualifier_list struct_declarator_list SEMI
 	;
 
 specifier_qualifier_list
@@ -269,8 +274,8 @@ labeled_statement
 	;
 
 expression_statement
-	: SEMI_COLON
-	| expression SEMI_COLON
+	: SEMI
+	| expression SEMI
 	;
 
 compound_statement
@@ -293,23 +298,23 @@ selection_statement
 
 iteration_statement
 	: WHILE LPAREN expression RPAREN statement
-	| DO statement WHILE LPAREN expression RPAREN SEMI_COLON
-	| FOR LPAREN SEMI_COLON SEMI_COLON RPAREN statement
-	| FOR LPAREN SEMI_COLON SEMI_COLON expression RPAREN statement
-	| FOR LPAREN SEMI_COLON expression SEMI_COLON RPAREN statement
-	| FOR LPAREN SEMI_COLON expression SEMI_COLON expression RPAREN statement
-	| FOR LPAREN expression SEMI_COLON SEMI_COLON RPAREN statement
-	| FOR LPAREN expression SEMI_COLON SEMI_COLON expression RPAREN statement
-	| FOR LPAREN expression SEMI_COLON expression SEMI_COLON RPAREN statement
-	| FOR LPAREN expression SEMI_COLON expression SEMI_COLON expression RPAREN statement
+	| DO statement WHILE LPAREN expression RPAREN SEMI
+	| FOR LPAREN SEMI SEMI RPAREN statement
+	| FOR LPAREN SEMI SEMI expression RPAREN statement
+	| FOR LPAREN SEMI expression SEMI RPAREN statement
+	| FOR LPAREN SEMI expression SEMI expression RPAREN statement
+	| FOR LPAREN expression SEMI SEMI RPAREN statement
+	| FOR LPAREN expression SEMI SEMI expression RPAREN statement
+	| FOR LPAREN expression SEMI expression SEMI RPAREN statement
+	| FOR LPAREN expression SEMI expression SEMI expression RPAREN statement
 	;
 
 jump_statement
-	: GOTO identifier SEMI_COLON
-	| CONTINUE SEMI_COLON
-	| BREAK SEMI_COLON
-	| RETURN SEMI_COLON
-	| RETURN expression SEMI_COLON
+	: GOTO identifier SEMI
+	| CONTINUE SEMI
+	| BREAK SEMI
+	| RETURN SEMI
+	| RETURN expression SEMI
 	;
 
 expression

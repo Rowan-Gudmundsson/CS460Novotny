@@ -180,7 +180,6 @@ template<typename K, typename T>
 void BinaryTree<K,T>::insertRepair(Node* repairFrom) {
 	Node* uncy;
 	Node* grandpa;
-	Node* nextFlip;
 	// We only need to repair if there are now two reds in a row
 	while(repairFrom->red && repairFrom->parent != nullptr && repairFrom->parent->red) {
 		uncy = uncle(repairFrom);
@@ -195,16 +194,13 @@ void BinaryTree<K,T>::insertRepair(Node* repairFrom) {
 		}
 		// Case 2: uncle is black
 		else {
-			nextFlip = repairFrom;
 			if(grandpa->left == uncy && grandpa->right->left == repairFrom) {
 				rotateRight(repairFrom->parent);
-				nextFlip = repairFrom->right;
 				rotateLeft(repairFrom->parent);
 				repairFrom->left->red = true;
 				repairFrom->red = false;
 			} else if(grandpa->right == uncy && grandpa->left->right == repairFrom) {
 				rotateLeft(repairFrom->parent);
-				nextFlip = repairFrom->left;
 				rotateRight(repairFrom->parent);
 				repairFrom->right->red = true;
 				repairFrom->red = false;
