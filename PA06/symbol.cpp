@@ -42,6 +42,7 @@ Symbol::SymbolType& Symbol::SymbolType::operator = (const SymbolType& rhs) {
  */
 Symbol::Symbol() : head(nullptr), scopeLevel(_scopeLevel) {
 	pushScope();
+	mode = Mode::READ;
 }
 
 /**
@@ -116,6 +117,15 @@ Symbol::SymbolType* Symbol::find(std::string key) {
 		conductor = conductor->next;
 	}
 	return nullptr;
+}
+
+/**
+ * Return a pointer to the SymbolType which matches the key given only in the current scope
+ * @param {std::string} name - The name oof the variable we are trying to find.
+ * @return {SymbolType*} - A pointer to the variable or nullptr if it doesnt exist.
+ */
+Symbol::SymbolType* Symbol::findInCurrentScope(std::string name) {
+	return head->tree->find(name);
 }
 
 /**

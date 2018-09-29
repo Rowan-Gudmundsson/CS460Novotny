@@ -5,6 +5,9 @@
 #include <iostream>
 #include <stdexcept>
 
+#define SPIC_UNDEFINED_REFERENCE 0
+#define SPIC_REDECLARATION 1
+
 class Symbol {
 	public:
 		// Var type
@@ -29,8 +32,13 @@ class Symbol {
 
 				friend class Symbol;
 			private:
-				unsigned _scopeLevel = 0;				
+				unsigned _scopeLevel = 0;
 		};
+
+		enum Mode {
+			READ,
+			WRITE
+		} mode;
 
 		// Constructor
 		Symbol();
@@ -45,6 +53,7 @@ class Symbol {
 		bool clear();
 
 		SymbolType* find(std::string name);
+		SymbolType* findInCurrentScope(std::string name);
 		unsigned popScope();
 
 		// Destructor
@@ -59,7 +68,6 @@ class Symbol {
 
 		Scope* head;
 		unsigned _scopeLevel;
-
 	public:
 		const unsigned& scopeLevel;
 };

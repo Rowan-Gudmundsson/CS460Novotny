@@ -60,7 +60,7 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 "&="        { return AND_ASSIGN; }
 "^="        { return XOR_ASSIGN; }
 "|="        { return OR_ASSIGN; }
-"{"         { table.pushScope(); return LBRACE; }
+"{"         { table.mode = Symbol::Mode::READ; table.pushScope(); return LBRACE; }
 "}"         { table.popScope(); return RBRACE; }
 "("         { return LPAREN; }
 ")"         { return RPAREN; }
@@ -70,7 +70,7 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 "-"         { return SUB; }
 "*"         { return MULT; }
 "/"         { return DIV; }
-";"         { return SEMI; }
+";"         { table.mode = Symbol::Mode::READ; return SEMI; }
 ","         { return COMMA; }
 "="         { return ASSIGN; }
 ":"         { return COLON; }
@@ -88,17 +88,17 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 "static"    { return STATIC; }
 "auto"      { return AUTO; }
 "register"  { return REGISTER; }
-"char"      { return CHAR; }
-"short"     { return SHORT; }
-"int"       { return INT; }
-"long"      { return LONG; }
-"signed"    { return SIGNED; }
-"unsigned"  { return UNSIGNED; }
-"float"     { return FLOAT; }
-"double"    { return DOUBLE; }
-"const"     { return CONST; }
-"volatile"  { return VOLATILE; }
-"void"      { return VOID; }
+"char"      { table.mode = Symbol::Mode::WRITE; return CHAR; }
+"short"     { table.mode = Symbol::Mode::WRITE; return SHORT; }
+"int"       { table.mode = Symbol::Mode::WRITE; return INT; }
+"long"      { table.mode = Symbol::Mode::WRITE; return LONG; }
+"signed"    { table.mode = Symbol::Mode::WRITE; return SIGNED; }
+"unsigned"  { table.mode = Symbol::Mode::WRITE; return UNSIGNED; }
+"float"     { table.mode = Symbol::Mode::WRITE; return FLOAT; }
+"double"    { table.mode = Symbol::Mode::WRITE; return DOUBLE; }
+"const"     { table.mode = Symbol::Mode::WRITE; return CONST; }
+"volatile"  { table.mode = Symbol::Mode::WRITE; return VOLATILE; }
+"void"      { table.mode = Symbol::Mode::WRITE; return VOID; }
 "struct"    { return STRUCT; }
 "union"     { return UNION; }
 "enum"      { return ENUM; }
@@ -119,10 +119,20 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 
 {ID}   {
 	std::string varName = yytext;
-	Symbol::SymbolType* idPtr = table.find(varName);
-	if(idPtr == nullptr) {
-		Symbol::SymbolType newSym(varName, lineno);
-		idPtr = table.insert(newSym);
+	Symbol::SymbolType* idPtr;
+	if (table.mode == Symbol::Mode::READ) {
+		idPtr = table.find(varName);
+		if (idPtr == nullptr) {
+			throw SPIC_UNDEFINED_REFERENCE;
+		}
+	} else if (table.mode == Symbol::Mode::WRITE) {
+		idPtr = table.findInCurrentScope(varName);
+		if (idPtr != nullptr) {
+			throw SPIC_REDECLARATION;
+		} else {
+			Symbol::SymbolType newSym(varName, lineno);
+			idPtr = table.insert(newSym);
+		}
 	}
 
 	yylval.sval = idPtr;
