@@ -9,10 +9,21 @@ int yyerror(char* s) {
 
 int main(int argc, char** argv) {
 	//BinaryTree<std::string, int> table;
-
 	doCmdArgs(argc, argv);
-
-	yyparse();
+	try {
+		yyparse();
+	} catch (int error) {
+		switch (error) {
+			case SPIC_REDECLARATION: {
+				std::cout << "Redeclaration of variable." << std::endl;
+				break;
+			}
+			case SPIC_UNDEFINED_REFERENCE: {
+				std::cout << "Undefined reference to variable." << std::endl;
+				break;
+			}
+		}
+	}
 	/*Symbol table;
 	Symbol::SymbolType newVar;
 	Symbol::SymbolType* symbolPtr;
