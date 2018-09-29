@@ -27,13 +27,20 @@ bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
 	return name > rhs.name;
 }
 
+Symbol::SymbolType& Symbol::SymbolType::operator = (const SymbolType& rhs) {
+	name = rhs.name;
+	lineNumber = rhs.lineNumber;
+	_scopeLevel = rhs._scopeLevel;
+	type = rhs.type;
+	return *this;
+}
+
 /**
  * Constructor.
  * @param None
  * @return None
  */
-Symbol::Symbol() {
-	head = nullptr;
+Symbol::Symbol() : head(nullptr), scopeLevel(_scopeLevel) {
 	pushScope();
 }
 
@@ -42,8 +49,7 @@ Symbol::Symbol() {
  * @param {const Symbol&} other - The Symbol table we asssign to this
  * @return None
  */
-Symbol::Symbol(const Symbol& other) {
-	head = nullptr;
+Symbol::Symbol(const Symbol& other) : head(nullptr), scopeLevel(_scopeLevel) {
 	(*this) = other;
 }
 
@@ -68,17 +74,19 @@ Symbol& Symbol::operator = (const Symbol& other) {
 /**
  * Push a new scope onto the stack.
  * @param None.
- * @return {bool} - successful or not.
+ * @return {unsigned} - New scope level
  */
-bool Symbol::pushScope() {
+unsigned Symbol::pushScope() {
 	if (head == nullptr) {
 		head = new Scope(new BinaryTree<std::string, SymbolType>(), nullptr);
+		_scopeLevel = 0;
 		return true;
 	}
 
 	Scope* tmp = new Scope(new BinaryTree<std::string, SymbolType>(), head);
 	head = tmp;
-	return true;
+	_scopeLevel++;
+	return _scopeLevel;
 }
 
 /**
@@ -87,7 +95,9 @@ bool Symbol::pushScope() {
  * @return {bool} - Whether or not the tree was successfully inserted.
  */
 Symbol::SymbolType* Symbol::insert(const SymbolType& val) {
-	return head->tree->insert(val.name, val);
+	SymbolType* re = head->tree->insert(val.name, val);
+	re->_scopeLevel = _scopeLevel;
+	return re;
 }
 
 /**
@@ -111,11 +121,11 @@ Symbol::SymbolType* Symbol::find(std::string key) {
 /**
  * Remove the item from the head of the list.
  * @param None.
- * @return {bool} - Whether or not the pop was successful.
+ * @return {unsigned} - New scope level
  */
-bool Symbol::popScope() {
+unsigned Symbol::popScope() {
 	if (head == nullptr) {
-		return false;
+		throw std::logic_error("Tried to pop a scope when there were no scopes.");
 	}
 
 	Scope* tmp = head;
@@ -124,7 +134,9 @@ bool Symbol::popScope() {
 	delete tmp;
 	tmp = nullptr;
 
-	return true;
+	_scopeLevel--;
+
+	return _scopeLevel;
 }
 /**
  * Clear the table

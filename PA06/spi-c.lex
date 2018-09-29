@@ -60,8 +60,8 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 "&="        { return AND_ASSIGN; }
 "^="        { return XOR_ASSIGN; }
 "|="        { return OR_ASSIGN; }
-"{"         { return LBRACE; }
-"}"         { return RBRACE; }
+"{"         { table.pushScope(); return LBRACE; }
+"}"         { table.popScope(); return RBRACE; }
 "("         { return LPAREN; }
 ")"         { return RPAREN; }
 "["         { return LBRACKET; }
@@ -121,8 +121,7 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 	std::string varName = yytext;
 	Symbol::SymbolType* idPtr = table.find(varName);
 	if(idPtr == nullptr) {
-		Symbol::SymbolType newSym(varName);
-		newSym.lineNumber = lineno;
+		Symbol::SymbolType newSym(varName, lineno);
 		idPtr = table.insert(newSym);
 	}
 

@@ -3,25 +3,33 @@
 #include "binary_tree.hpp"
 #include <string>
 #include <iostream>
+#include <stdexcept>
 
 class Symbol {
 	public:
 		// Var type
 		class SymbolType {
 			public:
-				SymbolType() {}
-				SymbolType(std::string key): name(key) {}
+				SymbolType() : scopeLevel(_scopeLevel) {}
+				SymbolType(std::string key, unsigned line): name(key), lineNumber(line), scopeLevel(_scopeLevel) {}
+				SymbolType(const SymbolType& other) : scopeLevel(_scopeLevel) {*(this) = other;}
 				bool operator < (const SymbolType& rhs) const;
 				bool operator > (const SymbolType& rhs) const;
 				bool operator == (const SymbolType& rhs) const;
+				SymbolType& operator = (const SymbolType& rhs);
 
 				std::string name;
-				unsigned int lineNumber;
+				unsigned lineNumber;
+				unsigned& scopeLevel;
 				enum Type {
 					INT,
 					FLOAT,
 					CHAR
 				} type;
+
+				friend class Symbol;
+			private:
+				unsigned _scopeLevel = 0;				
 		};
 
 		// Constructor
@@ -32,12 +40,12 @@ class Symbol {
 		Symbol& operator = (const Symbol& other);
 
 		// Member functions
-		bool pushScope();
+		unsigned pushScope();
 		SymbolType* insert(const SymbolType& val);
 		bool clear();
 
 		SymbolType* find(std::string name);
-		bool popScope();
+		unsigned popScope();
 
 		// Destructor
 		~Symbol();
@@ -50,4 +58,8 @@ class Symbol {
 		};
 
 		Scope* head;
+		unsigned _scopeLevel;
+
+	public:
+		const unsigned& scopeLevel;
 };

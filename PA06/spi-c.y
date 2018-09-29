@@ -6,6 +6,8 @@
 
 	int yyerror(char *s);
 	int yylex(void);
+
+	extern Symbol table;
 %}
 
 %union {
@@ -469,8 +471,10 @@ string
 
 identifier
 	: IDENTIFIER {
-		std::cout << "Identifier found: " << yylval.sval->name;
-		std::cout << " on line: " << yylval.sval->lineNumber << std::endl;
+		std::cout << "Identifier found: " << yylval.sval->name
+		          << " on line: " << yylval.sval->lineNumber 
+		          << " in scope level: " << yylval.sval->scopeLevel
+		          << " (current scope level: " << table.scopeLevel << ")" << std::endl;
 	}
 	;
 %%

@@ -40,7 +40,7 @@ scanner.o parser.o main.o : spi-c.tab.h
 
 .PHONY:
 test: compiler.test spi-c
-	./spi-c < compiler.test > compiler.out
+	cat compiler.test | ./spi-c > compiler.out
 	# diff compiler.out master.out
 
 .PHONY: clean
