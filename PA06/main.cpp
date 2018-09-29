@@ -7,8 +7,11 @@ int yyerror(char* s) {
 	return 1;
 }
 
-int main() {
+int main(int argc, char** argv) {
 	//BinaryTree<std::string, int> table;
+
+	doCmdArgs(argc, argv);
+
 	yyparse();
 	/*Symbol table;
 	Symbol::SymbolType newVar;
@@ -47,4 +50,36 @@ int main() {
 		lineNumber++;
 	}*/
 	return 0;
+}
+
+void doCmdArgs(int argc, char** argv) {
+	std::string args = "";
+	for(int i = 1; i < argc; i++) {
+		args += argv[i];
+		args += " ";
+	}
+	std::smatch match;
+	while(std::regex_search(args, match, rArgs, std::regex_constants::match_not_null)) {
+		//std::cout << match.size() << " matches found." << std::endl;
+		if(match[LEX_LEVEL_GROUP].matched) {
+			lexDLevel = atoi(match[LEX_LEVEL_GROUP].str().c_str());
+			if(lexDLevel == 0) lexDLevel = 1;
+		}
+		if(match[SYM_LEVEL_GROUP].matched) {
+			symDLevel = atoi(match[SYM_LEVEL_GROUP].str().c_str());
+			if(symDLevel == 0) symDLevel = 1;
+		}
+		if(match[PAR_LEVEL_GROUP].matched) {
+			parseDLevel = atoi(match[PAR_LEVEL_GROUP].str().c_str());
+			if(parseDLevel == 0) parseDLevel = 1;
+		}
+		if(match[OUT_FILE_GROUP].matched) {
+			outputFile = match[OUT_FILE_GROUP].str();
+		}
+		args = match.suffix().str();
+	}
+	
+	if(lexDLevel > 0 || symDLevel > 0 || parseDLevel > 0) {
+		std::cout << "Debug mode: lexer (" << lexDLevel << "), symbol table (" << symDLevel << "), parser (" << parseDLevel << ")" << std::endl;
+	}
 }
