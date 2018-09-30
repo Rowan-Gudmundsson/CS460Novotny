@@ -8,7 +8,7 @@ int yyerror(char* s) {
 }
 
 int main(int argc, char** argv) {
-	//BinaryTree<std::string, int> table;
+	system(""); // DON'T REMOVE THIS - SUPER IMPORTANT FOR CONSOLE COLORS ON WINDOWS POWERSHELL
 	doCmdArgs(argc, argv);
 	try {
 		yyparse();

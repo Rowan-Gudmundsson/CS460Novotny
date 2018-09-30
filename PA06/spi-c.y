@@ -475,6 +475,7 @@ identifier
 		          << " on line: " << yylval.sval->lineNumber
 		          << " in scope level: " << yylval.sval->scopeLevel
 		          << " (current scope level: " << table.scopeLevel << ")" << std::endl;
+		std::cout << table << std::endl;
 	}
 	;
 %%
