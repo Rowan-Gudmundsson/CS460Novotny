@@ -43,6 +43,9 @@ Symbol::SymbolType& Symbol::SymbolType::operator = (const SymbolType& rhs) {
 Symbol::Symbol() : head(nullptr), scopeLevel(_scopeLevel) {
 	pushScope();
 	mode = Mode::READ;
+	debug_symbol_stream = nullptr; 
+	debug_lex_stream = nullptr;
+	debug_parse_stream = nullptr;
 }
 
 /**
@@ -166,15 +169,92 @@ bool Symbol::clear() {
 }
 
 /**
+ * Operator << overload 
+ * @param {std::ostream&} stream {Symbol&} symbol 
+ * @return {std::ostream&} the output stream   
+ */
+
+std::ostream& operator<<(std::ostream& stream, const Symbol& symbol)
+{
+	if(symbol.head == nullptr)
+	{
+		stream << "Empty symbol table" << std::endl;
+		return stream;
+	}
+	Symbol::Scope* current = symbol.head;
+	while(current != nullptr)
+	{
+		stream << "-----------------" << std::endl;
+		stream << *(current->tree) << std::endl;
+		stream << "-----------------" << std::endl;
+		current = current->next;
+	} 
+	return stream;
+}
+
+/**
  * Destructor
  * @param None
  * @return None
  */
 Symbol::~Symbol() {
 	clear();
+	if( debug_symbol_stream != nullptr)
+	{
+		debug_symbol_stream->close();
+	}
+	if(debug_lex_stream != nullptr)
+	{
+		debug_lex_stream->close();
+	}
+	if(debug_parse_stream != nullptr)
+	{
+		debug_parse_stream->close();
+	}
+}
+/**
+ *
+ *
+ */
+void Symbol::dumpSymbolTable()
+{
+	if(debug_symbol_stream != nullptr)
+	{
+		(*debug_symbol_stream) << *this << std::endl;
+	}
 }
 
 std::ostream& operator << (std::ostream& stream, const Symbol::SymbolType& rhs) {
 	stream << rhs.name;
 	return stream;
+}
+/**
+ *
+ */
+void Symbol::setDebug_symbol_stream(std::ofstream* stream)
+{
+	debug_symbol_stream = stream; 
+}
+
+/*
+ *
+ */
+
+void Symbol::setDebug_lex_stream(std::ofstream* stream)
+{
+	debug_lex_stream = stream; 
+}
+
+/*
+ *
+ */
+
+void Symbol::setDebug_parse_stream(std::ofstream* stream)
+{
+	debug_parse_stream = stream; 
+}
+
+std::ofstream* Symbol::getDebug_lex_stream() const
+{
+	return debug_lex_stream; 
 }
