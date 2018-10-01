@@ -4,6 +4,9 @@
 #include <utility>
 
 #define BNODE typename BinaryTree<K,T>::Node
+#define BLACK "\x1B[1;30m"
+#define RED   "\x1B[1;31m"
+#define RESET "\x1B[0m"
 
 template <typename KeyType, typename NodeVal>
 class BinaryTree {
@@ -341,7 +344,9 @@ void BinaryTree<K,T>::outputHelper(std::string spaces, Node* node, std::ostream&
 	if(node == nullptr) return;
 	outputHelper(spaces +(isLeft ? " |   " : "     ") , node->right, out, false);
 	out << spaces << (isLeft ? " \\" : " /") << "--- ";
-	out << "<" << node->pair.first << "," << node->pair.second << ">" << (node->red ? "(r)" : "(b)") << std::endl;
+	out << (node->red ? RED : BLACK);
+	out << "<" << node->pair.first << "," << node->pair.second << ">" << BLACK << std::endl;
+	out << RESET;
 	outputHelper(spaces + (!isLeft ? " |   " : "     ") , node->left, out, true);
 }
 
