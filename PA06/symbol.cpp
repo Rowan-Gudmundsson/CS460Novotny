@@ -35,6 +35,11 @@ Symbol::SymbolType& Symbol::SymbolType::operator = (const SymbolType& rhs) {
 	return *this;
 }
 
+std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
+	out << "<" << sym.name << ", line " << sym.lineNumber << ", scope " << sym.scopeLevel << ">";
+	return out;
+}
+
 /**
  * Constructor.
  * @param None
@@ -70,6 +75,17 @@ Symbol& Symbol::operator = (const Symbol& other) {
 	}
 	*/
 	return (*this);
+}
+
+std::ostream& operator << (std::ostream& out, const Symbol& table) {
+	Symbol::Scope* conductor = table.head;
+	unsigned scopeLevel = table._scopeLevel;
+	while(conductor != nullptr) {
+		out << "Scope level: " << scopeLevel << std::endl << *conductor->tree << std::endl;
+		scopeLevel--;
+		conductor = conductor->next;
+	}
+	return out;
 }
 
 /**
@@ -172,9 +188,4 @@ bool Symbol::clear() {
  */
 Symbol::~Symbol() {
 	clear();
-}
-
-std::ostream& operator << (std::ostream& stream, const Symbol::SymbolType& rhs) {
-	stream << rhs.name;
-	return stream;
 }

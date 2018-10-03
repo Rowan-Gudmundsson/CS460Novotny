@@ -21,6 +21,8 @@ class Symbol {
 				bool operator == (const SymbolType& rhs) const;
 				SymbolType& operator = (const SymbolType& rhs);
 
+				friend std::ostream& operator << (std::ostream& out, const SymbolType& sym);
+
 				std::string name;
 				unsigned lineNumber;
 				unsigned& scopeLevel;
@@ -46,6 +48,8 @@ class Symbol {
 
 		// Operators
 		Symbol& operator = (const Symbol& other);
+
+		friend std::ostream& operator << (std::ostream& out, const Symbol& table);
 
 		// Member functions
 		unsigned pushScope();
