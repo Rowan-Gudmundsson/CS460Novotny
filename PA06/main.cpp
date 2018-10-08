@@ -89,7 +89,7 @@ void doCmdArgs(int argc, char** argv) {
 		}
 		args = match.suffix().str();
 	}
-	
+
 	if(lexDLevel > 0 || symDLevel > 0 || parseDLevel > 0) {
 		std::cout << "Debug mode: lexer (" << lexDLevel << "), symbol table (" << symDLevel << "), parser (" << parseDLevel << ")" << std::endl;
 	}
