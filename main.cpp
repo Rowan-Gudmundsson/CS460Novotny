@@ -50,10 +50,16 @@ void doCmdArgs(int argc, char** argv) {
 		if(match[OUT_FILE_GROUP].matched) {
 			outputFile = match[OUT_FILE_GROUP].str();
 		}
+		if(match[IN_FILE_GROUP].matched) {
+			inputFile = match[IN_FILE_GROUP].str();
+		}
 		args = match.suffix().str();
 	}
 
 	if(lexDLevel > 0 || symDLevel > 0 || parseDLevel > 0) {
 		std::cout << "Debug mode: lexer (" << lexDLevel << "), symbol table (" << symDLevel << "), parser (" << parseDLevel << ")" << std::endl;
 	}
+
+	std::cout << "Input file: \"" << inputFile << "\"" << std::endl
+	          << "Output file: \"" << outputFile << "\"" << std::endl;
 }
