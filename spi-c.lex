@@ -33,6 +33,7 @@ COMMENT \/\*[^(/\*)]*\*\/
 	for(int i = 0; i < yyleng; i++)
 		printf("%c", *(yytext + i));
 	printf("\n"); */
+	std::cout << "Int: " << yytext << std::endl;
 	char* dummy;
 	long long num = strtoll(yytext, &dummy, 10);
 	if(num >= INT_MAX) {
@@ -126,6 +127,7 @@ COMMENT \/\*[^(/\*)]*\*\/
 "return"    { return RETURN; }
 
 {ID}   {
+	std::cout << "ID: " << yytext << std::endl;
 	std::string varName = yytext;
 	Symbol::SymbolType* idPtr;
 	if (table.mode == Symbol::Mode::READ) {
