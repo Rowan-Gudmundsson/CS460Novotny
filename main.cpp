@@ -1,9 +1,8 @@
 #include "main.h"
 
-extern int yyparse();
-
 int yyerror(char* s) {
-	std::cout << s << std::endl;
+	column -= yyleng - 1;
+	std::cout << "Error: " << s << " on line " << lineno << " on column " << column << std::endl;
 	return 1;
 }
 

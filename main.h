@@ -20,3 +20,8 @@ unsigned parseDLevel = 0;
 std::string outputFile = "";
 
 void doCmdArgs(int argc, char** argv);
+
+extern int yyparse();
+extern int lineno;
+extern int column;
+extern int yyleng;
