@@ -17,12 +17,17 @@ DIGIT [0-9]
 INTEGER {DIGIT}+
 DELIM [ \t\r]
 ID [_a-zA-Z][_a-zA-Z0-9]*
-
+FLOAT {DIGIT}*\.{DIGIT}+f?
+CHAR \'((.)|(\\0[xX][0-9ABCDEF]{1,2})|(\\.))\'
+STRING \"[^\"]*\"
+COMMENT \/\*[^(/\*)]*\*\/
 %%
 
 \n   { lineno++; column = 0; }
-{DELIM}+ {}
+{COMMENT}    {}
+{DELIM}+     {}
 
+{FLOAT}      { return FLOATING_CONSTANT; }
 {INTEGER} {
 	/* printf("I saw an integer: ");
 	for(int i = 0; i < yyleng; i++)
@@ -36,6 +41,9 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 	yylval.ival = num;
 	return INTEGER_CONSTANT;
 }
+
+{STRING}    { return STRING_LITERAL; }
+{CHAR}      { return CHARACTER_CONSTANT; }
 
 "sizeof"    { return SIZEOF; }
 "->"        { return PTR_OP; }
