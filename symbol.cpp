@@ -190,7 +190,7 @@ bool Symbol::clear() {
  * @return {std::ostream&} the output stream   
  */
 
-std::ostream& operator<<(std::ostream& stream, const Symbol& symbol)
+/*std::ostream& operator<<(std::ostream& stream, const Symbol& symbol)
 {
 	if(symbol.head == nullptr)
 	{
@@ -207,7 +207,7 @@ std::ostream& operator<<(std::ostream& stream, const Symbol& symbol)
 	} 
 	return stream;
 }
-
+*/
 /**
  * Destructor
  * @param None

@@ -93,7 +93,4 @@ class Symbol {
 		std::ofstream* debug_lex_stream; 
 		std::ofstream* debug_parse_stream; 
 
-	public:
-		const unsigned& scopeLevel;
-
 };
