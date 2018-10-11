@@ -482,13 +482,7 @@ string
 identifier
 	: IDENTIFIER {
 
-		if(table.getDebug_lex_stream() != nullptr)
-		{
-		(*table.getDebug_lex_stream()) << "Identifier found: " << yylval.sval->name
-		          << " on line: " << yylval.sval->lineNumber
-		          << " in scope level: " << yylval.sval->scopeLevel
-		          << " (current scope level: " << table.scopeLevel << ")" << std::endl;
-		}
+		table.debug_token(yylval.sval->name, yylval.sval->lineNumber, yylval.sval->scopeLevel);
 	}
 	;
 %%

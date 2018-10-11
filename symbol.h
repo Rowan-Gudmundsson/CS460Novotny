@@ -64,13 +64,8 @@ class Symbol {
 		SymbolType* findInCurrentScope(std::string name);
 		unsigned popScope();
 
-		//Setters for the ostream variables 
-		void setDebug_symbol_stream(std::ofstream*);
-		void setDebug_lex_stream(std::ofstream*);
-		void setDebug_parse_stream(std::ofstream*);
+		void debug_token(std::string tokenName, int tokenLine, unsigned tokenScope); 
 
-		//Getter for the token ostream variable 
-		std::ofstream* getDebug_lex_stream() const; 
 
 		// Destructor
 		~Symbol();
@@ -89,8 +84,14 @@ class Symbol {
 		unsigned _scopeLevel;
 
 
-		std::ofstream* debug_symbol_stream;
-		std::ofstream* debug_lex_stream; 
-		std::ofstream* debug_parse_stream; 
+		std::ofstream debug_symbol_stream;
+		std::ofstream debug_token_stream; 
+		std::ofstream debug_parse_stream; 
+
+		bool global_debug_token_enabled = false;
+		bool global_debug_parse_enabled = false;
+		bool debug_token_enabled = false; 
+		bool debug_parse_enabled = false; 
+
 
 };
