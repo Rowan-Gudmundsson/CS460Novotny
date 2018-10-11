@@ -6,7 +6,7 @@ CFLAGS = -g -Wall -std=c++11
 .DELETE_ON_ERROR:
 .PHONY: all
 
-all: spi-c test
+all: spi-c symboTest test
 
 # COMPILE PROGRAM
 
@@ -35,6 +35,12 @@ binary_tree.o: binary_tree.hpp
 	$(CC) $(CFLAGS) -c binary_tree.hpp -o binary_tree.o
 
 scanner.o parser.o main.o : spi-c.tab.h
+
+symboTest: symboTest.o symbol.o
+	$(CC) $(CFLAGS) symboTest.o symbol.o -o symboTest
+
+symboTest.o: symboTest.cpp symboTest.h
+	$(CC) $(CFLAGS) -c symboTest.cpp -o symboTest.o
 
 # CLEAN
 

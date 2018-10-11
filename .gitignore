@@ -36,6 +36,7 @@
 *.tab.*
 lex.yy.c
 spi-c
+symboTest
 
 # Local config files
 .editorconfig

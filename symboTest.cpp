@@ -1,9 +1,6 @@
-#include "main.h"
+#include "symboTest.h"
 
-int yyerror(char* s) { return 1; }
-
-int main() {
-	//BinaryTree<std::string, int> table;
+int main(int argc, char** argv) {
 	Symbol table;
 	Symbol::SymbolType newVar;
 	Symbol::SymbolType* symbolPtr;
@@ -13,7 +10,7 @@ int main() {
 	unsigned tabs = 0;
 	while(true) {
 		std::cout << lineNumber << " ";
-		for(int i = 0; i < tabs; i++) std::cout << "\t";
+		for(unsigned i = 0; i < tabs; i++) std::cout << "\t";
 		std::cin >> input;
 		if(input == "{") {
 			table.pushScope();
@@ -27,11 +24,16 @@ int main() {
 		} else if(input == "<<") {
 			inputMode = true;
 		} else if(inputMode) {
-			newVar.name = input;
-			newVar.lineNumber = lineNumber;
-			if(!table.insert(newVar)) {
-				symbolPtr = table.find(input);
-				std::cout << "Variable " << input << " was already declared on line " << symbolPtr->lineNumber << std::endl;
+			symbolPtr = table.find(input);
+			if(symbolPtr != nullptr && symbolPtr->scopeLevel == table.scopeLevel) {
+				std::cout << "ERROR: Variable " << input << " was already declared on line " << symbolPtr->lineNumber << std::endl;
+			} else {
+				if(symbolPtr != nullptr && symbolPtr->scopeLevel < table.scopeLevel) {
+					std::cout << "WARNING: Variable " << input << " shadowing variable declared on line " << symbolPtr->lineNumber << std::endl;
+				}
+				newVar.name = input;
+				newVar.lineNumber = lineNumber;
+				table.insert(newVar);
 			}
 		} else if((symbolPtr = table.find(input)) != nullptr) {
 			std::cout << symbolPtr->name << " declared on " << symbolPtr->lineNumber << std::endl;
@@ -42,3 +44,5 @@ int main() {
 	}
 	return 0;
 }
+
+// ~ab+a = (~a+a)(b+a)

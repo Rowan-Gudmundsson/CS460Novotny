@@ -26,7 +26,7 @@ class Symbol {
 
 				std::string name;
 				unsigned lineNumber;
-				unsigned& scopeLevel;
+				const unsigned& scopeLevel;
 				enum Type {
 					INT,
 					FLOAT,
@@ -42,6 +42,8 @@ class Symbol {
 			READ,
 			WRITE
 		} mode;
+
+		const unsigned& scopeLevel;
 
 		// Constructor
 		Symbol();
@@ -86,10 +88,12 @@ class Symbol {
 		Scope* head;
 		unsigned _scopeLevel;
 
+
 		std::ofstream* debug_symbol_stream;
 		std::ofstream* debug_lex_stream; 
 		std::ofstream* debug_parse_stream; 
 
 	public:
 		const unsigned& scopeLevel;
+
 };

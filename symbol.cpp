@@ -45,7 +45,7 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
  * @param None
  * @return None
  */
-Symbol::Symbol() : head(nullptr), scopeLevel(_scopeLevel) {
+Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	pushScope();
 	mode = Mode::READ;
 	debug_symbol_stream = nullptr; 
@@ -58,7 +58,7 @@ Symbol::Symbol() : head(nullptr), scopeLevel(_scopeLevel) {
  * @param {const Symbol&} other - The Symbol table we asssign to this
  * @return None
  */
-Symbol::Symbol(const Symbol& other) : head(nullptr), scopeLevel(_scopeLevel) {
+Symbol::Symbol(const Symbol& other) : scopeLevel(_scopeLevel), head(nullptr) {
 	(*this) = other;
 }
 
