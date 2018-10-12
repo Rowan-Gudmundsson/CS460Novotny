@@ -57,8 +57,20 @@ void doCmdArgs(int argc, char** argv) {
 	}
 
 	if(lexDLevel > 0 || symDLevel > 0 || parseDLevel > 0) {
+	
 		std::cout << "Debug mode: lexer (" << lexDLevel << "), symbol table (" << symDLevel << "), parser (" << parseDLevel << ")" << std::endl;
+
+		if(lexDLevel > 0)
+		{
+			//TURN ON GLOBAL DEBUG FOR TOKENS table.global_debug_tokens_enabled = true;
+		}
+
+		if(parseDLevel > 0)
+		{
+			//TURN ON GLOBAL DEBUG FOR PARSING table.global_debug_parser_enabled = true;
+		}
 	}
+
 
 	std::cout << "Input file: \"" << inputFile << "\"" << std::endl
 	          << "Output file: \"" << outputFile << "\"" << std::endl;

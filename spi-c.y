@@ -1,14 +1,22 @@
 
+
+
 %{
 	#include <cstdio>
+	#include <iostream>
 	#include <string>
-	#include "symbol.h"
 
+	#define YYDEBUG 1
+	
 	int yyerror(char *s);
 	int yylex(void);
 
 	extern Symbol table;
 %}
+
+%code top {
+	#include "symbol.h"
+}
 
 %union {
 	Symbol::SymbolType* sval;
@@ -17,7 +25,9 @@
 	char cval;
 	std::string* strval;
 }
-
+%token DEBUG_SYMBOL_TABLE
+%token DEBUG_PARSER
+%token DEBUG_TOKENS
 %token IDENTIFIER
 %token INTEGER_CONSTANT FLOATING_CONSTANT CHARACTER_CONSTANT ENUMERATION_CONSTANT
 %token STRING_LITERAL
@@ -283,10 +293,10 @@ expression_statement
 	;
 
 compound_statement
-	: LBRACE RBRACE
-	| LBRACE statement_list RBRACE
-	| LBRACE declaration_list RBRACE
-	| LBRACE declaration_list statement_list RBRACE
+	: LBRACE RBRACE 
+	| LBRACE statement_list RBRACE 
+	| LBRACE declaration_list RBRACE 
+	| LBRACE declaration_list statement_list RBRACE 
 	;
 
 statement_list
@@ -471,11 +481,8 @@ string
 
 identifier
 	: IDENTIFIER {
-		std::cout << "Identifier found: " << yylval.sval->name
-		          << " on line: " << yylval.sval->lineNumber
-		          << " in scope level: " << yylval.sval->scopeLevel
-		          << " (current scope level: " << table.scopeLevel << ")" << std::endl;
-		std::cout << table << std::endl;
+
+		table.debug_token(yylval.sval->name, yylval.sval->lineNumber, yylval.sval->scopeLevel);
 	}
 	;
 %%

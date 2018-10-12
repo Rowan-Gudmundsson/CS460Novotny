@@ -146,6 +146,9 @@ SCOMMENT \/\/.*\n
 "continue"  { RETURN_TOKEN(CONTINUE); }
 "break"     { RETURN_TOKEN(BREAK); }
 "return"    { RETURN_TOKEN(RETURN); }
+"#DUMP"		{ RETURN_TOKEN(DEBUG_SYMBOL_TABLE); } //other stuff
+"#PAR"		{ RETURN_TOKEN(DEBUG_PARSER); } //other stuff 
+"#TOK"		{ RETURN_TOKEN(DEBUG_TOKENS); } //other stuff needed
 
 {ID}   {
 	std::cout << "ID: " << yytext << std::endl;

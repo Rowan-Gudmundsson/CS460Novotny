@@ -48,6 +48,9 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	pushScope();
 	mode = Mode::READ;
+	debug_symbol_stream = std::ofstream("debug_symbol.txt", std::ofstream::out); 
+	debug_token_stream = std::ofstream("debug_tokens.txt", std::ofstream::out);
+	debug_parse_stream = std::ofstream("debug_parser.txt", std::ofstream::out);
 }
 
 /**
@@ -182,10 +185,57 @@ bool Symbol::clear() {
 }
 
 /**
+ * Operator << overload 
+ * @param {std::ostream&} stream {Symbol&} symbol 
+ * @return {std::ostream&} the output stream   
+ */
+
+/*std::ostream& operator<<(std::ostream& stream, const Symbol& symbol)
+{
+	if(symbol.head == nullptr)
+	{
+		stream << "Empty symbol table" << std::endl;
+		return stream;
+	}
+	Symbol::Scope* current = symbol.head;
+	while(current != nullptr)
+	{
+		stream << "-----------------" << std::endl;
+		stream << *(current->tree) << std::endl;
+		stream << "-----------------" << std::endl;
+		current = current->next;
+	} 
+	return stream;
+}
+*/
+/**
  * Destructor
  * @param None
  * @return None
  */
 Symbol::~Symbol() {
 	clear();
+		debug_symbol_stream.close();
+		debug_token_stream.close();
+		debug_parse_stream.close();
+}
+/**
+ *
+ *
+ */
+void Symbol::dumpSymbolTable()
+{
+		debug_symbol_stream << *this << std::endl;
+}
+
+
+void Symbol::debug_token(std::string tokenName, int tokenLine, unsigned tokenScope)
+{
+	if(global_debug_token_enabled || debug_token_enabled)
+	{
+		debug_token_stream << "Identifier found: " << tokenName
+		          << " on line: " << tokenLine 
+		          << " in scope level: " << tokenScope
+		          << " (current scope level: " << scopeLevel << ")" << std::endl;
+	}
 }

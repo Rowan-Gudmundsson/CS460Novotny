@@ -3,6 +3,7 @@
 #include "binary_tree.hpp"
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
 
 #define SPIC_UNDEFINED_REFERENCE 0
@@ -57,13 +58,20 @@ class Symbol {
 		unsigned pushScope();
 		SymbolType* insert(const SymbolType& val);
 		bool clear();
+		void dumpSymbolTable();
 
 		SymbolType* find(std::string name);
 		SymbolType* findInCurrentScope(std::string name);
 		unsigned popScope();
 
+		void debug_token(std::string tokenName, int tokenLine, unsigned tokenScope); 
+
+
 		// Destructor
 		~Symbol();
+
+	friend std::ostream& operator<< (std::ostream& stream, const Symbol& symbol);
+
 	private:
 		struct Scope {
 			Scope() {}
@@ -74,4 +82,16 @@ class Symbol {
 
 		Scope* head;
 		unsigned _scopeLevel;
+
+
+		std::ofstream debug_symbol_stream;
+		std::ofstream debug_token_stream; 
+		std::ofstream debug_parse_stream; 
+
+		bool global_debug_token_enabled = false;
+		bool global_debug_parse_enabled = false;
+		bool debug_token_enabled = false; 
+		bool debug_parse_enabled = false; 
+
+
 };
