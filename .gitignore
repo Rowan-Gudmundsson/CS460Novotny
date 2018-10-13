@@ -46,3 +46,9 @@ symboTest
 
 # OSX Folder thing
 *.DS_Store
+
+debug_tokens\.txt
+
+debug_symbol\.txt
+
+debug_parser\.txt

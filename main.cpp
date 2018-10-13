@@ -3,25 +3,34 @@
 int yyerror(char* s) {
 	column -= yyleng - 1;
 	std::cout << "Error: " << s << " on line " << lineno << " on column " << column << std::endl;
+	std::cout << currentLine << std::endl;
 	return 1;
 }
 
 int main(int argc, char** argv) {
 	system(""); // DON'T REMOVE THIS - SUPER IMPORTANT FOR CONSOLE COLORS ON WINDOWS POWERSHELL
 	doCmdArgs(argc, argv);
-	try {
-		yyparse();
-	} catch (int error) {
-		switch (error) {
-			case SPIC_REDECLARATION: {
-				std::cout << "Redeclaration of variable." << std::endl;
-				break;
+	if(inFile.is_open()) {
+		yyin = fopen(inputFile.c_str(), "r");
+		try {
+			yyparse();
+		} catch (int error) {
+			switch (error) {
+				case SPIC_REDECLARATION: {
+					std::cout << "Redeclaration of variable." << std::endl;
+					break;
+				}
+				case SPIC_UNDEFINED_REFERENCE: {
+					std::cout << "Undefined reference to variable." << std::endl;
+					break;
+				}
 			}
-			case SPIC_UNDEFINED_REFERENCE: {
-				std::cout << "Undefined reference to variable." << std::endl;
-				break;
-			}
+			std::cout << "On line " << lineno << " on column " << column << std::endl;
+			std::cout << currentLine << std::endl;
 		}
+	} else {
+		std::cerr << "Input file not found!" << std::endl;
+		return 1;
 	}
 	return 0;
 }
@@ -71,6 +80,8 @@ void doCmdArgs(int argc, char** argv) {
 		}
 	}
 
+	inFile.open(inputFile);
+	std::getline(inFile, currentLine);
 
 	std::cout << "Input file: \"" << inputFile << "\"" << std::endl
 	          << "Output file: \"" << outputFile << "\"" << std::endl;

@@ -3,9 +3,14 @@
 	#include "spi-c.tab.h"
 	#include <cstdlib>
 	#include <climits>
+	#include <fstream>
+	#include <string>
 
 	#define RETURN_TOKEN(token) column += yyleng; return token;
 	int yyerror(char *s);
+
+	extern std::ifstream inFile;
+	extern std::string currentLine;
 
 	Symbol table;
 	unsigned lineno = 0;
@@ -25,7 +30,7 @@ COMMENT \/\*[^(/\*)]*\*\/
 SCOMMENT \/\/.*\n
 %%
 
-\n   { lineno++; column = 0; }
+\n   { lineno++; column = 0; std::getline(inFile,currentLine); }
 {COMMENT}    {
 	std::string comment = yytext;
 	std::size_t lastPos;
@@ -36,6 +41,7 @@ SCOMMENT \/\/.*\n
 		if (position != std::string::npos) {
 			lineno++;
 			column = 0;
+			std::getline(inFile,currentLine);
 		};
 	} while (position != std::string::npos);
 

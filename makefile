@@ -45,9 +45,13 @@ symboTest.o: symboTest.cpp symboTest.h
 # CLEAN
 
 .PHONY:
-test: compiler.test spi-c
-	cat compiler.test | ./spi-c > compiler.out
-	diff compiler.out master.out
+test: tests/compiler.test spi-c
+ifeq ($(OS),Windows_NT)
+	.\spi-c tests/compiler.test > tests/compiler.out
+else
+	./spi-c tests/compiler.test > tests/compiler.out
+endif
+#	diff tests/compiler.out tests/master.out
 
 .PHONY: clean
 clean:

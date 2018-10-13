@@ -1,5 +1,9 @@
 #pragma once
 
+#define YYDEBUG 1
+
+#include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <regex>
 #include "symbol.h"
@@ -18,8 +22,10 @@ const std::regex rArgs("(?:(?:-d(?:l([1-9]?))?(?:s([1-9]?))?(?:p([1-9]?))?) ?|(?
 unsigned lexDLevel = 0;
 unsigned symDLevel = 0;
 unsigned parseDLevel = 0;
-std::string outputFile = "";
+std::string outputFile = "out/a.out";
 std::string inputFile = "";
+std::ifstream inFile;
+std::string currentLine;
 
 void doCmdArgs(int argc, char** argv);
 
@@ -27,3 +33,5 @@ extern int yyparse();
 extern int lineno;
 extern int column;
 extern int yyleng;
+extern int yydebug;
+extern FILE* yyin;
