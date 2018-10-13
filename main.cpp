@@ -2,8 +2,8 @@
 
 int yyerror(char* s) {
 	column -= yyleng - 1;
-	std::cout << "Error: " << s << " on line " << lineno << " on column " << column << std::endl;
-	std::cout << currentLine << std::endl;
+	std::cout << "Error: " << s << " on line " << lineno << ", column " << column << std::endl;
+	doArrowErrThing();
 	return 1;
 }
 
@@ -25,8 +25,8 @@ int main(int argc, char** argv) {
 					break;
 				}
 			}
-			std::cout << "On line " << lineno << " on column " << column << std::endl;
-			std::cout << currentLine << std::endl;
+			std::cout << "On line " << lineno << ", column " << column << std::endl;
+			doArrowErrThing();
 		}
 	} else {
 		std::cerr << "Input file not found!" << std::endl;
@@ -85,4 +85,26 @@ void doCmdArgs(int argc, char** argv) {
 
 	std::cout << "Input file: \"" << inputFile << "\"" << std::endl
 	          << "Output file: \"" << outputFile << "\"" << std::endl;
+}
+
+void doArrowErrThing() {
+	unsigned i;
+	replaceInString(currentLine, '\t', ' ');
+	std::cout << currentLine << std::endl;
+	for(i = 1; i < column; i++) {
+		std::cout << " ";
+	}
+	std::cout << "^";
+	for(i = 1; i < yyleng; i++) {
+		std::cout << "~";
+	}
+	std::cout << std::endl;
+}
+
+void replaceInString(std::string& str, char init, char replace) {
+	for(unsigned i = 0; i < str.length(); i++) {
+		if(str[i] == init) {
+			str[i] = replace;
+		}
+	}
 }

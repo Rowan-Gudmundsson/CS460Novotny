@@ -13,8 +13,8 @@
 	extern std::string currentLine;
 
 	Symbol table;
-	unsigned lineno = 0;
-	unsigned column = 0;
+	unsigned lineno = 1;
+	unsigned column = 1;
 %}
 
 %option nounput
@@ -30,7 +30,7 @@ COMMENT \/\*[^(/\*)]*\*\/
 SCOMMENT \/\/.*\n
 %%
 
-\n   { lineno++; column = 0; std::getline(inFile,currentLine); }
+\n   { lineno++; column = 1; std::getline(inFile,currentLine); }
 {COMMENT}    {
 	std::string comment = yytext;
 	std::size_t lastPos;
@@ -40,7 +40,7 @@ SCOMMENT \/\/.*\n
 		position = comment.find('\n', lastPos);
 		if (position != std::string::npos) {
 			lineno++;
-			column = 0;
+			column = 1;
 			std::getline(inFile,currentLine);
 		};
 	} while (position != std::string::npos);
@@ -67,7 +67,7 @@ SCOMMENT \/\/.*\n
 		return ERROR;
 	}
 	yylval.ival = num;
-	return INTEGER_CONSTANT;
+	RETURN_TOKEN(INTEGER_CONSTANT);
 }
 
 {STRING}    { RETURN_TOKEN(STRING_LITERAL); }

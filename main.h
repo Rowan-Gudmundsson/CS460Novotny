@@ -28,10 +28,12 @@ std::ifstream inFile;
 std::string currentLine;
 
 void doCmdArgs(int argc, char** argv);
+void doArrowErrThing();
+void replaceInString(std::string& str, char init, char replace);
 
 extern int yyparse();
-extern int lineno;
-extern int column;
-extern int yyleng;
+extern unsigned lineno;
+extern unsigned column;
+extern unsigned yyleng;
 extern int yydebug;
 extern FILE* yyin;
