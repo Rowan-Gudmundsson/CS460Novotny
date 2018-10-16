@@ -1,0 +1,6 @@
+Identifier found: main on line: 1 in scope level: 0 (current scope level: 0)
+Identifier found: x on line: 2 in scope level: 1 (current scope level: 1)
+Identifier found: y on line: 3 in scope level: 1 (current scope level: 1)
+Identifier found: x on line: 2 in scope level: 1 (current scope level: 1)
+Identifier found: y on line: 5 in scope level: 2 (current scope level: 2)
+Identifier found: x on line: 2 in scope level: 1 (current scope level: 2)

@@ -1,0 +1,12 @@
+Scope level: 0
+ 	  \--- [1;30m<main,<main, line 1, scope 0>>[1;30m
+[0m
+
+Scope level: 1
+ 	  |    /--- [1;31m<y,<y, line 3, scope 1>>[1;30m
+[0m 	  \--- [1;30m<x,<x, line 2, scope 1>>[1;30m
+[0m
+Scope level: 0
+ 	  \--- [1;30m<main,<main, line 1, scope 0>>[1;30m
+[0m
+

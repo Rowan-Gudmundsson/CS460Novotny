@@ -96,9 +96,7 @@ class Symbol {
 		std::ofstream debug_token_stream; 
 		std::ofstream debug_parse_stream; 
 
-		bool global_debug_token_enabled = false;
-		bool global_debug_parse_enabled = false;
-		bool global_debug_symbol_enabled = false; 
+		
 
 		bool debug_token_enabled = false; 
 		bool debug_parse_enabled = false; 

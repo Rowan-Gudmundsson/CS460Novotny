@@ -43,7 +43,7 @@ void doCmdArgs(int argc, char** argv) {
 	}
 	std::smatch match;
 	while(std::regex_search(args, match, rArgs, std::regex_constants::match_not_null)) {
-		//std::cout << match.size() << " matches found." << std::endl;
+		// std::cout << match.size() << " matches found." << std::endl;
 		if(match[LEX_LEVEL_GROUP].matched) {
 			lexDLevel = atoi(match[LEX_LEVEL_GROUP].str().c_str());
 			if(lexDLevel == 0) lexDLevel = 1;
@@ -64,6 +64,11 @@ void doCmdArgs(int argc, char** argv) {
 		}
 		args = match.suffix().str();
 	}
+
+	// TAKE THIS OUT WHEN THE REGEX IS WORKING
+	lexDLevel = 1;
+	parseDLevel = 1; 
+	symDLevel = 1; 
 
 	if(lexDLevel > 0 || symDLevel > 0 || parseDLevel > 0) {
 	
