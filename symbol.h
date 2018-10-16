@@ -9,6 +9,11 @@
 #define SPIC_UNDEFINED_REFERENCE 0
 #define SPIC_REDECLARATION 1
 
+
+extern unsigned int lexDLevel;
+extern unsigned int symDLevel;
+extern unsigned int parseDLevel;
+
 class Symbol {
 	public:
 		// Var type
@@ -66,6 +71,9 @@ class Symbol {
 
 		void debug_token(std::string tokenName, int tokenLine, unsigned tokenScope); 
 
+		void toggleDebug_token_enabled();
+		void toggleDebug_parse_enabled();
+
 
 		// Destructor
 		~Symbol();
@@ -90,8 +98,11 @@ class Symbol {
 
 		bool global_debug_token_enabled = false;
 		bool global_debug_parse_enabled = false;
+		bool global_debug_symbol_enabled = false; 
+
 		bool debug_token_enabled = false; 
 		bool debug_parse_enabled = false; 
+
 
 
 };

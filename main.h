@@ -19,9 +19,10 @@ const std::regex rArgs("(?:(?:-d(?:l([1-9]?))?(?:s([1-9]?))?(?:p([1-9]?))?) ?|(?
 #define OUT_FILE_GROUP  4
 #define IN_FILE_GROUP   5
 
-unsigned lexDLevel = 0;
-unsigned symDLevel = 0;
-unsigned parseDLevel = 0;
+extern unsigned int lexDLevel;
+extern unsigned int symDLevel;
+extern unsigned int parseDLevel;
+
 std::string outputFile = "out/a.out";
 std::string inputFile = "";
 std::ifstream inFile;

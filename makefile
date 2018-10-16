@@ -1,7 +1,7 @@
 OBS = parser.o scanner.o main.o symbol.o
 
 CC = g++
-CFLAGS = -g -Wall -std=c++11
+CFLAGS = -g -Wall -std=c++11 
 
 .DELETE_ON_ERROR:
 .PHONY: all
@@ -10,8 +10,8 @@ all: spi-c symboTest test
 
 # COMPILE PROGRAM
 
-spi-c: parser.o scanner.o main.o symbol.o
-	$(CC) $(CFLAGS) $(OBS) -o spi-c
+spi-c: parser.o scanner.o main.o symbol.o 
+	$(CC) $(CFLAGS) $(OBS) -o spi-c 
 
 scanner.o: lex.yy.c
 	$(CC) $(CFLAGS) -c lex.yy.c -o scanner.o
@@ -37,7 +37,7 @@ binary_tree.o: binary_tree.hpp
 scanner.o parser.o main.o : spi-c.tab.h
 
 symboTest: symboTest.o symbol.o
-	$(CC) $(CFLAGS) symboTest.o symbol.o -o symboTest
+	$(CC) $(CFLAGS) symboTest.o symbol.o -o symboTest 
 
 symboTest.o: symboTest.cpp symboTest.h
 	$(CC) $(CFLAGS) -c symboTest.cpp -o symboTest.o

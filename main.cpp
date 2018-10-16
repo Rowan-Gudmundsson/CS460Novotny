@@ -69,15 +69,7 @@ void doCmdArgs(int argc, char** argv) {
 	
 		std::cout << "Debug mode: lexer (" << lexDLevel << "), symbol table (" << symDLevel << "), parser (" << parseDLevel << ")" << std::endl;
 
-		if(lexDLevel > 0)
-		{
-			//TURN ON GLOBAL DEBUG FOR TOKENS table.global_debug_tokens_enabled = true;
-		}
 
-		if(parseDLevel > 0)
-		{
-			//TURN ON GLOBAL DEBUG FOR PARSING table.global_debug_parser_enabled = true;
-		}
 	}
 
 	inFile.open(inputFile);

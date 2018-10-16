@@ -1,5 +1,6 @@
 #include "symboTest.h"
 
+
 int main(int argc, char** argv) {
 	Symbol table;
 	Symbol::SymbolType newVar;

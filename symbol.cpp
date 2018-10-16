@@ -1,5 +1,11 @@
 #include "symbol.h"
 
+
+unsigned int lexDLevel = 0;
+unsigned int symDLevel = 0;
+unsigned int parseDLevel = 0;
+
+
 /**
  * Equality operator for SymbolType.
  * @param {const SymbolType&} rhs - The right hand side of the operator
@@ -51,6 +57,9 @@ Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	debug_symbol_stream = std::ofstream("debug_symbol.txt", std::ofstream::out); 
 	debug_token_stream = std::ofstream("debug_tokens.txt", std::ofstream::out);
 	debug_parse_stream = std::ofstream("debug_parser.txt", std::ofstream::out);
+	global_debug_token_enabled = ::lexDLevel > 0;
+	global_debug_parse_enabled = ::parseDLevel > 0;
+	global_debug_symbol_enabled = ::symDLevel > 0;
 }
 
 /**
@@ -184,30 +193,7 @@ bool Symbol::clear() {
 	return true;
 }
 
-/**
- * Operator << overload 
- * @param {std::ostream&} stream {Symbol&} symbol 
- * @return {std::ostream&} the output stream   
- */
 
-/*std::ostream& operator<<(std::ostream& stream, const Symbol& symbol)
-{
-	if(symbol.head == nullptr)
-	{
-		stream << "Empty symbol table" << std::endl;
-		return stream;
-	}
-	Symbol::Scope* current = symbol.head;
-	while(current != nullptr)
-	{
-		stream << "-----------------" << std::endl;
-		stream << *(current->tree) << std::endl;
-		stream << "-----------------" << std::endl;
-		current = current->next;
-	} 
-	return stream;
-}
-*/
 /**
  * Destructor
  * @param None
@@ -238,4 +224,15 @@ void Symbol::debug_token(std::string tokenName, int tokenLine, unsigned tokenSco
 		          << " in scope level: " << tokenScope
 		          << " (current scope level: " << scopeLevel << ")" << std::endl;
 	}
+}
+
+
+void Symbol::toggleDebug_token_enabled()
+{
+	debug_token_enabled = !debug_token_enabled; 
+}
+
+void Symbol::toggleDebug_parse_enabled()
+{
+	debug_parse_enabled = !debug_parse_enabled; 
 }

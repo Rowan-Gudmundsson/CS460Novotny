@@ -152,9 +152,9 @@ SCOMMENT \/\/.*\n
 "continue"  { RETURN_TOKEN(CONTINUE); }
 "break"     { RETURN_TOKEN(BREAK); }
 "return"    { RETURN_TOKEN(RETURN); }
-"#DUMP"		{ RETURN_TOKEN(DEBUG_SYMBOL_TABLE); } //other stuff
-"#PAR"		{ RETURN_TOKEN(DEBUG_PARSER); } //other stuff 
-"#TOK"		{ RETURN_TOKEN(DEBUG_TOKENS); } //other stuff needed
+"#DUMP"		{ table.dumpSymbolTable(); RETURN_TOKEN(DEBUG_SYMBOL_TABLE); } 
+"#PAR"		{ table.toggleDebug_parse_enabled(); RETURN_TOKEN(DEBUG_PARSER); } 
+"#TOK"		{ table.toggleDebug_token_enabled(); RETURN_TOKEN(DEBUG_TOKENS); } 
 
 {ID}   {
 	std::cout << "ID: " << yytext << std::endl;
