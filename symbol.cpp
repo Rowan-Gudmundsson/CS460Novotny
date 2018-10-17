@@ -5,6 +5,10 @@ unsigned int lexDLevel = 0;
 unsigned int symDLevel = 0;
 unsigned int parseDLevel = 0;
 
+#ifdef YYDEBUG
+extern int yydebug;
+#endif
+
 
 /**
  * Equality operator for SymbolType.
@@ -246,9 +250,11 @@ void Symbol::toggleDebug_token_enabled()
 
 void Symbol::toggleDebug_parse_enabled()
 {
+	#ifdef YYDEBUG
 	debug_parse_enabled = !debug_parse_enabled; 
 	if(parseDLevel == 0)
 	{
 		yydebug = debug_parse_enabled ? 1 : 0;
 	}
+	#endif
 }
