@@ -247,4 +247,8 @@ void Symbol::toggleDebug_token_enabled()
 void Symbol::toggleDebug_parse_enabled()
 {
 	debug_parse_enabled = !debug_parse_enabled; 
+	if(parseDLevel == 0)
+	{
+		yydebug = debug_parse_enabled ? 1 : 0;
+	}
 }

@@ -66,9 +66,10 @@ void doCmdArgs(int argc, char** argv) {
 	}
 
 	// TAKE THIS OUT WHEN THE REGEX IS WORKING
-	lexDLevel = 1;
-	parseDLevel = 1; 
-	symDLevel = 1; 
+	//lexDLevel = 1;
+	//parseDLevel = 1; 
+	//symDLevel = 1; 
+	yydebug = parseDLevel != 0 ? 1 : 0;
 
 	if(lexDLevel > 0 || symDLevel > 0 || parseDLevel > 0) {
 	
