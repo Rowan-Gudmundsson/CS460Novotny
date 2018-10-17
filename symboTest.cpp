@@ -24,6 +24,8 @@ int main(int argc, char** argv) {
 			inputMode = false;
 		} else if(input == "<<") {
 			inputMode = true;
+		} else if(input == "DUMP") {
+			std::cout << table << std::endl;
 		} else if(inputMode) {
 			symbolPtr = table.find(input);
 			if(symbolPtr != nullptr && symbolPtr->scopeLevel == table.scopeLevel) {
