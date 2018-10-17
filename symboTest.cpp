@@ -2,6 +2,17 @@
 
 
 int main(int argc, char** argv) {
+	std::cout << "----------------------------------------------------------------------------\n"
+	          << "                          Symbol Table Test Driver                          \n"
+	          << "----------------------------------------------------------------------------\n"
+	          << "Commands:\n"
+	          << "  {    - Push a new scope\n"
+	          << "  }    - Pop current scope\n"
+	          << "  >>   - Change from variable declarations to variable usage\n"
+	          << "  <<   - Change from variable usage to variable declarations (default mode)\n"
+	          << "  DUMP - Output current symbol table to screen\n"
+	          << "  [id] - Declare or reference variable (depending on curent mode)" << std::endl;
+
 	Symbol table;
 	Symbol::SymbolType newVar;
 	Symbol::SymbolType* symbolPtr;
@@ -9,6 +20,7 @@ int main(int argc, char** argv) {
 	bool inputMode = true;
 	unsigned lineNumber = 1;
 	unsigned tabs = 0;
+
 	while(true) {
 		std::cout << lineNumber << " ";
 		for(unsigned i = 0; i < tabs; i++) std::cout << "\t";
