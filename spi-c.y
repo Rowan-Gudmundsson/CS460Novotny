@@ -80,8 +80,8 @@ function_definition
 	;
 
 declaration
-	: declaration_specifiers SEMI debug 
-	| declaration_specifiers init_declarator_list SEMI debug 
+	: declaration_specifiers SEMI 
+	| declaration_specifiers init_declarator_list SEMI  
 	;
 
 declaration_list
@@ -153,7 +153,7 @@ init_declarator
 	;
 
 struct_declaration
-	: specifier_qualifier_list struct_declarator_list SEMI debug
+	: specifier_qualifier_list struct_declarator_list SEMI 
 	;
 
 specifier_qualifier_list
@@ -288,8 +288,8 @@ labeled_statement
 	;
 
 expression_statement
-	: SEMI debug
-	| expression SEMI debug
+	: SEMI 
+	| expression SEMI 
 	;
 
 compound_statement
@@ -485,11 +485,5 @@ identifier
 		table.debug_token(yylval.sval->name, yylval.sval->lineNumber, yylval.sval->scopeLevel);
 	}
 	;
-debug 
-	: DEBUG_SYMBOL_TABLE debug 
-	| DEBUG_PARSER debug 
-	| DEBUG_TOKENS debug 
-	| 
-	| /*empty*/
-	;
+
 %%
