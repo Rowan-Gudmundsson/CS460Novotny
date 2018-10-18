@@ -6,10 +6,6 @@
 #include <fstream>
 #include <stdexcept>
 
-#define SPIC_UNDEFINED_REFERENCE 0
-#define SPIC_REDECLARATION 1
-
-
 extern unsigned int lexDLevel;
 extern unsigned int symDLevel;
 extern unsigned int parseDLevel;
