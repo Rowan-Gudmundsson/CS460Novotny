@@ -1,5 +1,8 @@
 #include "symboTest.h"
 
+#ifdef YYDEBUG
+int yydebug = 0;
+#endif
 
 int main(int argc, char** argv) {
 	std::cout << "----------------------------------------------------------------------------\n"

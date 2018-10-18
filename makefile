@@ -1,7 +1,7 @@
 OBS = parser.o scanner.o main.o symbol.o
 
 CC = g++
-CFLAGS = -g -Wall -std=c++11 
+CFLAGS = -g -Wall -std=c++11 -DYYDEBUG=1
 
 .DELETE_ON_ERROR:
 .PHONY: all
