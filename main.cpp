@@ -14,17 +14,8 @@ int main(int argc, char** argv) {
 		yyin = fopen(inputFile.c_str(), "r");
 		try {
 			yyparse();
-		} catch (int error) {
-			switch (error) {
-				case SPIC_REDECLARATION: {
-					std::cout << "Redeclaration of variable." << std::endl;
-					break;
-				}
-				case SPIC_UNDEFINED_REFERENCE: {
-					std::cout << "Undefined reference to variable." << std::endl;
-					break;
-				}
-			}
+		} catch (scannerError error) {
+			std::cout << "ERROR! " << error.what() << std::endl;
 			std::cout << "On line " << lineno << ", column " << column << std::endl;
 			doArrowErrThing();
 		}

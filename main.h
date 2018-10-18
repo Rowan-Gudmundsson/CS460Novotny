@@ -8,6 +8,7 @@
 #include <regex>
 #include "symbol.h"
 #include "spi-c.tab.h"
+#include "errors.h"
 
 /*
 *	REGULAR EXPRESSIONS DO NOT WORK WHEN INPUTTING A DEBUG LEVEL AND A FILE NAME
