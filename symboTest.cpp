@@ -9,6 +9,7 @@ int main(int argc, char** argv) {
 	          << "                          Symbol Table Test Driver                          \n"
 	          << "----------------------------------------------------------------------------\n"
 	          << "Commands:\n"
+	          << "  quit - Quit the program\n"
 	          << "  {    - Push a new scope\n"
 	          << "  }    - Pop current scope\n"
 	          << "  >>   - Change from variable declarations to variable usage\n"
@@ -25,10 +26,11 @@ int main(int argc, char** argv) {
 	unsigned tabs = 0;
 	std::ofstream outFile("symboTest.out");
 
-	while(true) {
+	while(input != "quit") {
 		std::cout << lineNumber << " ";
 		for(unsigned i = 0; i < tabs; i++) std::cout << "\t";
 		std::cin >> input;
+
 		if(input == "{") {
 			table.pushScope();
 			inputMode = true;

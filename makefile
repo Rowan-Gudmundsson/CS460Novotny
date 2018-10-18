@@ -48,6 +48,7 @@ symboTest.o: symboTest.cpp symboTest.h
 test: tests/compiler.test spi-c
 ifeq ($(OS),Windows_NT)
 	.\spi-c tests/compiler.test > tests/compiler.out
+	.\symboTest < "symbol table tests/test1" > "symbol table tests/test1.out"
 else
 	./spi-c tests/compiler.test > tests/compiler.out
 endif
