@@ -1,10 +1,8 @@
-
-
-
 %{
 	#include <cstdio>
 	#include <iostream>
 	#include <string>
+	#include "errors.h"
 
 	#define YYDEBUG 1
 	

@@ -1,12 +1,15 @@
 %{
 	#include "symbol.h"
 	#include "spi-c.tab.h"
+	#include "errors.h"
 	#include <cstdlib>
 	#include <climits>
 	#include <fstream>
 	#include <string>
+	#include <stdexcept>
 
 	#define RETURN_TOKEN(token) column += yyleng; return token;
+	#define COLUMN column += yyleng
 	int yyerror(char *s);
 
 	extern std::ifstream inFile;
@@ -64,7 +67,7 @@ SCOMMENT \/\/.*\n
 	char* dummy;
 	long long num = strtoll(yytext, &dummy, 10);
 	if(num >= INT_MAX) {
-		return ERROR;
+		throw scannerError("Integer too large");
 	}
 	yylval.ival = num;
 	RETURN_TOKEN(INTEGER_CONSTANT);
@@ -155,7 +158,7 @@ SCOMMENT \/\/.*\n
 "#DUMP"		{ table.dumpSymbolTable(); } 
 "#PAR"		{ table.toggleDebug_parse_enabled(); } 
 "#TOK"		{ table.toggleDebug_token_enabled(); } 
-"#REDUCE" { table.toggleDebug_reduce_enabled(); RETURN_TOKEN(DEBUG_REDUCTIONS); }
+"#REDUCE" { table.toggleDebug_reduce_enabled(); COLUMN; }
 
 {ID}   {
 	std::cout << "ID: " << yytext << std::endl;
@@ -164,12 +167,12 @@ SCOMMENT \/\/.*\n
 	if (table.mode == Symbol::Mode::READ) {
 		idPtr = table.find(varName);
 		if (idPtr == nullptr) {
-			throw SPIC_UNDEFINED_REFERENCE;
+			throw scannerError("Undeclared Reference");
 		}
 	} else if (table.mode == Symbol::Mode::WRITE) {
 		idPtr = table.findInCurrentScope(varName);
 		if (idPtr != nullptr) {
-			throw SPIC_REDECLARATION;
+			throw scannerError("Variable redeclaration");
 		} else {
 			Symbol::SymbolType newSym(varName, lineno);
 			idPtr = table.insert(newSym);
