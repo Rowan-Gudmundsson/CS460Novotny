@@ -1,6 +1,6 @@
 int main() {
 	float x = 0;
-	int y = 12;
+	int y = 12;  
 	if (x == 12) {
 		int y = 13;
 		x < y;
