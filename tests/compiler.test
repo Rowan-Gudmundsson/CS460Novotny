@@ -1,6 +1,6 @@
 int main() {
-	float x = 0;
-	int y = 12;
+	float x = 0;#PAR #TOK
+	int y = 12; #PAR #TOK 
 	if (x == 12) {
 		int y = 13;
 		x = 3;asdasdasdasd

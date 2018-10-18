@@ -1,5 +1,5 @@
 #include "symbol.h"
-
+#include <stdio.h>
 
 unsigned int lexDLevel = 0;
 unsigned int symDLevel = 0;
@@ -60,9 +60,8 @@ Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	mode = Mode::READ;
 	debug_symbol_stream = std::ofstream("debug_symbol.txt", std::ofstream::out); 
 	debug_token_stream = std::ofstream("debug_tokens.txt", std::ofstream::out);
-	debug_parse_stream = std::ofstream("debug_parser.txt", std::ofstream::out);
 	
-
+	freopen ("debug_parser.txt","w",stderr);	
 	
 
 }
@@ -256,5 +255,9 @@ void Symbol::toggleDebug_parse_enabled()
 	{
 		yydebug = debug_parse_enabled ? 1 : 0;
 	}
+
+	std::cout << "XXX PARSER DEBUG CALLED " << yydebug << std::endl; 
+
 	#endif
+
 }

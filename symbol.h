@@ -65,11 +65,13 @@ class Symbol {
 		bool clear();
 		void dumpSymbolTable();
 
+
 		SymbolType* find(std::string name);
 		SymbolType* findInCurrentScope(std::string name);
 		unsigned popScope();
 
 		void debug_token(std::string tokenName, int tokenLine, unsigned tokenScope); 
+
 
 		void toggleDebug_token_enabled();
 		void toggleDebug_parse_enabled();
