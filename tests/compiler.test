@@ -3,6 +3,7 @@ int main() {
 	int y = 12;
 	if (x == 12) {
 		int y = 13;
+		x < y;
 		x = 3;asdasdasdasd
 		y = 12;
 	} else {

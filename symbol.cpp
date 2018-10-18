@@ -58,12 +58,12 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	pushScope();
 	mode = Mode::READ;
-	debug_symbol_stream = std::ofstream("debug_symbol.txt", std::ofstream::out); 
+	debug_symbol_stream = std::ofstream("debug_symbol.txt", std::ofstream::out);
 	debug_token_stream = std::ofstream("debug_tokens.txt", std::ofstream::out);
 	debug_parse_stream = std::ofstream("debug_parser.txt", std::ofstream::out);
-	
 
-	
+
+
 
 }
 
@@ -128,7 +128,7 @@ unsigned Symbol::pushScope() {
 	head = tmp;
 	_scopeLevel++;
 
-	
+
 	return _scopeLevel;
 }
 
@@ -236,7 +236,7 @@ void Symbol::debug_token(std::string tokenName, int tokenLine, unsigned tokenSco
 	if(lexDLevel > 0 || debug_token_enabled)
 	{
 		debug_token_stream << "Identifier found: " << tokenName
-		          << " on line: " << tokenLine 
+		          << " on line: " << tokenLine
 		          << " in scope level: " << tokenScope
 		          << " (current scope level: " << scopeLevel << ")" << std::endl;
 	}
@@ -245,16 +245,21 @@ void Symbol::debug_token(std::string tokenName, int tokenLine, unsigned tokenSco
 
 void Symbol::toggleDebug_token_enabled()
 {
-	debug_token_enabled = !debug_token_enabled; 
+	debug_token_enabled = !debug_token_enabled;
 }
 
 void Symbol::toggleDebug_parse_enabled()
 {
 	#ifdef YYDEBUG
-	debug_parse_enabled = !debug_parse_enabled; 
+	debug_parse_enabled = !debug_parse_enabled;
 	if(parseDLevel == 0)
 	{
 		yydebug = debug_parse_enabled ? 1 : 0;
 	}
 	#endif
+}
+
+void Symbol::toggleDebug_reduce_enabled()
+{
+	debug_reduce_enabled = !debug_reduce_enabled;
 }
