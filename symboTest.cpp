@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 	          << "  }    - Pop current scope\n"
 	          << "  >>   - Change from variable declarations to variable usage\n"
 	          << "  <<   - Change from variable usage to variable declarations (default mode)\n"
-	          << "  DUMP - Output current symbol table to screen\n"
+	          << "  DUMP - Output current symbol table to screen and symboTest.out\n"
 	          << "  [id] - Declare or reference variable (depending on curent mode)" << std::endl;
 
 	Symbol table;
@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
 	bool inputMode = true;
 	unsigned lineNumber = 1;
 	unsigned tabs = 0;
+	std::ofstream outFile("symboTest.out");
 
 	while(true) {
 		std::cout << lineNumber << " ";
@@ -41,6 +42,7 @@ int main(int argc, char** argv) {
 			inputMode = true;
 		} else if(input == "DUMP") {
 			std::cout << table << std::endl;
+			outFile << table << std::endl;
 		} else if(inputMode) {
 			symbolPtr = table.find(input);
 			if(symbolPtr != nullptr && symbolPtr->scopeLevel == table.scopeLevel) {
