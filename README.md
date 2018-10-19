@@ -1,6 +1,6 @@
 # CS460Novotny
 
-A C compiler project made for CS 460 at UNR in conjunction with [Rowan Gudmundsson](https://github.com/Rowan-Gudmundsson/) and Emily G
+A C compiler project made for CS 460 at UNR in conjunction with Alexander  Novotny, [Rowan Gudmundsson](https://github.com/Rowan-Gudmundsson/), and Emily Gentry
 
 ## Build instructions
 Navigate to the PA then execute:
