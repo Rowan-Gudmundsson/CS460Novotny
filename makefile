@@ -10,8 +10,8 @@ all: spi-c symboTest test
 
 # COMPILE PROGRAM
 
-spi-c: parser.o scanner.o main.o symbol.o 
-	$(CC) $(CFLAGS) $(OBS) -o spi-c 
+spi-c: parser.o scanner.o main.o symbol.o
+	$(CC) $(CFLAGS) $(OBS) -o spi-c
 
 scanner.o: lex.yy.c
 	$(CC) $(CFLAGS) -c lex.yy.c -o scanner.o
@@ -37,7 +37,7 @@ binary_tree.o: binary_tree.hpp
 scanner.o parser.o main.o : spi-c.tab.h
 
 symboTest: symboTest.o symbol.o
-	$(CC) $(CFLAGS) symboTest.o symbol.o -o symboTest 
+	$(CC) $(CFLAGS) symboTest.o symbol.o -o symboTest
 
 symboTest.o: symboTest.cpp symboTest.h
 	$(CC) $(CFLAGS) -c symboTest.cpp -o symboTest.o
@@ -45,14 +45,19 @@ symboTest.o: symboTest.cpp symboTest.h
 # CLEAN
 
 .PHONY:
-test: tests/compiler.test spi-c
+test: tests/compiler.test tests/redeclaration.test tests/shadowing.test tests/undefined_reference.test spi-c
 ifeq ($(OS),Windows_NT)
 	.\spi-c tests/compiler.test > tests/compiler.out
+	.\spi-c tests/redeclaration.test > tests/redeclaration.out
+	.\spi-c tests/shadowing.test > tests/shadowing.out
+	.\spi-c tests/undefined_reference.test > tests/undefined_reference.out
 	.\symboTest < "symbol table tests/test1" > "symbol table tests/test1.out"
 else
 	./spi-c tests/compiler.test > tests/compiler.out
+	./spi-c tests/redeclaration.test > tests/redeclaration.out
+	./spi-c tests/shadowing.test > tests/shadowing.out
+	./spi-c tests/undefined_reference.test > tests/undefined_reference.out
 endif
-#	diff tests/compiler.out tests/master.out
 
 .PHONY: clean
 clean:

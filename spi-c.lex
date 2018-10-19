@@ -155,9 +155,9 @@ SCOMMENT \/\/.*\n
 "continue"  { RETURN_TOKEN(CONTINUE); }
 "break"     { RETURN_TOKEN(BREAK); }
 "return"    { RETURN_TOKEN(RETURN); }
-"#DUMP"		{ table.dumpSymbolTable(); } 
-"#PAR"		{ table.toggleDebug_parse_enabled(); } 
-"#TOK"		{ table.toggleDebug_token_enabled(); } 
+"#DUMP"		{ table.dumpSymbolTable(); }
+"#PAR"		{ table.toggleDebug_parse_enabled(); }
+"#TOK"		{ table.toggleDebug_token_enabled(); }
 "#REDUCE" { table.toggleDebug_reduce_enabled(); COLUMN; }
 
 {ID}   {
@@ -169,11 +169,17 @@ SCOMMENT \/\/.*\n
 		if (idPtr == nullptr) {
 			throw scannerError("Undeclared Reference");
 		}
+
 	} else if (table.mode == Symbol::Mode::WRITE) {
 		idPtr = table.findInCurrentScope(varName);
+		Symbol::SymbolType* shadowIdPtr = table.find(varName);
 		if (idPtr != nullptr) {
 			throw scannerError("Variable redeclaration");
 		} else {
+			if (shadowIdPtr != nullptr) {
+				std::cout << "WARNING! Shadowing" << std::endl
+					<< "On line " << lineno << ", column " << column << std::endl;
+			}
 			Symbol::SymbolType newSym(varName, lineno);
 			idPtr = table.insert(newSym);
 		}
