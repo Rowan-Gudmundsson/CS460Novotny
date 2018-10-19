@@ -7,6 +7,7 @@ unsigned int parseDLevel = 0;
 
 #ifdef YYDEBUG
 extern int yydebug;
+extern int yyparse;
 #endif
 
 
@@ -60,12 +61,8 @@ Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	mode = Mode::READ;
 	debug_symbol_stream = std::ofstream("debug_symbol.txt", std::ofstream::out);
 	debug_token_stream = std::ofstream("debug_tokens.txt", std::ofstream::out);
-	
-	freopen ("debug_parser.txt","w",stderr);	
-	
 
-
-
+	freopen ("debug_parser.txt","w",stderr);
 }
 
 /**
@@ -258,13 +255,8 @@ void Symbol::toggleDebug_parse_enabled()
 		yydebug = debug_parse_enabled ? 1 : 0;
 	}
 
-	std::cout << "XXX PARSER DEBUG CALLED " << yydebug << std::endl; 
+	std::cout << "XXX PARSER DEBUG CALLED " << yydebug << std::endl;
 
 	#endif
 
-}
-
-void Symbol::toggleDebug_reduce_enabled()
-{
-	debug_reduce_enabled = !debug_reduce_enabled;
 }

@@ -71,7 +71,6 @@ class Symbol {
 
 		void toggleDebug_token_enabled();
 		void toggleDebug_parse_enabled();
-		void toggleDebug_reduce_enabled();
 
 		// Destructor
 		~Symbol();

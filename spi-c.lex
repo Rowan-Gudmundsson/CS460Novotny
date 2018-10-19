@@ -158,7 +158,6 @@ SCOMMENT \/\/.*\n
 "#DUMP"		{ table.dumpSymbolTable(); }
 "#PAR"		{ table.toggleDebug_parse_enabled(); }
 "#TOK"		{ table.toggleDebug_token_enabled(); }
-"#REDUCE" { table.toggleDebug_reduce_enabled(); COLUMN; }
 
 {ID}   {
 	std::cout << "ID: " << yytext << std::endl;
