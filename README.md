@@ -42,3 +42,6 @@ with the currently supported flags:
                      for symbol table, lexer, and parser
                      (examples: "-dl", "-dl1s4", "-dlps")
 ```
+
+## Extra Credit
+The binary tree used (found in [binary_tree.hpp](https://github.com/alexander-novo/CS460Novotny/blob/master/binary_tree.hpp)) is a red-black tree. This can be seen by using the `DUMP` command in `symboTest`.
