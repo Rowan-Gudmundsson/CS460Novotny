@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 	          << "  >>   - Change from variable declarations to variable usage\n"
 	          << "  <<   - Change from variable usage to variable declarations (default mode)\n"
 	          << "  DUMP - Output current symbol table to screen and symboTest.out\n"
-	          << "  [id] - Declare or reference variable (depending on curent mode)" << std::endl;
+	          << "  [id] - Declare or reference variable (depending on current mode)" << std::endl;
 
 	Symbol table;
 	Symbol::SymbolType newVar;
