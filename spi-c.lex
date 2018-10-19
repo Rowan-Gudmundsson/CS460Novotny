@@ -190,7 +190,7 @@ SCOMMENT \/\/.*\n
 	RETURN_TOKEN(IDENTIFIER);
 }
 
-.           { RETURN_TOKEN(ERROR); }
+.           { throw scannerError("Syntax error"); }
 %%
 
 int yywrap(void) {
