@@ -53,6 +53,9 @@ void doCmdArgs(int argc, char** argv) {
 		if(match[IN_FILE_GROUP].matched) {
 			inputFile = match[IN_FILE_GROUP].str();
 		}
+		if(match[HELP_GROUP].matched) {
+			helpMenu();
+		}
 		args = match.suffix().str();
 	}
 
@@ -96,4 +99,16 @@ void replaceInString(std::string& str, char init, char replace) {
 			str[i] = replace;
 		}
 	}
+}
+
+void helpMenu() {
+	std::cout << "USAGE\n"
+	          << "  ./spi-c [flags] <input file>\n\n"
+	          << "FLAGS\n";
+	std::cout << "  -h, --help       - Display help menu\n"
+              << "  -o <output file> - Output to the given file\n"
+              << "  -d[debug levels] - Enable debug flags for various different stages of the compiler.\n"
+              << "                     Allowable flags include: s#, l#, p#\n"
+              << "                     for symbol table, lexer, and parser\n"
+              << "                     (examples: \"-dl\", \"-dl1s4\", \"-dlps\")" << std::endl;
 }
