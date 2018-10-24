@@ -10,11 +10,6 @@
 #include "spi-c.tab.h"
 #include "errors.h"
 
-/*
-*	REGULAR EXPRESSIONS DO NOT WORK WHEN INPUTTING A DEBUG LEVEL AND A FILE NAME
-*/
-
-
 // https://regex101.com/r/SizYZH/6
 //                                  v group 1     v group 2     v group 3           v group 4                                     v group 5                                    v group 6
 const std::regex rArgs("(?:(?:-d(?:l([1-9]?))?(?:s([1-9]?))?(?:p([1-9]?))?) ?|(?:-o ([a-zA-Z\\.\\/_0-9][a-zA-Z\\.\\/\\-_0-9]*)) ?|([a-zA-Z\\.\\/_0-9][a-zA-Z\\.\\/\\-_0-9]*) ?|(-h|--help) ?)");
@@ -29,6 +24,10 @@ const std::regex rArgs("(?:(?:-d(?:l([1-9]?))?(?:s([1-9]?))?(?:p([1-9]?))?) ?|(?
 extern unsigned int lexDLevel;
 extern unsigned int symDLevel;
 extern unsigned int parseDLevel;
+
+std::ofstream debug_symbol_stream;
+std::ofstream debug_token_stream;
+std::ofstream debug_parse_stream;
 
 std::string outputFile = "out/a.out";
 std::string inputFile = "";

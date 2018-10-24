@@ -478,10 +478,7 @@ string
 	;
 
 identifier
-	: IDENTIFIER {
-
-		table.debug_token(yylval.sval->name, yylval.sval->lineNumber, yylval.sval->scopeLevel);
-	}
+	: IDENTIFIER
 	;
 
 %%

@@ -1,9 +1,8 @@
 int main() {
-	#PAR
+	#REDUCE
 	float x = 0;
 	int y = 12;
 	#DUMP
-	#TOK
 	if (x == 12) {
 		int y = 13;
 		x < y;

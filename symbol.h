@@ -6,10 +6,6 @@
 #include <fstream>
 #include <stdexcept>
 
-extern unsigned int lexDLevel;
-extern unsigned int symDLevel;
-extern unsigned int parseDLevel;
-
 class Symbol {
 	public:
 		// Var type
@@ -66,12 +62,6 @@ class Symbol {
 		SymbolType* findInCurrentScope(std::string name);
 		unsigned popScope();
 
-		void debug_token(std::string tokenName, int tokenLine, unsigned tokenScope);
-
-
-		void toggleDebug_token_enabled();
-		void toggleDebug_parse_enabled();
-
 		// Destructor
 		~Symbol();
 
@@ -87,16 +77,4 @@ class Symbol {
 
 		Scope* head;
 		unsigned _scopeLevel;
-
-
-		std::ofstream debug_symbol_stream;
-		std::ofstream debug_token_stream;
-		std::ofstream debug_parse_stream;
-
-
-		bool debug_token_enabled = false;
-		bool debug_parse_enabled = false;
-		bool debug_reduce_enabled = false;
-
-
 };

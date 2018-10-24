@@ -59,10 +59,6 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	pushScope();
 	mode = Mode::READ;
-	debug_symbol_stream = std::ofstream("debug_symbol.txt", std::ofstream::out);
-	debug_token_stream = std::ofstream("debug_tokens.txt", std::ofstream::out);
-
-	freopen ("debug_parser.txt","w",stderr);
 }
 
 /**
@@ -109,13 +105,6 @@ std::ostream& operator << (std::ostream& out, const Symbol& table) {
  * @return {unsigned} - New scope level
  */
 unsigned Symbol::pushScope() {
-
-	std::cout << "XXX CALLING PUSH SCOPE " << symDLevel <<std::endl;
-
-	if(symDLevel > 0)
-	{
-		dumpSymbolTable();
-	}
 	if (head == nullptr) {
 		head = new Scope(new BinaryTree<std::string, SymbolType>(), nullptr);
 		_scopeLevel = 0;
@@ -213,50 +202,37 @@ bool Symbol::clear() {
  */
 Symbol::~Symbol() {
 	clear();
-		debug_symbol_stream.close();
-		debug_token_stream.close();
-		debug_parse_stream.close();
-}
-/**
- *
- *
- */
-void Symbol::dumpSymbolTable()
-{
-		std::cout << "XXX DUMPING TABLE " << std::endl;
-		debug_symbol_stream << *this << std::endl;
 }
 
+// void Symbol::debug_token(std::string tokenName, int tokenLine, unsigned tokenScope)
+// {
+// 	std::cout << "XXX DEBUG TOKEN CALLED" << std::endl;
+// 	if(lexDLevel > 0 || debug_token_enabled)
+// 	{
+// 		debug_token_stream << "Identifier found: " << tokenName
+// 		          << " on line: " << tokenLine
+// 		          << " in scope level: " << tokenScope
+// 		          << " (current scope level: " << scopeLevel << ")" << std::endl;
+// 	}
+// }
 
-void Symbol::debug_token(std::string tokenName, int tokenLine, unsigned tokenScope)
-{
-	std::cout << "XXX DEBUG TOKEN CALLED" << std::endl;
-	if(lexDLevel > 0 || debug_token_enabled)
-	{
-		debug_token_stream << "Identifier found: " << tokenName
-		          << " on line: " << tokenLine
-		          << " in scope level: " << tokenScope
-		          << " (current scope level: " << scopeLevel << ")" << std::endl;
-	}
-}
 
+// void Symbol::toggleDebug_token_enabled()
+// {
+// 	debug_token_enabled = !debug_token_enabled;
+// }
 
-void Symbol::toggleDebug_token_enabled()
-{
-	debug_token_enabled = !debug_token_enabled;
-}
+// void Symbol::toggleDebug_parse_enabled()
+// {
+// 	#ifdef YYDEBUG
+// 	debug_parse_enabled = !debug_parse_enabled;
+// 	if(parseDLevel == 0)
+// 	{
+// 		yydebug = debug_parse_enabled ? 1 : 0;
+// 	}
 
-void Symbol::toggleDebug_parse_enabled()
-{
-	#ifdef YYDEBUG
-	debug_parse_enabled = !debug_parse_enabled;
-	if(parseDLevel == 0)
-	{
-		yydebug = debug_parse_enabled ? 1 : 0;
-	}
+// 	std::cout << "XXX PARSER DEBUG CALLED " << yydebug << std::endl;
 
-	std::cout << "XXX PARSER DEBUG CALLED " << yydebug << std::endl;
+// 	#endif
 
-	#endif
-
-}
+// }

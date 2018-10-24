@@ -8,12 +8,18 @@
 	#include <string>
 	#include <stdexcept>
 
+	using namespace std::string_literals;
+
 	#define RETURN_TOKEN(token) column += yyleng; return token;
 	#define COLUMN column += yyleng
 	int yyerror(char *s);
+	extern int yydebug;
 
+	extern unsigned int lexDLevel;
 	extern std::ifstream inFile;
 	extern std::string currentLine;
+	extern std::ofstream debug_symbol_stream;
+	extern std::ofstream debug_token_stream;
 
 	Symbol table;
 	unsigned lineno = 1;
@@ -59,15 +65,11 @@ SCOMMENT \/\/.*\n
 
 {FLOAT}      { RETURN_TOKEN(FLOATING_CONSTANT); }
 {INTEGER} {
-	/* printf("I saw an integer: ");
-	for(int i = 0; i < yyleng; i++)
-		printf("%c", *(yytext + i));
-	printf("\n"); */
-	std::cout << "Int: " << yytext << std::endl;
+	if(lexDLevel) std::cout << "Int: " << yytext << std::endl;
 	char* dummy;
 	long long num = strtoll(yytext, &dummy, 10);
 	if(num >= INT_MAX) {
-		throw scannerError("Integer too large");
+		throw ScannerError("Integer too large");
 	}
 	yylval.ival = num;
 	RETURN_TOKEN(INTEGER_CONSTANT);
@@ -155,25 +157,25 @@ SCOMMENT \/\/.*\n
 "continue"  { RETURN_TOKEN(CONTINUE); }
 "break"     { RETURN_TOKEN(BREAK); }
 "return"    { RETURN_TOKEN(RETURN); }
-"#DUMP"		{ table.dumpSymbolTable(); }
-"#PAR"		{ table.toggleDebug_parse_enabled(); }
-"#TOK"		{ table.toggleDebug_token_enabled(); }
+"#DUMP"		{ if(debug_symbol_stream.is_open()) debug_symbol_stream << table; }
+"#REDUCE"   { yydebug = 1; }
+"#NOREDUCE" { yydebug = 0; }
 
 {ID}   {
-	std::cout << "ID: " << yytext << std::endl;
+	if(lexDLevel) std::cout << "ID: " << yytext << std::endl;
 	std::string varName = yytext;
 	Symbol::SymbolType* idPtr;
 	if (table.mode == Symbol::Mode::READ) {
 		idPtr = table.find(varName);
 		if (idPtr == nullptr) {
-			throw scannerError("Undeclared Reference");
+			throw ScannerError("Undeclared Reference");
 		}
 
 	} else if (table.mode == Symbol::Mode::WRITE) {
 		idPtr = table.findInCurrentScope(varName);
 		Symbol::SymbolType* shadowIdPtr = table.find(varName);
 		if (idPtr != nullptr) {
-			throw scannerError("Variable redeclaration");
+			throw ScannerError("Variable redeclaration");
 		} else {
 			if (shadowIdPtr != nullptr) {
 				std::cout << "WARNING! Shadowing" << std::endl
@@ -189,7 +191,7 @@ SCOMMENT \/\/.*\n
 	RETURN_TOKEN(IDENTIFIER);
 }
 
-.           { throw scannerError("Syntax error"); }
+.           { throw ScannerError("Unexpected Token: "s + yytext); }
 %%
 
 int yywrap(void) {

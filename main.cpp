@@ -1,7 +1,7 @@
 #include "main.h"
 
 int yyerror(char* s) {
-	column -= yyleng - 1;
+	column -= yyleng;
 	std::cout << "Error: " << s << " on line " << lineno << ", column " << column << std::endl;
 	doArrowErrThing();
 	return 1;
@@ -10,11 +10,17 @@ int yyerror(char* s) {
 int main(int argc, char** argv) {
 	system(""); // DON'T REMOVE THIS - SUPER IMPORTANT FOR CONSOLE COLORS ON WINDOWS POWERSHELL
 	doCmdArgs(argc, argv);
+
+	// Potentially add command line arguments for these later
+	debug_symbol_stream.open("debug_symbol.txt", std::ofstream::out);
+	debug_token_stream.open("debug_tokens.txt", std::ofstream::out);
+	freopen ("debug_parser.txt","w",stderr);
+
 	if(inFile.is_open()) {
 		yyin = fopen(inputFile.c_str(), "r");
 		try {
 			yyparse();
-		} catch (scannerError error) {
+		} catch (ScannerError error) {
 			std::cout << "ERROR! " << error.what() << std::endl;
 			std::cout << "On line " << lineno << ", column " << column << std::endl;
 			doArrowErrThing();
@@ -59,17 +65,8 @@ void doCmdArgs(int argc, char** argv) {
 		args = match.suffix().str();
 	}
 
-	// TAKE THIS OUT WHEN THE REGEX IS WORKING
-	//lexDLevel = 1;
-	//parseDLevel = 1; 
-	//symDLevel = 1; 
-	yydebug = parseDLevel != 0 ? 1 : 0;
-
 	if(lexDLevel > 0 || symDLevel > 0 || parseDLevel > 0) {
-	
 		std::cout << "Debug mode: lexer (" << lexDLevel << "), symbol table (" << symDLevel << "), parser (" << parseDLevel << ")" << std::endl;
-
-
 	}
 
 	inFile.open(inputFile);
