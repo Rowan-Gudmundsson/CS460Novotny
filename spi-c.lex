@@ -21,6 +21,8 @@
 	extern std::ofstream debug_symbol_stream;
 	extern std::ofstream debug_token_stream;
 
+	void throwWarning(const std::string& warning);
+
 	Symbol table;
 	unsigned lineno = 1;
 	unsigned column = 1;
@@ -178,8 +180,7 @@ SCOMMENT \/\/.*\n
 			throw ScannerError("Variable redeclaration");
 		} else {
 			if (shadowIdPtr != nullptr) {
-				std::cout << "WARNING! Shadowing" << std::endl
-					<< "On line " << lineno << ", column " << column << std::endl;
+				throwWarning("Variable \""s + varName + "\" shadows variable declared on line "s + std::to_string(shadowIdPtr->lineNumber));
 			}
 			Symbol::SymbolType newSym(varName, lineno);
 			idPtr = table.insert(newSym);

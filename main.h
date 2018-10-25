@@ -35,6 +35,7 @@ std::ifstream inFile;
 std::string currentLine;
 
 void doCmdArgs(int argc, char** argv);
+void throwWarning(const std::string& warning);
 void doArrowErrThing();
 void replaceInString(std::string& str, char init, char replace);
 void helpMenu();

@@ -76,6 +76,12 @@ void doCmdArgs(int argc, char** argv) {
 	          << "Output file: \"" << outputFile << "\"" << std::endl;
 }
 
+void throwWarning(const std::string& warning) {
+	std::cout << "WARNING! " << warning << '\n'
+	          << "On line " << lineno << ", column " << column << std::endl;
+	doArrowErrThing();
+}
+
 void doArrowErrThing() {
 	unsigned i;
 	replaceInString(currentLine, '\t', ' ');
