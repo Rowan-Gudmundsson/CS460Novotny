@@ -18,7 +18,6 @@ int main(int argc, char** argv) {
 	          << "  [id] - Declare or reference variable (depending on current mode)" << std::endl;
 
 	Symbol table;
-	Symbol::SymbolType newVar;
 	Symbol::SymbolType* symbolPtr;
 	std::string input;
 	bool inputMode = true;
@@ -53,9 +52,7 @@ int main(int argc, char** argv) {
 				if(symbolPtr != nullptr && symbolPtr->scopeLevel < table.scopeLevel) {
 					std::cout << "WARNING: Variable " << input << " shadowing variable declared on line " << symbolPtr->lineNumber << std::endl;
 				}
-				newVar.name = input;
-				newVar.lineNumber = lineNumber;
-				table.insert(newVar);
+				table.insert(input, lineNumber);
 			}
 		} else if((symbolPtr = table.find(input)) != nullptr) {
 			std::cout << symbolPtr->name << " declared on " << symbolPtr->lineNumber << std::endl;

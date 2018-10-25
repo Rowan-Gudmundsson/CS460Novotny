@@ -182,8 +182,7 @@ SCOMMENT \/\/.*\n
 			if (shadowIdPtr != nullptr) {
 				throwWarning("Variable \""s + varName + "\" shadows variable declared on line "s + std::to_string(shadowIdPtr->lineNumber));
 			}
-			Symbol::SymbolType newSym(varName, lineno);
-			idPtr = table.insert(newSym);
+			idPtr = table.insert(varName, lineno);
 		}
 	}
 

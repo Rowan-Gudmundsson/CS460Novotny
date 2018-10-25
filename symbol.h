@@ -11,19 +11,16 @@ class Symbol {
 		// Var type
 		class SymbolType {
 			public:
-				SymbolType() : scopeLevel(_scopeLevel) {}
-				SymbolType(std::string key, unsigned line): name(key), lineNumber(line), scopeLevel(_scopeLevel) {}
-				SymbolType(const SymbolType& other) : scopeLevel(_scopeLevel) {*(this) = other;}
+				SymbolType(const SymbolType& other) : name(other.name), lineNumber(other.lineNumber), scopeLevel(other.scopeLevel) {}
 				bool operator < (const SymbolType& rhs) const;
 				bool operator > (const SymbolType& rhs) const;
 				bool operator == (const SymbolType& rhs) const;
-				SymbolType& operator = (const SymbolType& rhs);
 
 				friend std::ostream& operator << (std::ostream& out, const SymbolType& sym);
 
-				std::string name;
-				unsigned lineNumber;
-				const unsigned& scopeLevel;
+				const std::string name;
+				const unsigned lineNumber;
+				const unsigned scopeLevel;
 				enum Type {
 					INT,
 					FLOAT,
@@ -32,13 +29,13 @@ class Symbol {
 
 				friend class Symbol;
 			private:
-				unsigned _scopeLevel = 0;
+				SymbolType(std::string key, unsigned line, unsigned scope): name(key), lineNumber(line), scopeLevel(scope) {}
 		};
 
 		enum Mode {
 			READ,
 			WRITE
-		} mode;
+		} mode = WRITE;
 
 		const unsigned& scopeLevel;
 
@@ -53,7 +50,7 @@ class Symbol {
 
 		// Member functions
 		unsigned pushScope();
-		SymbolType* insert(const SymbolType& val);
+		SymbolType* insert(const std::string& name, unsigned line);
 		bool clear();
 		void dumpSymbolTable();
 

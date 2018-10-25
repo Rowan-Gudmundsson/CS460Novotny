@@ -1,5 +1,8 @@
+#REDUCE
+
+int main();
+
 int main() {
-	#REDUCE
 	float x = 0;
 	int y = 12;
 	#DUMP

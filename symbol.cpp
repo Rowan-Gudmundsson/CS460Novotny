@@ -38,14 +38,6 @@ bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
 	return name > rhs.name;
 }
 
-Symbol::SymbolType& Symbol::SymbolType::operator = (const SymbolType& rhs) {
-	name = rhs.name;
-	lineNumber = rhs.lineNumber;
-	_scopeLevel = rhs._scopeLevel;
-	type = rhs.type;
-	return *this;
-}
-
 std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 	out << "<" << sym.name << ", line " << sym.lineNumber << ", scope " << sym.scopeLevel << ">";
 	return out;
@@ -124,9 +116,8 @@ unsigned Symbol::pushScope() {
  * @param {const BinaryTree<SymbolType>&} val - The tree to insert.
  * @return {bool} - Whether or not the tree was successfully inserted.
  */
-Symbol::SymbolType* Symbol::insert(const SymbolType& val) {
-	SymbolType* re = head->tree->insert(val.name, val);
-	re->_scopeLevel = _scopeLevel;
+Symbol::SymbolType* Symbol::insert(const std::string& name, unsigned line) {
+	SymbolType* re = head->tree->insert(name, SymbolType(name, line, _scopeLevel));
 	return re;
 }
 
