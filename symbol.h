@@ -6,6 +6,21 @@
 #include <fstream>
 #include <stdexcept>
 
+enum EvalType {
+	ESIGNED =   1 << 0,
+	EUNSIGNED = 1 << 1,
+	EVOID =     1 << 2,
+	ECHAR =     1 << 3,
+	ESHORT =    1 << 4,
+	EINT =      1 << 5,
+	ELONG =     1 << 6,
+	EFLOAT =    1 << 7,
+	EDOUBLE =   1 << 8
+};
+
+inline EvalType operator|(EvalType a, EvalType b)
+{return static_cast<EvalType>(static_cast<unsigned>(a) | static_cast<unsigned>(b));}
+
 class Symbol {
 	public:
 		// Var type

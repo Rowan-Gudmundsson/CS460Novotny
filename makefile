@@ -1,4 +1,4 @@
-OBS = parser.o scanner.o main.o symbol.o
+OBS = parser.o scanner.o main.o symbol.o node.o
 
 CC = g++
 CFLAGS = -g -Wall -std=c++14 -DYYDEBUG=1
@@ -10,7 +10,7 @@ all: spi-c symboTest test
 
 # COMPILE PROGRAM
 
-spi-c: parser.o scanner.o main.o symbol.o
+spi-c: $(OBS)
 	$(CC) $(CFLAGS) $(OBS) -o spi-c
 
 scanner.o: lex.yy.c
@@ -33,6 +33,9 @@ symbol.o: symbol.cpp symbol.h binary_tree.o
 
 binary_tree.o: binary_tree.hpp
 	$(CC) $(CFLAGS) -c binary_tree.hpp -o binary_tree.o
+
+node.o: node.h node.cpp
+	$(CC) $(CFLAGS) -c node.cpp -o node.o
 
 scanner.o parser.o main.o : spi-c.tab.h
 

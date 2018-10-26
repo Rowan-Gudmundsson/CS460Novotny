@@ -2,7 +2,7 @@
 	#include <cstdio>
 	#include <iostream>
 	#include <string>
-	#include "errors.h"
+	#include "errors.h"	
 
 	#define YYDEBUG 1
 
@@ -22,6 +22,7 @@
 	float fval;
 	char cval;
 	std::string* strval;
+	EvalType eval;
 }
 
 %token DEBUG_SYMBOL_TABLE
@@ -58,6 +59,8 @@
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
+%type <eval> type_specifier declaration_specifiers
+
 %start translation_unit
 %%
 
@@ -91,8 +94,8 @@ declaration_list
 declaration_specifiers
 	: storage_class_specifier
 	| storage_class_specifier declaration_specifiers
-	| type_specifier
-	| type_specifier declaration_specifiers
+	| type_specifier { $$ = $1 }
+	| type_specifier declaration_specifiers { $$ = $1 | $2 }
 	| type_qualifier
 	| type_qualifier declaration_specifiers
 	;
@@ -106,18 +109,18 @@ storage_class_specifier
 	;
 
 type_specifier
-	: VOID { table.mode = Symbol::Mode::WRITE; }
-	| CHAR { table.mode = Symbol::Mode::WRITE; }
-	| SHORT { table.mode = Symbol::Mode::WRITE; }
-	| INT { table.mode = Symbol::Mode::WRITE; }
-	| LONG { table.mode = Symbol::Mode::WRITE; }
-	| FLOAT { table.mode = Symbol::Mode::WRITE; }
-	| DOUBLE { table.mode = Symbol::Mode::WRITE; }
-	| SIGNED { table.mode = Symbol::Mode::WRITE; }
-	| UNSIGNED { table.mode = Symbol::Mode::WRITE; }
-	| struct_or_union_specifier
-	| enum_specifier
-	| TYPEDEF_NAME { table.mode = Symbol::Mode::WRITE; }
+	: VOID { table.mode = Symbol::Mode::WRITE; $$ = EVOID; }
+	| CHAR { table.mode = Symbol::Mode::WRITE; $$ = ECHAR; }
+	| SHORT { table.mode = Symbol::Mode::WRITE; $$ = ESHORT; }
+	| INT { table.mode = Symbol::Mode::WRITE; $$ = EINT; }
+	| LONG { table.mode = Symbol::Mode::WRITE; $$ = ELONG; }
+	| FLOAT { table.mode = Symbol::Mode::WRITE; $$ = EFLOAT; }
+	| DOUBLE { table.mode = Symbol::Mode::WRITE; $$ = EDOUBLE; }
+	| SIGNED { table.mode = Symbol::Mode::WRITE; $$ = ESIGNED; }
+	| UNSIGNED { table.mode = Symbol::Mode::WRITE; $$ = EUNSIGNED; }
+	| struct_or_union_specifier { /* TODO Acutally do this */ $$ = EVOID; }
+	| enum_specifier { /* TODO Acutally do this */ $$ = EVOID; }
+	| TYPEDEF_NAME { table.mode = Symbol::Mode::WRITE; /* TODO Acutally do this */ $$ = EVOID; }
 	;
 
 type_qualifier
