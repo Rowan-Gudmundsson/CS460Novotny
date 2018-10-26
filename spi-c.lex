@@ -103,7 +103,7 @@ SCOMMENT \/\/.*\n
 "&="        { RETURN_TOKEN(AND_ASSIGN); }
 "^="        { RETURN_TOKEN(XOR_ASSIGN); }
 "|="        { RETURN_TOKEN(OR_ASSIGN); }
-"{"         { table.mode = Symbol::Mode::READ; table.pushScope(); RETURN_TOKEN(LBRACE); }
+"{"         { table.pushScope(); RETURN_TOKEN(LBRACE); }
 "}"         { table.popScope(); RETURN_TOKEN(RBRACE); }
 "("         { RETURN_TOKEN(LPAREN); }
 ")"         { RETURN_TOKEN(RPAREN); }
@@ -113,7 +113,7 @@ SCOMMENT \/\/.*\n
 "-"         { RETURN_TOKEN(SUB); }
 "*"         { RETURN_TOKEN(MULT); }
 "/"         { RETURN_TOKEN(DIV); }
-";"         { table.mode = Symbol::Mode::READ; RETURN_TOKEN(SEMI); }
+";"         { RETURN_TOKEN(SEMI); }
 ","         { RETURN_TOKEN(COMMA); }
 "="         { RETURN_TOKEN(ASSIGN); }
 ":"         { RETURN_TOKEN(COLON); }
@@ -131,17 +131,17 @@ SCOMMENT \/\/.*\n
 "static"    { RETURN_TOKEN(STATIC); }
 "auto"      { RETURN_TOKEN(AUTO); }
 "register"  { RETURN_TOKEN(REGISTER); }
-"char"      { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(CHAR); }
-"short"     { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(SHORT); }
-"int"       { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(INT); }
-"long"      { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(LONG); }
-"signed"    { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(SIGNED); }
-"unsigned"  { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(UNSIGNED); }
-"float"     { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(FLOAT); }
-"double"    { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(DOUBLE); }
-"const"     { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(CONST); }
-"volatile"  { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(VOLATILE); }
-"void"      { table.mode = Symbol::Mode::WRITE; RETURN_TOKEN(VOID); }
+"char"      { RETURN_TOKEN(CHAR); }
+"short"     { RETURN_TOKEN(SHORT); }
+"int"       { RETURN_TOKEN(INT); }
+"long"      { RETURN_TOKEN(LONG); }
+"signed"    { RETURN_TOKEN(SIGNED); }
+"unsigned"  { RETURN_TOKEN(UNSIGNED); }
+"float"     { RETURN_TOKEN(FLOAT); }
+"double"    { RETURN_TOKEN(DOUBLE); }
+"const"     { RETURN_TOKEN(CONST); }
+"volatile"  { RETURN_TOKEN(VOLATILE); }
+"void"      { RETURN_TOKEN(VOID); }
 "struct"    { RETURN_TOKEN(STRUCT); }
 "union"     { RETURN_TOKEN(UNION); }
 "enum"      { RETURN_TOKEN(ENUM); }

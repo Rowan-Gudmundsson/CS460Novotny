@@ -1,3 +1,5 @@
+#REDUCE
+
 void main(void) {
 	x = 2;
 }

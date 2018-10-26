@@ -1,15 +1,13 @@
 #REDUCE
+int main(int);
 
-int main();
-
-int main() {
+int main(int x) {
 	float x = 0;
 	int y = 12;
-	#DUMP
 	if (x == 12) {
 		int y = 13;
 		x < y;
-		x = 3;asdasdasdasd
+		x = 3;
 		y = 12;
 	} else {
 		x = 2;

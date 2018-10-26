@@ -5,7 +5,7 @@
 	#include "errors.h"
 
 	#define YYDEBUG 1
-	
+
 	int yyerror(char *s);
 	int yylex(void);
 
@@ -23,6 +23,7 @@
 	char cval;
 	std::string* strval;
 }
+
 %token DEBUG_SYMBOL_TABLE
 %token DEBUG_PARSER
 %token DEBUG_TOKENS
@@ -66,7 +67,7 @@ translation_unit
 	;
 
 external_declaration
-	: function_definition
+	: function_definition { table.mode = Symbol::Mode::READ; }
 	| declaration
 	;
 
@@ -78,12 +79,12 @@ function_definition
 	;
 
 declaration
-	: declaration_specifiers SEMI 
-	| declaration_specifiers init_declarator_list SEMI  
+	: declaration_specifiers SEMI
+	| declaration_specifiers init_declarator_list SEMI
 	;
 
 declaration_list
-	: declaration
+	: declaration { table.mode = Symbol::Mode::READ; }
 	| declaration_list declaration
 	;
 
@@ -105,18 +106,18 @@ storage_class_specifier
 	;
 
 type_specifier
-	: VOID
-	| CHAR
-	| SHORT
-	| INT
-	| LONG
-	| FLOAT
-	| DOUBLE
-	| SIGNED
-	| UNSIGNED
+	: VOID { table.mode = Symbol::Mode::WRITE; }
+	| CHAR { table.mode = Symbol::Mode::WRITE; }
+	| SHORT { table.mode = Symbol::Mode::WRITE; }
+	| INT { table.mode = Symbol::Mode::WRITE; }
+	| LONG { table.mode = Symbol::Mode::WRITE; }
+	| FLOAT { table.mode = Symbol::Mode::WRITE; }
+	| DOUBLE { table.mode = Symbol::Mode::WRITE; }
+	| SIGNED { table.mode = Symbol::Mode::WRITE; }
+	| UNSIGNED { table.mode = Symbol::Mode::WRITE; }
 	| struct_or_union_specifier
 	| enum_specifier
-	| TYPEDEF_NAME
+	| TYPEDEF_NAME { table.mode = Symbol::Mode::WRITE; }
 	;
 
 type_qualifier
@@ -151,7 +152,7 @@ init_declarator
 	;
 
 struct_declaration
-	: specifier_qualifier_list struct_declarator_list SEMI 
+	: specifier_qualifier_list struct_declarator_list SEMI
 	;
 
 specifier_qualifier_list
@@ -216,8 +217,8 @@ type_qualifier_list
 	;
 
 parameter_type_list
-	: parameter_list
-	| parameter_list COMMA ELIPSIS
+	: parameter_list { table.mode = Symbol::Mode::READ; }
+	| parameter_list COMMA ELIPSIS { table.mode = Symbol::Mode::READ; }
 	;
 
 parameter_list
@@ -286,15 +287,15 @@ labeled_statement
 	;
 
 expression_statement
-	: SEMI 
-	| expression SEMI 
+	: SEMI
+	| expression SEMI
 	;
 
 compound_statement
-	: LBRACE RBRACE 
-	| LBRACE statement_list RBRACE 
-	| LBRACE declaration_list RBRACE 
-	| LBRACE declaration_list statement_list RBRACE 
+	: LBRACE RBRACE
+	| LBRACE statement_list RBRACE
+	| LBRACE declaration_list RBRACE
+	| LBRACE declaration_list statement_list RBRACE
 	;
 
 statement_list
