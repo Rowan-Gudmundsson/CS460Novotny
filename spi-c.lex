@@ -1,5 +1,6 @@
 %{
 	#include "symbol.h"
+	#include "node.h"
 	#include "spi-c.tab.h"
 	#include "errors.h"
 	#include <cstdlib>

@@ -14,6 +14,7 @@
 
 %code top {
 	#include "symbol.h"
+	#include "node.h"
 }
 
 %union {
@@ -60,7 +61,9 @@
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
-%type <eval> type_specifier declaration_specifiers
+%type <eval> type_specifier declaration_specifiers storage_class_specifier type_qualifier
+%type <sval> identifier
+%type <nval> direct_declarator
 %type <nval> constant
 %start translation_unit
 %%
@@ -93,12 +96,12 @@ declaration_list
 	;
 
 declaration_specifiers
-	: storage_class_specifier
-	| storage_class_specifier declaration_specifiers
+	: storage_class_specifier { $$ = $1 }
+	| storage_class_specifier declaration_specifiers { $$ = $1 | $2 }
 	| type_specifier { $$ = $1 }
 	| type_specifier declaration_specifiers { $$ = $1 | $2 }
-	| type_qualifier
-	| type_qualifier declaration_specifiers
+	| type_qualifier { $$ = $1 }
+	| type_qualifier declaration_specifiers { $$ = $1 | $2 }
 	;
 
 storage_class_specifier
@@ -199,13 +202,13 @@ declarator
 	;
 
 direct_declarator
-	: identifier
-	| LPAREN declarator RPAREN
+	: identifier { $$ = new IdentifierNode($1); }
+	| LPAREN declarator RPAREN { /* TODO LATER*/ $$ = nullptr; }
 	| direct_declarator LBRACKET RBRACKET
 	| direct_declarator LBRACKET constant_expression RBRACKET
 	| direct_declarator LPAREN RPAREN
-	| direct_declarator LPAREN parameter_type_list RPAREN
-	| direct_declarator LPAREN identifier_list RPAREN
+	| direct_declarator LPAREN parameter_type_list RPAR*EN
+	| direct_declarator LPAREN identifier_list RPAREN { /* TODO: WHAT IS THIS? */ $$ = nullptr; }
 	;
 
 pointer
@@ -483,7 +486,7 @@ string
 	;
 
 identifier
-	: IDENTIFIER
+	: IDENTIFIER { $$ = yylval.sval }
 	;
 
 %%
