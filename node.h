@@ -4,7 +4,7 @@
 class SyntaxNode {
 	public:
 		const enum Type {
-			TYPE
+			CONSTANT
 		} type;
 
 		EvalType etype;
@@ -19,8 +19,12 @@ class SyntaxNode {
 		unsigned _numChildren;
 };
 
-// class TypeNode : public SyntaxNode {
-// 	public:
-// 		TypeNode(EvalType eType) : SyntaxNode(TYPE, eType, 0) {}
-
-// };
+class ConstantNode : public SyntaxNode {
+	public:
+		ConstantNode(EvalType type, double _f) : SyntaxNode(CONSTANT, type, 0), f(_f) {}
+		ConstantNode(EvalType type, long int _i) : SyntaxNode(CONSTANT, type, 0), i(_i) {}
+		union {
+			double f;
+			long int i;
+		};
+};

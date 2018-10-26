@@ -65,7 +65,16 @@ SCOMMENT \/\/.*\n
 
 {DELIM}+     { column += yyleng; }
 
-{FLOAT}      { RETURN_TOKEN(FLOATING_CONSTANT); }
+{FLOAT}      {
+	if (lexDLevel) std::cout << "Float: " << yytext << std::endl;
+	char* dummy;
+	double num = strtod(yytext, &dummy);
+	if(num != float(num)) {
+		throw ScannerError("Floating point constant too large");
+	}
+	yylval.fval = num;
+	RETURN_TOKEN(FLOATING_CONSTANT);
+}
 {INTEGER} {
 	if(lexDLevel) std::cout << "Int: " << yytext << std::endl;
 	char* dummy;
@@ -78,7 +87,10 @@ SCOMMENT \/\/.*\n
 }
 
 {STRING}    { RETURN_TOKEN(STRING_LITERAL); }
-{CHAR}      { RETURN_TOKEN(CHARACTER_CONSTANT); }
+{CHAR}      {
+	yylval.cval = yytext[1];
+	RETURN_TOKEN(CHARACTER_CONSTANT);
+}
 
 "sizeof"    { RETURN_TOKEN(SIZEOF); }
 "->"        { RETURN_TOKEN(PTR_OP); }

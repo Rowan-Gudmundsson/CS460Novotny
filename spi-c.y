@@ -2,7 +2,7 @@
 	#include <cstdio>
 	#include <iostream>
 	#include <string>
-	#include "errors.h"	
+	#include "errors.h"
 
 	#define YYDEBUG 1
 
@@ -18,11 +18,12 @@
 
 %union {
 	Symbol::SymbolType* sval;
-	int ival;
-	float fval;
+	long int ival;
+	double fval;
 	char cval;
 	std::string* strval;
 	EvalType eval;
+	SyntaxNode* nval;
 }
 
 %token DEBUG_SYMBOL_TABLE
@@ -60,7 +61,7 @@
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
 %type <eval> type_specifier declaration_specifiers
-
+%type <nval> constant
 %start translation_unit
 %%
 
@@ -471,10 +472,10 @@ argument_expression_list
 	;
 
 constant
-	: INTEGER_CONSTANT
-	| CHARACTER_CONSTANT
-	| FLOATING_CONSTANT
-	| ENUMERATION_CONSTANT
+	: INTEGER_CONSTANT { $$ = new ConstantNode(EINT, yylval.ival); }
+	| CHARACTER_CONSTANT { $$ = new ConstantNode(ECHAR, yylval.cval); }
+	| FLOATING_CONSTANT { $$ = new ConstantNode(EFLOAT, yylval.fval); }
+	| ENUMERATION_CONSTANT { /* TODO(Rowan) -- Fix later. */ $$ = nullptr; }
 	;
 
 string
