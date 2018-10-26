@@ -15,12 +15,16 @@ enum EvalType {
 	EINT =      1 << 5,
 	ELONG =     1 << 6,
 	EFLOAT =    1 << 7,
-	EDOUBLE =   1 << 8
+	EDOUBLE =   1 << 8,
+	EPOINTER =  1 << 9
 };
 
 inline EvalType operator|(EvalType a, EvalType b)
 {return static_cast<EvalType>(static_cast<unsigned>(a) | static_cast<unsigned>(b));}
-
+inline EvalType operator&(EvalType a, EvalType b)
+{return static_cast<EvalType>(static_cast<unsigned>(a) & static_cast<unsigned>(b));}
+inline EvalType operator~(EvalType a)
+{return static_cast<EvalType>(~static_cast<unsigned>(a));}
 class Symbol {
 	public:
 		// Var type
