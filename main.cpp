@@ -1,6 +1,6 @@
 #include "main.h"
 
-int yyerror(char* s) {
+int yyerror(SyntaxNode*& root, char* s) {
 	column -= yyleng;
 	std::cout << "Error: " << s << " on line " << lineno << ", column " << column << std::endl;
 	doArrowErrThing();
@@ -8,6 +8,7 @@ int yyerror(char* s) {
 }
 
 int main(int argc, char** argv) {
+	SyntaxNode* root = nullptr;
 	system(""); // DON'T REMOVE THIS - SUPER IMPORTANT FOR CONSOLE COLORS ON WINDOWS POWERSHELL
 	doCmdArgs(argc, argv);
 
@@ -19,7 +20,7 @@ int main(int argc, char** argv) {
 	if(inFile.is_open()) {
 		yyin = fopen(inputFile.c_str(), "r");
 		try {
-			yyparse();
+			yyparse(root);
 		} catch (ScannerError error) {
 			std::cout << "ERROR! " << error.what() << std::endl;
 			std::cout << "On line " << lineno << ", column " << column << std::endl;
@@ -29,6 +30,11 @@ int main(int argc, char** argv) {
 		std::cerr << "Input file not found!" << std::endl;
 		return 1;
 	}
+
+	std::ofstream treeFile("tree.tex");
+	treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}\n\t\\Tree "
+	         << root
+	         << "\n\\end{tikzpicture}\n\\end{document}";
 	return 0;
 }
 

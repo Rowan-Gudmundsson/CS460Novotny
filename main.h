@@ -41,7 +41,7 @@ void doArrowErrThing();
 void replaceInString(std::string& str, char init, char replace);
 void helpMenu();
 
-extern int yyparse();
+extern int yyparse(SyntaxNode*& root);
 extern unsigned lineno;
 extern unsigned column;
 extern unsigned yyleng;

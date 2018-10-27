@@ -6,7 +6,7 @@
 
 	#define YYDEBUG 1
 
-	int yyerror(char *s);
+	int yyerror(SyntaxNode*& root, char *s);
 	int yylex(void);
 
 	extern Symbol table;
@@ -66,41 +66,57 @@
 %type <eval> type_specifier declaration_specifiers storage_class_specifier type_qualifier specifier_qualifier_list type_name
 %type <oval> unary_operator
 %type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression
-%type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression initializer
-%type <nval> direct_declarator constant primary_expression string expression identifier
-%type <nval> postfix_expression unary_expression cast_expression pointer
+%type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression
+%type <nval> direct_declarator constant primary_expression string expression identifier declaration declaration_list
+%type <nval> postfix_expression unary_expression cast_expression pointer initializer init_declarator init_declarator_list
+%type <nval> compound_statement function_definition external_declaration translation_unit constant_expression
+
+%parse-param {SyntaxNode*& root}
 
 %start translation_unit
 %%
 
-translation_unit
-	: external_declaration
-	| translation_unit external_declaration
+translation_unit // Node*
+	: external_declaration { $$ = root = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
+	| translation_unit external_declaration { $$ = root = $1; $$->pushChild($2); }
 	;
 
-external_declaration
-	: function_definition { table.mode = Symbol::Mode::READ; }
-	| declaration
+external_declaration // Node*
+	: function_definition { table.mode = Symbol::Mode::READ;  $$ = $1; }
+	| declaration { $$ = $1; }
 	;
 
-function_definition
+function_definition // Node*
 	: declarator compound_statement
 	| declarator declaration_list compound_statement
-	| declaration_specifiers declarator compound_statement
+	| declaration_specifiers declarator compound_statement {
+		/*
+		  TODO: Apply declaration specifiers
+		  Should be easy, just need to traverse tree and find identifier
+		  Also need to find the eval type of the function
+		*/
+		$$ = new SyntaxNode(SyntaxNode::Type::FUNCTION, EUNKNOWN, 2, $2, $3);
+	}
 	| declaration_specifiers declarator declaration_list compound_statement
 	;
 
-declaration
+declaration // Node*
 	: declaration_specifiers SEMI
-	| declaration_specifiers init_declarator_list SEMI
+	| declaration_specifiers init_declarator_list SEMI {
+		/*
+		  TODO: Apply declaration specifiers
+		  This should be fairly easy, we just need to traverse the tree until we find identifiers
+		*/
+		$$ = $2;
+	}
 	;
 
-declaration_list
-	: declaration { table.mode = Symbol::Mode::READ; }
+declaration_list // Node*
+	: declaration { table.mode = Symbol::Mode::READ; $$ = $1; }
 	| declaration_list declaration
 	;
 
-declaration_specifiers
+declaration_specifiers // EvalType
 	: storage_class_specifier { $$ = $1; }
 	| storage_class_specifier declaration_specifiers { $$ = $1 | $2; }
 	| type_specifier { $$ = $1; }
@@ -109,7 +125,7 @@ declaration_specifiers
 	| type_qualifier declaration_specifiers { $$ = $1 | $2; }
 	;
 
-storage_class_specifier
+storage_class_specifier // EvalType
 	: AUTO
 	| REGISTER
 	| STATIC
@@ -117,7 +133,7 @@ storage_class_specifier
 	| TYPEDEF
 	;
 
-type_specifier
+type_specifier // EvalType
 	: VOID { table.mode = Symbol::Mode::WRITE; $$ = EVOID; }
 	| CHAR { table.mode = Symbol::Mode::WRITE; $$ = ECHAR; }
 	| SHORT { table.mode = Symbol::Mode::WRITE; $$ = ESHORT; }
@@ -132,7 +148,7 @@ type_specifier
 	| TYPEDEF_NAME { table.mode = Symbol::Mode::WRITE; /* TODO Acutally do this */ $$ = EVOID; }
 	;
 
-type_qualifier
+type_qualifier // EvalType
 	: CONST
 	| VOLATILE
 	;
@@ -153,14 +169,14 @@ struct_declaration_list
 	| struct_declaration_list struct_declaration
 	;
 
-init_declarator_list
-	: init_declarator
+init_declarator_list // Node*
+	: init_declarator { $$ = $1; }
 	| init_declarator_list COMMA init_declarator
 	;
 
-init_declarator
+init_declarator // Node*
 	: declarator
-	| declarator ASSIGN initializer
+	| declarator ASSIGN initializer { $$ = new SyntaxNode(SyntaxNode::Type::DECLARE_AND_INIT, EUNKNOWN, 2, $1, $3); }
 	;
 
 struct_declaration
@@ -201,12 +217,12 @@ enumerator
 	| identifier ASSIGN constant_expression
 	;
 
-declarator
+declarator // Node*
 	: direct_declarator { $$ = $1; }
-	| pointer direct_declarator { /* TODO: Pointr stuff */ $$ = $1; }
+	| pointer direct_declarator { /* TODO: Pointer stuff */ $$ = $1; }
 	;
 
-direct_declarator
+direct_declarator // Node*
 	: identifier { $$ = $1; }
 	| LPAREN declarator RPAREN { /* Parentheses don't do anything...? */ $$ = $2; }
 	| direct_declarator LBRACKET RBRACKET {
@@ -286,8 +302,8 @@ identifier_list
 	| identifier_list COMMA identifier
 	;
 
-initializer
-	: assignment_expression
+initializer // Node*
+	: assignment_expression { $$ = $1; }
 	| LBRACE initializer_list RBRACE
 	| LBRACE initializer_list COMMA RBRACE
 	;
@@ -340,10 +356,10 @@ expression_statement
 	| expression SEMI
 	;
 
-compound_statement
-	: LBRACE RBRACE
+compound_statement // Node*
+	: LBRACE RBRACE { $$ = nullptr; }
 	| LBRACE statement_list RBRACE
-	| LBRACE declaration_list RBRACE
+	| LBRACE declaration_list RBRACE { $$ = $2; }
 	| LBRACE declaration_list statement_list RBRACE
 	;
 
@@ -379,13 +395,13 @@ jump_statement
 	| RETURN expression SEMI
 	;
 
-expression
+expression // Node*
 	: assignment_expression
 	| expression COMMA assignment_expression
 	;
 
-assignment_expression
-	: conditional_expression
+assignment_expression // Node*
+	: conditional_expression { $$ = $1; }
 	| unary_expression assignment_operator assignment_expression
 	;
 
@@ -403,79 +419,79 @@ assignment_operator
 	| OR_ASSIGN
 	;
 
-conditional_expression
-	: logical_or_expression
+conditional_expression // Node*
+	: logical_or_expression { $$ = $1; }
 	| logical_or_expression HUH expression COLON conditional_expression
 	;
 
-constant_expression
-	: conditional_expression
+constant_expression // Node*
+	: conditional_expression { $$ = $1; }
 	;
 
-logical_or_expression
-	: logical_and_expression
+logical_or_expression // Node*
+	: logical_and_expression { $$ = $1; }
 	| logical_or_expression OR_OP logical_and_expression
 	;
 
-logical_and_expression
-	: inclusive_or_expression
+logical_and_expression // Node*
+	: inclusive_or_expression { $$ = $1; }
 	| logical_and_expression AND_OP inclusive_or_expression
 	;
 
-inclusive_or_expression
-	: exclusive_or_expression
+inclusive_or_expression // Node*
+	: exclusive_or_expression { $$ = $1; }
 	| inclusive_or_expression BOR exclusive_or_expression
 	;
 
-exclusive_or_expression
-	: and_expression
+exclusive_or_expression // Node*
+	: and_expression { $$ = $1; }
 	| exclusive_or_expression BXOR and_expression
 	;
 
-and_expression
-	: equality_expression
+and_expression // Node*
+	: equality_expression { $$ = $1; }
 	| and_expression BAND equality_expression
 	;
 
-equality_expression
-	: relational_expression
+equality_expression // Node*
+	: relational_expression { $$ = $1; }
 	| equality_expression EQ_OP relational_expression
 	| equality_expression NE_OP relational_expression
 	;
 
-relational_expression
-	: shift_expression
+relational_expression // Node*
+	: shift_expression { $$ = $1; }
 	| relational_expression LTHAN shift_expression
 	| relational_expression GTHAN shift_expression
 	| relational_expression LE_OP shift_expression
 	| relational_expression GE_OP shift_expression
 	;
 
-shift_expression
-	: additive_expression
+shift_expression // Node*
+	: additive_expression { $$ = $1; }
 	| shift_expression LEFT_OP additive_expression
 	| shift_expression RIGHT_OP additive_expression
 	;
 
-additive_expression
-	: multiplicative_expression
+additive_expression // Node*
+	: multiplicative_expression { $$ = $1; }
 	| additive_expression ADD multiplicative_expression
 	| additive_expression SUB multiplicative_expression
 	;
 
-multiplicative_expression
-	: cast_expression
+multiplicative_expression // Node*
+	: cast_expression { $$ = $1; }
 	| multiplicative_expression MULT cast_expression
 	| multiplicative_expression DIV cast_expression
 	| multiplicative_expression MOD cast_expression
 	;
 
-cast_expression
-	: unary_expression
+cast_expression // Node*
+	: unary_expression { $$ = $1; }
 	| LPAREN type_name RPAREN cast_expression
 	;
 
-unary_expression
+unary_expression // Node*
 	: postfix_expression { $$ = $1; }
 	| INC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::OINC, 1, $2); }
 	| DEC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::ODEC, 1, $2); }

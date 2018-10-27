@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdarg>
+#include <iostream>
 #include "symbol.h"
 
 extern unsigned lineno;
@@ -9,9 +10,12 @@ extern unsigned column;
 class SyntaxNode {
 	public:
 		const enum Type {
+			GENERIC, // For a node which only holds other nodes
 			IDENTIFIER,
 			CONSTANT,
-			OPERATOR
+			OPERATOR,
+			DECLARE_AND_INIT,
+			FUNCTION
 		} type;
 
 		EvalType etype;
@@ -26,6 +30,7 @@ class SyntaxNode {
 		SyntaxNode(Type type, EvalType etype, unsigned numChildren...);
 
 		virtual void semanticCheck();
+		void pushChild(SyntaxNode* child);
 	private:
 	protected:
 		unsigned _numChildren;
@@ -50,7 +55,7 @@ class ConstantNode : public SyntaxNode {
 
 class OperatorNode : public SyntaxNode {
 	public:
-		enum OpType {
+		const enum OpType {
 			OBAND = 1 << 0,
 			OMULT = 1 << 1,
 			OADD =  1 << 2,
@@ -70,3 +75,10 @@ class IdentifierNode : public SyntaxNode {
 		Symbol::SymbolType * const sym;
 		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, EVOID, 0), sym(sPtr) {}
 };
+
+std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t);
+std::ostream& operator<<(std::ostream& out, const SyntaxNode * n);
+std::ostream& operator<<(std::ostream& out, const SyntaxNode& n);
+std::ostream& operator<<(std::ostream& out, const ConstantNode& n);
+std::ostream& operator<<(std::ostream& out, const OperatorNode& n);
+std::ostream& operator<<(std::ostream& out, const IdentifierNode& n);

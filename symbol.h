@@ -16,7 +16,8 @@ enum EvalType : unsigned {
 	ELONG =     1 << 6,
 	EFLOAT =    1 << 7,
 	EDOUBLE =   1 << 8,
-	EPOINTER =  1 << 9
+	EPOINTER =  1 << 9,
+	EUNKNOWN =  1 << 30
 };
 
 inline EvalType operator|(EvalType a, EvalType b)

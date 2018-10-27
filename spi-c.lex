@@ -13,7 +13,7 @@
 
 	#define RETURN_TOKEN(token) column += yyleng; return token;
 	#define COLUMN column += yyleng
-	int yyerror(char *s);
+	int yyerror(SyntaxNode*& root, char *s);
 	extern int yydebug;
 
 	extern unsigned int lexDLevel;
