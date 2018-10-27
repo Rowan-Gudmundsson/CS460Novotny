@@ -63,8 +63,7 @@
 
 %type <eval> type_specifier declaration_specifiers storage_class_specifier type_qualifier
 %type <sval> identifier
-%type <nval> direct_declarator
-%type <nval> constant
+%type <nval> direct_declarator declarator constant primary_expression postfix_expression unary_expression cast_expression multiplicative_expression additive_expression shift_expression relational_expression equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression initializer
 %start translation_unit
 %%
 
@@ -96,12 +95,12 @@ declaration_list
 	;
 
 declaration_specifiers
-	: storage_class_specifier { $$ = $1 }
-	| storage_class_specifier declaration_specifiers { $$ = $1 | $2 }
-	| type_specifier { $$ = $1 }
-	| type_specifier declaration_specifiers { $$ = $1 | $2 }
-	| type_qualifier { $$ = $1 }
-	| type_qualifier declaration_specifiers { $$ = $1 | $2 }
+	: storage_class_specifier { $$ = $1; }
+	| storage_class_specifier declaration_specifiers { $$ = $1 | $2; }
+	| type_specifier { $$ = $1; }
+	| type_specifier declaration_specifiers { $$ = $1 | $2; }
+	| type_qualifier { $$ = $1; }
+	| type_qualifier declaration_specifiers { $$ = $1 | $2; }
 	;
 
 storage_class_specifier
@@ -197,18 +196,55 @@ enumerator
 	;
 
 declarator
-	: direct_declarator
-	| pointer direct_declarator
+	: direct_declarator { $$ = $1; }
+	| pointer direct_declarator { /* TODO: Pointr stuff */ $$ = $1; }
 	;
 
 direct_declarator
 	: identifier { $$ = new IdentifierNode($1); }
-	| LPAREN declarator RPAREN { /* TODO LATER*/ $$ = nullptr; }
-	| direct_declarator LBRACKET RBRACKET
-	| direct_declarator LBRACKET constant_expression RBRACKET
-	| direct_declarator LPAREN RPAREN
-	| direct_declarator LPAREN parameter_type_list RPAR*EN
-	| direct_declarator LPAREN identifier_list RPAREN { /* TODO: WHAT IS THIS? */ $$ = nullptr; }
+	| LPAREN declarator RPAREN { /* Parentheses don't do anything...? */ $$ = $2; }
+	| direct_declarator LBRACKET RBRACKET {
+		$$ = $1;
+		if($$->type == SyntaxNode::Type::IDENTIFIER) {
+			IdentifierNode* node = (IdentifierNode*) $$;
+			node->sym->itype = Symbol::SymbolType::VARIABLE;
+			node->sym->isArray = true;
+		} else {
+			throw "Error 1";
+		}
+	}
+	| direct_declarator LBRACKET constant_expression RBRACKET {
+		$$ = $1;
+		if($$->type == SyntaxNode::Type::IDENTIFIER) {
+			IdentifierNode* node = (IdentifierNode*) $$;
+			node->sym->itype = Symbol::SymbolType::VARIABLE;
+			node->sym->isArray = true;
+			// TODO - set size
+		} else {
+			throw "Error 2";
+		}
+	}
+	| direct_declarator LPAREN RPAREN {
+		$$ = $1;
+		if($$->type == SyntaxNode::Type::IDENTIFIER) {
+			IdentifierNode* node = (IdentifierNode*) $$;
+			node->sym->itype = Symbol::SymbolType::FUNCTION;
+			// TODO - set paramters
+		} else {
+			throw "Error 3";
+		}
+	}
+	| direct_declarator LPAREN parameter_type_list RPAREN {
+		$$ = $1;
+		if($$->type == SyntaxNode::Type::IDENTIFIER) {
+			IdentifierNode* node = (IdentifierNode*) $$;
+			node->sym->itype = Symbol::SymbolType::FUNCTION;
+			// TODO - set paramters
+		} else {
+			throw "Error 4";
+		}
+	}
+	| direct_declarator LPAREN identifier_list RPAREN { /* Ignore this, it won't be a feature of our language */ $$ = nullptr; }
 	;
 
 pointer
@@ -476,7 +512,7 @@ argument_expression_list
 
 constant
 	: INTEGER_CONSTANT { $$ = new ConstantNode(EINT, yylval.ival); }
-	| CHARACTER_CONSTANT { $$ = new ConstantNode(ECHAR, yylval.cval); }
+	| CHARACTER_CONSTANT { $$ = new ConstantNode(ECHAR, (long int) yylval.cval); }
 	| FLOATING_CONSTANT { $$ = new ConstantNode(EFLOAT, yylval.fval); }
 	| ENUMERATION_CONSTANT { /* TODO(Rowan) -- Fix later. */ $$ = nullptr; }
 	;

@@ -54,3 +54,11 @@ debug_tokens\.txt
 debug_symbol\.txt
 
 debug_parser\.txt
+
+*.tex
+
+*.pdf
+
+*.log
+
+*.aux

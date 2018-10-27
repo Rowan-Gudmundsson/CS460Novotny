@@ -6,7 +6,7 @@
 #include <fstream>
 #include <stdexcept>
 
-enum EvalType {
+enum EvalType : unsigned {
 	ESIGNED =   1 << 0,
 	EUNSIGNED = 1 << 1,
 	EVOID =     1 << 2,
@@ -36,11 +36,18 @@ class Symbol {
 				const std::string name;
 				const unsigned lineNumber;
 				const unsigned scopeLevel;
-				enum Type {
-					INT,
-					FLOAT,
-					CHAR
-				} type;
+				EvalType etype;
+				enum {
+					UNKNOWN,
+					VARIABLE,
+					FUNCTION,
+					ENUMCONSTANT,
+					TYPEDEF
+				} itype = UNKNOWN;
+
+				bool isArray = false;
+				int arraySize = -1;
+
 
 				friend class Symbol;
 			private:

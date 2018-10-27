@@ -20,6 +20,8 @@ class SyntaxNode {
 		const unsigned& numChildren;
 		SyntaxNode** children;
 
+		// TODO: Consider boolean 'constant' which checks whether or not this node can be evaluated at compile time ?
+
 		SyntaxNode(Type type, EvalType etype, unsigned numChildren...);
 
 		virtual void semanticCheck();
@@ -39,6 +41,6 @@ class ConstantNode : public SyntaxNode {
 
 class IdentifierNode : public SyntaxNode {
 	public:
-		const Symbol::SymbolType* sym;
+		Symbol::SymbolType * const sym;
 		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, EVOID, 0), sym(sPtr) {}
 };
