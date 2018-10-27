@@ -87,7 +87,11 @@ SCOMMENT \/\/.*\n
 	RETURN_TOKEN(INTEGER_CONSTANT);
 }
 
-{STRING}    { RETURN_TOKEN(STRING_LITERAL); }
+{STRING}    {
+	std::string temp = std::string(yytext).substr(1, yyleng - 2);
+	yylval.strval = new std::string(temp);
+	RETURN_TOKEN(STRING_LITERAL);
+}
 {CHAR}      {
 	yylval.cval = yytext[1];
 	RETURN_TOKEN(CHARACTER_CONSTANT);
@@ -172,7 +176,7 @@ SCOMMENT \/\/.*\n
 "continue"  { RETURN_TOKEN(CONTINUE); }
 "break"     { RETURN_TOKEN(BREAK); }
 "return"    { RETURN_TOKEN(RETURN); }
-"#DUMP"		{ if(debug_symbol_stream.is_open()) debug_symbol_stream << table; }
+"#DUMP"     { if(debug_symbol_stream.is_open()) debug_symbol_stream << table; }
 "#REDUCE"   { yydebug = 1; }
 "#NOREDUCE" { yydebug = 0; }
 

@@ -10,6 +10,7 @@
 	int yylex(void);
 
 	extern Symbol table;
+	void throwWarning(const std::string& warning);
 %}
 
 %code top {
@@ -25,6 +26,7 @@
 	std::string* strval;
 	EvalType eval;
 	SyntaxNode* nval;
+	OperatorNode::OpType oval;
 }
 
 %token DEBUG_SYMBOL_TABLE
@@ -61,9 +63,13 @@
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
-%type <eval> type_specifier declaration_specifiers storage_class_specifier type_qualifier
-%type <sval> identifier
-%type <nval> direct_declarator declarator constant primary_expression postfix_expression unary_expression cast_expression multiplicative_expression additive_expression shift_expression relational_expression equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression initializer
+%type <eval> type_specifier declaration_specifiers storage_class_specifier type_qualifier specifier_qualifier_list type_name
+%type <oval> unary_operator
+%type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression
+%type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression initializer
+%type <nval> direct_declarator constant primary_expression string expression identifier
+%type <nval> postfix_expression unary_expression cast_expression pointer
+
 %start translation_unit
 %%
 
@@ -201,7 +207,7 @@ declarator
 	;
 
 direct_declarator
-	: identifier { $$ = new IdentifierNode($1); }
+	: identifier { $$ = $1; }
 	| LPAREN declarator RPAREN { /* Parentheses don't do anything...? */ $$ = $2; }
 	| direct_declarator LBRACKET RBRACKET {
 		$$ = $1;
@@ -470,39 +476,60 @@ cast_expression
 	;
 
 unary_expression
-	: postfix_expression
-	| INC_OP unary_expression
-	| DEC_OP unary_expression
-	| unary_operator cast_expression
-	| SIZEOF unary_expression
-	| SIZEOF LPAREN type_name RPAREN
+	: postfix_expression { $$ = $1; }
+	| INC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::OINC, 1, $2); }
+	| DEC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::ODEC, 1, $2); }
+	| unary_operator cast_expression {
+		EvalType _type;
+		switch($1) {
+			case OperatorNode::OBAND:
+				_type = EINT;
+				break;
+			case OperatorNode::OMULT:
+				_type = $2->etype & ~EPOINTER;
+				break;
+			case OperatorNode::OADD:
+				throw ParserError("Not handling the unary '+' operator");
+				break;
+			case OperatorNode::OSUB:
+				if ($2->etype & EUNSIGNED) {
+					throwWarning("Taking 2's complement of unsigned type.");
+				}
+			case OperatorNode::OBNOT:
+			case OperatorNode::OLNOT:
+				_type = $2->etype;
+		}
+		$$ = new OperatorNode(_type, $1, 1, $2);
+	}
+	| SIZEOF unary_expression { $$ = new OperatorNode(EINT | EUNSIGNED, OperatorNode::OSIZE, 1, $2); }
+	| SIZEOF LPAREN type_name RPAREN { $$ = new OperatorNode(EINT | EUNSIGNED, OperatorNode::OSIZE, 1, $3); }
 	;
 
 unary_operator
-	: BAND
-	| MULT
-	| ADD
-	| SUB
-	| BNOT
-	| LNOT
+	: BAND { $$ = OperatorNode::OBAND; }
+	| MULT { $$ = OperatorNode::OMULT; }
+	| ADD { /* https://docs.microsoft.com/en-us/cpp/c-language/unary-arithmetic-operators?view=vs-2017 */ $$ = OperatorNode::OADD; }
+	| SUB { $$ = OperatorNode::OSUB; }
+	| BNOT { $$ = OperatorNode::OBNOT; }
+	| LNOT { $$ = OperatorNode::OLNOT; }
 	;
 
 postfix_expression
-	: primary_expression
-	| postfix_expression LBRACKET expression RBRACKET
-	| postfix_expression LPAREN RPAREN
-	| postfix_expression LPAREN argument_expression_list RPAREN
-	| postfix_expression PERIOD identifier
-	| postfix_expression PTR_OP identifier
-	| postfix_expression INC_OP
-	| postfix_expression DEC_OP
+	: primary_expression { $$ = $1; }
+	| postfix_expression LBRACKET expression RBRACKET { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression LPAREN RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression LPAREN argument_expression_list RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression PERIOD identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression INC_OP { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression DEC_OP { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	;
 
 primary_expression
-	: identifier
-	| constant
-	| string
-	| LPAREN expression RPAREN
+	: identifier { $$ = $1; }
+	| constant { $$ = $1; }
+	| string { $$ = $1; }
+	| LPAREN expression RPAREN { $$ = $2; }
 	;
 
 argument_expression_list
@@ -512,17 +539,17 @@ argument_expression_list
 
 constant
 	: INTEGER_CONSTANT { $$ = new ConstantNode(EINT, yylval.ival); }
-	| CHARACTER_CONSTANT { $$ = new ConstantNode(ECHAR, (long int) yylval.cval); }
+	| CHARACTER_CONSTANT { $$ = new ConstantNode(ECHAR, (long int)(yylval.cval)); }
 	| FLOATING_CONSTANT { $$ = new ConstantNode(EFLOAT, yylval.fval); }
 	| ENUMERATION_CONSTANT { /* TODO(Rowan) -- Fix later. */ $$ = nullptr; }
 	;
 
 string
-	: STRING_LITERAL
+	: STRING_LITERAL { $$ = new ConstantNode(ECHAR | EPOINTER, yylval.strval); }
 	;
 
 identifier
-	: IDENTIFIER { $$ = yylval.sval }
+	: IDENTIFIER { $$ = new IdentifierNode(yylval.sval); }
 	;
 
 %%

@@ -10,7 +10,8 @@ class SyntaxNode {
 	public:
 		const enum Type {
 			IDENTIFIER,
-			CONSTANT
+			CONSTANT,
+			OPERATOR
 		} type;
 
 		EvalType etype;
@@ -26,17 +27,42 @@ class SyntaxNode {
 
 		virtual void semanticCheck();
 	private:
+	protected:
 		unsigned _numChildren;
 };
 
 class ConstantNode : public SyntaxNode {
 	public:
-		ConstantNode(EvalType type, double _f) : SyntaxNode(CONSTANT, type, 0), f(_f) {}
-		ConstantNode(EvalType type, long int _i) : SyntaxNode(CONSTANT, type, 0), i(_i) {}
+		ConstantNode(EvalType _type, double _f) : SyntaxNode(CONSTANT, _type, 0), f(_f) {}
+		ConstantNode(EvalType _type, long int _i) : SyntaxNode(CONSTANT, _type, 0), i(_i) {}
+		ConstantNode(EvalType _type, std::string* _s) : SyntaxNode(CONSTANT, _type, 0), s(_s) {}
 		union {
 			double f;
 			long int i;
+			std::string* s;
 		};
+		~ConstantNode() {
+			if (type & EPOINTER) {
+				delete s;
+			}
+		}
+};
+
+class OperatorNode : public SyntaxNode {
+	public:
+		enum OpType {
+			OBAND = 1 << 0,
+			OMULT = 1 << 1,
+			OADD =  1 << 2,
+			OSUB =  1 << 3,
+			OBNOT = 1 << 4,
+			OLNOT = 1 << 5,
+			OINC =  1 << 6,
+			ODEC =  1 << 7,
+			OSIZE = 1 << 8
+		} opType;
+		OperatorNode(EvalType _type, OpType _opType, unsigned numChildren...);
+
 };
 
 class IdentifierNode : public SyntaxNode {
