@@ -1,9 +1,10 @@
-#REDUCE
 int main() {
 	// This is a test
-	int x = 0, y = 2;
+	#REDUCE
 	char z = 's';
+	int x = 0, y = 2;
 }
+#NOREDUCE
 
 void blah() {
 	int x;

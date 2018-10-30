@@ -81,13 +81,13 @@ translation_unit // Node*
 	: external_declaration {
 		$$ = root = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
 		if(parseDLevel) {
-			std::cout << "Found: " << $1;
+			std::cout << "Found: " << $1 << '\n';
 		}
 	}
 	| translation_unit external_declaration {
 		$$ = root = $1; $$->pushChild($2);
 		if(parseDLevel) {
-			std::cout << "Found: " << $2;
+			std::cout << "Found: " << $2 << '\n';
 		}
 	}
 	;
@@ -127,8 +127,14 @@ declaration // Node*
 	;
 
 declaration_list // Node*
-	: declaration { table.mode = Symbol::Mode::READ; $$ = $1; }
-	| declaration_list declaration
+	: declaration {
+		table.mode = Symbol::Mode::READ;
+		$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
+	}
+	| declaration_list declaration {
+		$$ = $1;
+		$1->pushChild($2);
+	}
 	;
 
 declaration_specifiers // EvalType
@@ -192,7 +198,10 @@ init_declarator_list // Node*
 			          << $1 << std::endl;
 		}
 	}
-	| init_declarator_list COMMA init_declarator { $$ = $1; $1->pushChild($3); }
+	| init_declarator_list COMMA init_declarator {
+		$$ = $1;
+		$1->pushChild($3);
+	}
 	;
 
 init_declarator // Node*

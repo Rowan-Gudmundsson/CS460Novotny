@@ -32,9 +32,11 @@ int main(int argc, char** argv) {
 	}
 
 	std::ofstream treeFile("tree.tex");
-	treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}\n\t\\Tree "
-	         << root
-	         << "\n\\end{tikzpicture}\n\\end{document}";
+	treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}\n\t\\Tree ";
+	std::stringstream ss;
+	ss << root;
+	std::string s = std::regex_replace(ss.str(), std::regex("_"), "\\$&");
+	treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
 	return 0;
 }
 
