@@ -22,9 +22,9 @@ const std::regex rArgs("(?:(?:-d(?:l([1-9]?))?(?:s([1-9]?))?(?:p([1-9]?))?) ?|(?
 #define IN_FILE_GROUP   5
 #define HELP_GROUP      6
 
-extern unsigned int lexDLevel;
-extern unsigned int symDLevel;
-extern unsigned int parseDLevel;
+unsigned int lexDLevel;
+unsigned int symDLevel;
+unsigned int parseDLevel;
 
 std::ofstream debug_symbol_stream;
 std::ofstream debug_token_stream;

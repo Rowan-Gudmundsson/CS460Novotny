@@ -10,6 +10,7 @@
 	int yylex(void);
 
 	extern Symbol table;
+	extern unsigned int parseDLevel;
 	void throwWarning(const std::string& warning);
 %}
 
@@ -77,8 +78,18 @@
 %%
 
 translation_unit // Node*
-	: external_declaration { $$ = root = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
-	| translation_unit external_declaration { $$ = root = $1; $$->pushChild($2); }
+	: external_declaration {
+		$$ = root = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
+		if(parseDLevel) {
+			std::cout << "Found: " << $1;
+		}
+	}
+	| translation_unit external_declaration {
+		$$ = root = $1; $$->pushChild($2);
+		if(parseDLevel) {
+			std::cout << "Found: " << $2;
+		}
+	}
 	;
 
 external_declaration // Node*
@@ -96,6 +107,10 @@ function_definition // Node*
 		  Also need to find the eval type of the function
 		*/
 		$$ = new SyntaxNode(SyntaxNode::Type::FUNCTION, EUNKNOWN, 2, $2, $3);
+		if(parseDLevel) {
+			std::cout << "Found function: \n"
+			          << $2 << '\n' << $3 << '\n';
+		}
 	}
 	| declaration_specifiers declarator declaration_list compound_statement
 	;
@@ -170,13 +185,26 @@ struct_declaration_list
 	;
 
 init_declarator_list // Node*
-	: init_declarator { $$ = $1; }
-	| init_declarator_list COMMA init_declarator
+	: init_declarator {
+		$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
+		if(parseDLevel){
+			std::cout << "GENERIC:\n"
+			          << $1 << std::endl;
+		}
+	}
+	| init_declarator_list COMMA init_declarator { $$ = $1; $1->pushChild($3); }
 	;
 
 init_declarator // Node*
 	: declarator
-	| declarator ASSIGN initializer { $$ = new SyntaxNode(SyntaxNode::Type::DECLARE_AND_INIT, EUNKNOWN, 2, $1, $3); }
+	| declarator ASSIGN initializer {
+		$$ = new SyntaxNode(SyntaxNode::Type::DECLARE_AND_INIT, EUNKNOWN, 2, $1, $3);
+		if(parseDLevel){
+			std::cout << "DECLARE_AND_INIT:\n"
+			          << $1 << '\n'
+			          << $3 << std::endl;
+		}
+	}
 	;
 
 struct_declaration
@@ -251,7 +279,7 @@ direct_declarator // Node*
 		if($$->type == SyntaxNode::Type::IDENTIFIER) {
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::FUNCTION;
-			// TODO - set paramters
+			// TODO - set paramaters
 		} else {
 			throw "Error 3";
 		}
@@ -565,7 +593,12 @@ string
 	;
 
 identifier
-	: IDENTIFIER { $$ = new IdentifierNode(yylval.sval); }
+	: IDENTIFIER {
+		$$ = new IdentifierNode(yylval.sval);
+		if(parseDLevel) {
+			std::cout << "Found new identifier node: " << yylval.sval->name << std::endl;
+		}
+	}
 	;
 
 %%

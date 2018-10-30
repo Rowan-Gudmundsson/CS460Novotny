@@ -1,5 +1,10 @@
 #REDUCE
 int main() {
+	// This is a test
 	int x = 0, y = 2;
 	char z = 's';
+}
+
+void blah() {
+	int x;
 }
