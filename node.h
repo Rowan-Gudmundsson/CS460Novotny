@@ -16,7 +16,8 @@ class SyntaxNode {
 			OPERATOR,
 			DECLARE_AND_INIT,
 			FUNCTION,
-			ASSIGN
+			ASSIGN,
+			CONDITIONAL
 		} type;
 
 		EvalType etype;

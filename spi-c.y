@@ -71,7 +71,7 @@
 %type <nval> direct_declarator constant primary_expression string expression identifier declaration declaration_list
 %type <nval> postfix_expression unary_expression cast_expression pointer initializer init_declarator init_declarator_list
 %type <nval> compound_statement function_definition external_declaration translation_unit constant_expression expression_statement
-%type <nval> statement statement_list
+%type <nval> statement statement_list labeled_statement selection_statement iteration_statement jump_statement
 
 %parse-param {SyntaxNode*& root}
 
@@ -110,7 +110,7 @@ function_definition // Node*
 		//$$ = new SyntaxNode(SyntaxNode::Type::FUNCTION, EUNKNOWN, 2, $2, $3);
 		if($2->type == SyntaxNode::Type::IDENTIFIER) {
 			$$ = new FunctionNode((IdentifierNode*) $2, $3);
-			
+
 		} else {
 			throw "Identifier not found where it should be";
 		}
@@ -386,15 +386,15 @@ direct_abstract_declarator
 	;
 
 statement // Node*
-	: labeled_statement
-	| compound_statement
+	: labeled_statement { $$ = nullptr; /* TODO */ }
+	| compound_statement { $$ = $1; }
 	| expression_statement { $$ = $1; }
-	| selection_statement
-	| iteration_statement
-	| jump_statement
+	| selection_statement { $$ = $1; }
+	| iteration_statement { $$ = $1; }
+	| jump_statement { $$ = nullptr; /* TODO */ }
 	;
 
-labeled_statement
+labeled_statement // Node*
 	: identifier COLON statement
 	| CASE constant_expression COLON statement
 	| DEFAULT COLON statement
@@ -407,7 +407,7 @@ expression_statement // Node*
 
 compound_statement // Node*
 	: LBRACE RBRACE { $$ = nullptr; }
-	| LBRACE statement_list RBRACE
+	| LBRACE statement_list RBRACE { $$ = $2; }
 	| LBRACE declaration_list RBRACE { $$ = $2; }
 	| LBRACE declaration_list statement_list RBRACE { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 2, $2, $3); }
 	;
@@ -417,13 +417,13 @@ statement_list // Node*
 	| statement_list statement { $$ = $1; $$->children.push_back($2); }
 	;
 
-selection_statement
-	: IF LPAREN expression RPAREN statement
-	| IF LPAREN expression RPAREN statement ELSE statement
-	| SWITCH LPAREN expression RPAREN statement
+selection_statement // Node*
+	: IF LPAREN expression RPAREN statement { $$ = new SyntaxNode(SyntaxNode::Type::CONDITIONAL, EVOID, 2, $3, $5); }
+	| IF LPAREN expression RPAREN statement ELSE statement { $$ = new SyntaxNode(SyntaxNode::Type::CONDITIONAL, EVOID, 3, $3, $5, $7); }
+	| SWITCH LPAREN expression RPAREN statement { $$ = nullptr; /* TODO: Switch Statements */ }
 	;
 
-iteration_statement
+iteration_statement // Node*
 	: WHILE LPAREN expression RPAREN statement
 	| DO statement WHILE LPAREN expression RPAREN SEMI
 	| FOR LPAREN SEMI SEMI RPAREN statement
@@ -436,7 +436,7 @@ iteration_statement
 	| FOR LPAREN expression SEMI expression SEMI expression RPAREN statement
 	;
 
-jump_statement
+jump_statement // Node*
 	: GOTO identifier SEMI
 	| CONTINUE SEMI
 	| BREAK SEMI
@@ -445,8 +445,8 @@ jump_statement
 	;
 
 expression // Node*
-	: assignment_expression { $$ = $1; /* TODO: Do a generic container list thing here*/ }
-	| expression COMMA assignment_expression
+	: assignment_expression { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
+	| expression COMMA assignment_expression { $$ = $1; $$->children.push_back($3); }
 	;
 
 assignment_expression // Node*

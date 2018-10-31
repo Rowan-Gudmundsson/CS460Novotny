@@ -3,9 +3,17 @@ int main() {
 	char z = 's';
 	int x = 0, y = 2;
 
-	#REDUCE
 	x = x + y / 2;
 	y *= 3 % z;
+
+	#REDUCE
+	if(x == 2 || y > z / 2) {
+		z = 3;
+	} else if (1) {
+		y = 3;
+	} else {
+		x;
+	}
 }
 #NOREDUCE
 

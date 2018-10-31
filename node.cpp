@@ -56,6 +56,8 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(OPERATOR);
 			PROCESS_VAL(DECLARE_AND_INIT);
 			PROCESS_VAL(ASSIGN);
+			PROCESS_VAL(FUNCTION);
+			PROCESS_VAL(CONDITIONAL);
 		}
 	#undef PROCESS_VAL
 
@@ -63,8 +65,13 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 }
 
 std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
-	if(n == nullptr) return out;
 	out << "[.{";
+
+	if(n == nullptr) {
+		out << "\\textbf{nullptr}} ]";
+		return out;
+	}
+	
 	switch(n->type) {
 		case SyntaxNode::Type::IDENTIFIER:
 		case SyntaxNode::Type::FUNCTION:
@@ -209,7 +216,7 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
 	out << *n.sym << "} ";
-	
+
 	for(unsigned i = 0; i < n.children.size(); i++) {
 		out << n.children[i];
 	}
