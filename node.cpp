@@ -1,50 +1,54 @@
 #include "node.h"
 
-SyntaxNode::SyntaxNode(Type t, EvalType e, unsigned n...) : type(t), etype(e), line(lineno), columnno(column), numChildren(_numChildren), _numChildren(n) {
-	if(numChildren > 0) {
+SyntaxNode::SyntaxNode(Type t, EvalType e, unsigned n...) : type(t), etype(e), line(lineno), columnno(column) {
+	if(n > 0) {
 		va_list args;
 		va_start(args, n);
 
-		children = new SyntaxNode*[n];
+		children.resize(n);
 
 		for(unsigned i = 0; i < n; i++) {
 			children[i] = va_arg(args, SyntaxNode*);
 		}
 
 		va_end(args);
-	} else {
-		children = nullptr;
 	}
 }
 
-void SyntaxNode::semanticCheck() {}
-
-void SyntaxNode::pushChild(SyntaxNode* child) {
-	_numChildren++;
-	SyntaxNode** temp = new SyntaxNode*[_numChildren];
-	temp[_numChildren - 1] = child;
-	for(unsigned i = 0; i < _numChildren - 1; i++) {
-		temp[i] = children[i];
+void SyntaxNode::semanticCheck() {
+	for(SyntaxNode* child : children) {
+		if(child != nullptr) child->semanticCheck();
 	}
-	delete [] children;
-	children = temp;
+	
+	switch(type) {
+		case GENERIC:
+			// Compress generic nodes
+			// If a generic node has generic children, then just gab all of the grandchildren
+			for(unsigned i = 0; i < children.size(); i++) {
+				if(children[i]->type == GENERIC) {
+					unsigned size = children[i]->children.size();
+					children.insert(children.begin() + i, children[i]->children.begin(), children[i]->children.end());
+					delete children[i + size];
+					children.erase(children.begin() + i + size);
+				}
+			}
+		default:
+			break;
+	}
 }
 
 OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): SyntaxNode(OPERATOR, _type, 0), opType(_opType) {
-	_numChildren = n;
 	if (n > 0) {
 		va_list args;
 		va_start(args, n);
 
-		children = new SyntaxNode*[n];
+		children.resize(n);
 
 		for (unsigned i = 0; i < n; i++) {
 			children[i] = va_arg(args, SyntaxNode*);
 		}
 
 		va_end(args);
-	} else {
-		children = nullptr;
 	}
 }
 
@@ -86,7 +90,7 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 std::ostream& operator<<(std::ostream& out, const SyntaxNode& n) {
 	out << "[.{" << n.type << "} ";
 
-	for(unsigned i = 0; i < n.numChildren; i++) {
+	for(unsigned i = 0; i < n.children.size(); i++) {
 		out << n.children[i];
 	}
 
@@ -117,7 +121,7 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 	// TODO: Actually do this output
 	out << "[.{\\textbf{test} ";
 
-	for(unsigned i = 0; i < n.numChildren; i++) {
+	for(unsigned i = 0; i < n.children.size(); i++) {
 		out << n.children[i];
 	}
 

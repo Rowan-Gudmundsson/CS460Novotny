@@ -85,7 +85,7 @@ translation_unit // Node*
 		}
 	}
 	| translation_unit external_declaration {
-		$$ = root = $1; $$->pushChild($2);
+		$$ = root = $1; $$->children.push_back($2);
 		if(parseDLevel) {
 			std::cout << "Found: " << $2 << '\n';
 		}
@@ -133,7 +133,7 @@ declaration_list // Node*
 	}
 	| declaration_list declaration {
 		$$ = $1;
-		$1->pushChild($2);
+		$1->children.push_back($2);
 	}
 	;
 
@@ -200,7 +200,7 @@ init_declarator_list // Node*
 	}
 	| init_declarator_list COMMA init_declarator {
 		$$ = $1;
-		$1->pushChild($3);
+		$1->children.push_back($3);
 	}
 	;
 

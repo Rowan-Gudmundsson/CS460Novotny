@@ -22,18 +22,13 @@ class SyntaxNode {
 		const unsigned line;
 		const unsigned columnno;
 
-		const unsigned& numChildren;
-		SyntaxNode** children;
+		std::vector<SyntaxNode*> children;
 
 		// TODO: Consider boolean 'constant' which checks whether or not this node can be evaluated at compile time ?
 
 		SyntaxNode(Type type, EvalType etype, unsigned numChildren...);
 
 		virtual void semanticCheck();
-		void pushChild(SyntaxNode* child);
-	private:
-	protected:
-		unsigned _numChildren;
 };
 
 class ConstantNode : public SyntaxNode {
