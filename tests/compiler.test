@@ -1,8 +1,11 @@
 int main() {
 	// This is a test
-	#REDUCE
 	char z = 's';
 	int x = 0, y = 2;
+
+	#REDUCE
+	x = x + y / 2;
+	y *= 3 % z;
 }
 #NOREDUCE
 

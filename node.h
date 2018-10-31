@@ -15,7 +15,8 @@ class SyntaxNode {
 			CONSTANT,
 			OPERATOR,
 			DECLARE_AND_INIT,
-			FUNCTION
+			FUNCTION,
+			ASSIGN
 		} type;
 
 		EvalType etype;
@@ -51,15 +52,35 @@ class ConstantNode : public SyntaxNode {
 class OperatorNode : public SyntaxNode {
 	public:
 		const enum OpType {
-			OBAND = 1 << 0,
-			OMULT = 1 << 1,
-			OADD =  1 << 2,
-			OSUB =  1 << 3,
-			OBNOT = 1 << 4,
-			OLNOT = 1 << 5,
-			OINC =  1 << 6,
-			ODEC =  1 << 7,
-			OSIZE = 1 << 8
+			// Binary Operators
+			OBAND,
+			OBOR,
+			OBXOR,
+			OBNOT,
+			OLSHIFT,
+			ORSHIFT,
+			// Arithmetic
+			OMOD,
+			ODIV,
+			OMULT,
+			OADD,
+			OSUB,
+			OINC,
+			ODEC,
+			// Logic
+			OLNOT,
+			OLAND,
+			OLOR,
+			// Comparison
+			OLESS,
+			OGREAT,
+			OLEQ,
+			OGEQ,
+			OEQUAL,
+			ONEQ,
+			// Other
+			OSIZE,
+			OTERNARY
 		} opType;
 		OperatorNode(EvalType _type, OpType _opType, unsigned numChildren...);
 

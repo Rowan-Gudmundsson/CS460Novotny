@@ -61,6 +61,7 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(OPERATOR);
 			PROCESS_VAL(DECLARE_AND_INIT);
 			PROCESS_VAL(FUNCTION);
+			PROCESS_VAL(ASSIGN);
 		}
 	#undef PROCESS_VAL
 
@@ -69,6 +70,7 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 
 std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 	if(n == nullptr) return out;
+	out << "[.{";
 	switch(n->type) {
 		case SyntaxNode::Type::IDENTIFIER:
 			out << *((IdentifierNode*) n);
@@ -83,24 +85,22 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 			out << *n;
 			break;
 	}
-
-	return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const SyntaxNode& n) {
-	out << "[.{" << n.type << "} ";
-
-	for(unsigned i = 0; i < n.children.size(); i++) {
-		out << n.children[i];
-	}
-
 	out << ']';
 
 	return out;
 }
 
+std::ostream& operator<<(std::ostream& out, const SyntaxNode& n) {
+	out << n.type << "} ";
+
+	for(unsigned i = 0; i < n.children.size(); i++) {
+		out << n.children[i];
+	}
+
+	return out;
+}
+
 std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
-	out << "[.{";
 	if(n.etype & ECHAR) {
 		if(n.etype & EPOINTER) {
 			out << '\"' << *n.s << '\"';
@@ -112,25 +112,107 @@ std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
 	} else if(n.etype & EFLOAT || n.etype & EDOUBLE) {
 		out << n.f;
 	}
-	out << "} ]";
+	out << "} ";
 
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 	// TODO: Actually do this output
-	out << "[.{\\textbf{test} ";
+	out << "\\textbf{";
+
+	switch(n.opType) {
+		case OperatorNode::OpType::OBAND:
+			out << '&';
+			break;
+		case OperatorNode::OpType::OBOR:
+			out << '|';
+			break;
+		case OperatorNode::OpType::OBXOR:
+			out << '^';
+			break;
+		case OperatorNode::OpType::OBNOT:
+			out << '~';
+			break;
+		case OperatorNode::OpType::OLSHIFT:
+			out << "<<";
+			break;
+		case OperatorNode::OpType::ORSHIFT:
+			out << ">>";
+			break;
+		
+		// Arithmetic
+		case OperatorNode::OpType::OMOD:
+			out << '%';
+			break;
+		case OperatorNode::OpType::ODIV:
+			out << '/';
+			break;
+		case OperatorNode::OpType::OMULT:
+			out << '*';
+			break;
+		case OperatorNode::OpType::OADD:
+			out << '+';
+			break;
+		case OperatorNode::OpType::OSUB:
+			out << '-';
+			break;
+		case OperatorNode::OpType::OINC:
+			out << "++";
+			break;
+		case OperatorNode::OpType::ODEC:
+			out << "--";
+			break;
+		
+		// Logic
+		case OperatorNode::OpType::OLNOT:
+			out << '!';
+			break;
+		case OperatorNode::OpType::OLAND:
+			out << "&&";
+			break;
+		case OperatorNode::OpType::OLOR:
+			out << "||";
+			break;
+		
+		// Comparison
+		case OperatorNode::OpType::OLESS:
+			out << '<';
+			break;
+		case OperatorNode::OpType::OGREAT:
+			out << '>';
+			break;
+		case OperatorNode::OpType::OLEQ:
+			out << "\\leq";
+			break;
+		case OperatorNode::OpType::OGEQ:
+			out << "\\geq";
+			break;
+		case OperatorNode::OpType::OEQUAL:
+			out << "==";
+			break;
+		case OperatorNode::OpType::ONEQ:
+			out << "!=";
+			break;
+		
+		// Other
+		case OperatorNode::OpType::OSIZE:
+			out << "sizeof";
+			break;
+		case OperatorNode::OpType::OTERNARY:
+			out << "? :";
+			break;
+	}
+
+	out << "}} ";
 
 	for(unsigned i = 0; i < n.children.size(); i++) {
 		out << n.children[i];
 	}
-
-	out << ']';
-
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
-	out << "[.{" << *n.sym << "} ]";
+	out << *n.sym << "} ";
 	return out;
 }

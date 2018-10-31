@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 		std::stringstream ss;
 		ss << root;
 		// Sanitize underscores
-		std::string s = std::regex_replace(ss.str(), std::regex("_"), "\\$&");
+		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
 		treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
 
 		treeFile.close();
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 		std::stringstream ss;
 		ss << root;
 		// Sanitize underscores
-		std::string s = std::regex_replace(ss.str(), std::regex("_"), "\\$&");
+		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
 		treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
 
 		treeFile.close();

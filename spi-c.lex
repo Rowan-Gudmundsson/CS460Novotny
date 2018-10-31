@@ -62,6 +62,7 @@ SCOMMENT \/\/.*\n
 {SCOMMENT}   {
 	lineno++;
 	column = 0;
+	std::getline(inFile,currentLine);
 }
 
 {DELIM}+     { column += yyleng; }

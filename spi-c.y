@@ -65,12 +65,13 @@
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
 %type <eval> type_specifier declaration_specifiers storage_class_specifier type_qualifier specifier_qualifier_list type_name
-%type <oval> unary_operator
+%type <oval> unary_operator assignment_operator
 %type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression
 %type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression
 %type <nval> direct_declarator constant primary_expression string expression identifier declaration declaration_list
 %type <nval> postfix_expression unary_expression cast_expression pointer initializer init_declarator init_declarator_list
-%type <nval> compound_statement function_definition external_declaration translation_unit constant_expression
+%type <nval> compound_statement function_definition external_declaration translation_unit constant_expression expression_statement
+%type <nval> statement statement_list
 
 %parse-param {SyntaxNode*& root}
 
@@ -132,6 +133,7 @@ declaration_list // Node*
 		$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
 	}
 	| declaration_list declaration {
+		table.mode = Symbol::Mode::READ;
 		$$ = $1;
 		$1->children.push_back($2);
 	}
@@ -303,7 +305,10 @@ direct_declarator // Node*
 			throw "Error 4";
 		}
 	}
-	| direct_declarator LPAREN identifier_list RPAREN { /* Ignore this, it won't be a feature of our language */ $$ = nullptr; }
+	| direct_declarator LPAREN identifier_list RPAREN {
+		/* Ignore this, it won't be a feature of our language */
+		$$ = nullptr;
+	}
 	;
 
 pointer
@@ -373,10 +378,10 @@ direct_abstract_declarator
 	| direct_abstract_declarator LPAREN parameter_type_list RPAREN
 	;
 
-statement
+statement // Node*
 	: labeled_statement
 	| compound_statement
-	| expression_statement
+	| expression_statement { $$ = $1; }
 	| selection_statement
 	| iteration_statement
 	| jump_statement
@@ -388,21 +393,21 @@ labeled_statement
 	| DEFAULT COLON statement
 	;
 
-expression_statement
-	: SEMI
-	| expression SEMI
+expression_statement // Node*
+	: SEMI { $$ = nullptr; }
+	| expression SEMI { $$ = $1; }
 	;
 
 compound_statement // Node*
 	: LBRACE RBRACE { $$ = nullptr; }
 	| LBRACE statement_list RBRACE
 	| LBRACE declaration_list RBRACE { $$ = $2; }
-	| LBRACE declaration_list statement_list RBRACE
+	| LBRACE declaration_list statement_list RBRACE { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 2, $2, $3); }
 	;
 
-statement_list
-	: statement
-	| statement_list statement
+statement_list // Node*
+	: statement { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
+	| statement_list statement { $$ = $1; $$->children.push_back($2); }
 	;
 
 selection_statement
@@ -433,32 +438,41 @@ jump_statement
 	;
 
 expression // Node*
-	: assignment_expression
+	: assignment_expression { $$ = $1; /* TODO: Do a generic container list thing here*/ }
 	| expression COMMA assignment_expression
 	;
 
 assignment_expression // Node*
 	: conditional_expression { $$ = $1; }
-	| unary_expression assignment_operator assignment_expression
+	| unary_expression assignment_operator assignment_expression {
+		if($2 == OperatorNode::OpType::OTERNARY) {
+			$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, EUNKNOWN, 2, $1, $3);
+		} else {
+			OperatorNode* temp = new OperatorNode(EUNKNOWN, $2, 2, $1, $3);
+			$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, EUNKNOWN, 2, $1, temp);
+		}
+	}
 	;
 
-assignment_operator
-	: ASSIGN
-	| MUL_ASSIGN
-	| DIV_ASSIGN
-	| MOD_ASSIGN
-	| ADD_ASSIGN
-	| SUB_ASSIGN
-	| LEFT_ASSIGN
-	| RIGHT_ASSIGN
-	| AND_ASSIGN
-	| XOR_ASSIGN
-	| OR_ASSIGN
+assignment_operator // OperatorNode::OpType
+	: ASSIGN { $$ = OperatorNode::OpType::OTERNARY; }
+	| MUL_ASSIGN { $$ = OperatorNode::OpType::OMULT; }
+	| DIV_ASSIGN { $$ = OperatorNode::OpType::ODIV; }
+	| MOD_ASSIGN { $$ = OperatorNode::OpType::OMOD; }
+	| ADD_ASSIGN { $$ = OperatorNode::OpType::OADD; }
+	| SUB_ASSIGN { $$ = OperatorNode::OpType::OSUB; }
+	| LEFT_ASSIGN { $$ = OperatorNode::OpType::OLSHIFT; }
+	| RIGHT_ASSIGN { $$ = OperatorNode::OpType::ORSHIFT; }
+	| AND_ASSIGN { $$ = OperatorNode::OpType::OBAND; }
+	| XOR_ASSIGN { $$ = OperatorNode::OpType::OBXOR; }
+	| OR_ASSIGN { $$ = OperatorNode::OpType::OBOR; }
 	;
 
 conditional_expression // Node*
 	: logical_or_expression { $$ = $1; }
-	| logical_or_expression HUH expression COLON conditional_expression
+	| logical_or_expression HUH expression COLON conditional_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OTERNARY, 3, $1, $3, $5);
+	}
 	;
 
 constant_expression // Node*
@@ -467,60 +481,96 @@ constant_expression // Node*
 
 logical_or_expression // Node*
 	: logical_and_expression { $$ = $1; }
-	| logical_or_expression OR_OP logical_and_expression
+	| logical_or_expression OR_OP logical_and_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLOR, 2, $1, $3);
+	}
 	;
 
 logical_and_expression // Node*
 	: inclusive_or_expression { $$ = $1; }
-	| logical_and_expression AND_OP inclusive_or_expression
+	| logical_and_expression AND_OP inclusive_or_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLAND, 2, $1, $3);
+	}
 	;
 
 inclusive_or_expression // Node*
 	: exclusive_or_expression { $$ = $1; }
-	| inclusive_or_expression BOR exclusive_or_expression
+	| inclusive_or_expression BOR exclusive_or_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OBOR, 2, $1, $3);
+	}
 	;
 
 exclusive_or_expression // Node*
 	: and_expression { $$ = $1; }
-	| exclusive_or_expression BXOR and_expression
+	| exclusive_or_expression BXOR and_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OBXOR, 2, $1, $3);
+	}
 	;
 
 and_expression // Node*
 	: equality_expression { $$ = $1; }
-	| and_expression BAND equality_expression
+	| and_expression BAND equality_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OBAND, 2, $1, $3);
+	}
 	;
 
 equality_expression // Node*
 	: relational_expression { $$ = $1; }
-	| equality_expression EQ_OP relational_expression
-	| equality_expression NE_OP relational_expression
+	| equality_expression EQ_OP relational_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OEQUAL, 2, $1, $3);
+	}
+	| equality_expression NE_OP relational_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::ONEQ, 2, $1, $3);
+	}
 	;
 
 relational_expression // Node*
 	: shift_expression { $$ = $1; }
-	| relational_expression LTHAN shift_expression
-	| relational_expression GTHAN shift_expression
-	| relational_expression LE_OP shift_expression
-	| relational_expression GE_OP shift_expression
+	| relational_expression LTHAN shift_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLESS, 2, $1, $3);
+	}
+	| relational_expression GTHAN shift_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OGREAT, 2, $1, $3);
+	}
+	| relational_expression LE_OP shift_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLEQ, 2, $1, $3);
+	}
+	| relational_expression GE_OP shift_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OGEQ, 2, $1, $3);
+	}
 	;
 
 shift_expression // Node*
 	: additive_expression { $$ = $1; }
-	| shift_expression LEFT_OP additive_expression
-	| shift_expression RIGHT_OP additive_expression
+	| shift_expression LEFT_OP additive_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLSHIFT, 2, $1, $3);
+	}
+	| shift_expression RIGHT_OP additive_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::ORSHIFT, 2, $1, $3);
+	}
 	;
 
 additive_expression // Node*
 	: multiplicative_expression { $$ = $1; }
-	| additive_expression ADD multiplicative_expression
-	| additive_expression SUB multiplicative_expression
+	| additive_expression ADD multiplicative_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OADD, 2, $1, $3);
+	}
+	| additive_expression SUB multiplicative_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OSUB, 2, $1, $3);
+	}
 	;
 
 multiplicative_expression // Node*
 	: cast_expression { $$ = $1; }
-	| multiplicative_expression MULT cast_expression
-	| multiplicative_expression DIV cast_expression
-	| multiplicative_expression MOD cast_expression
+	| multiplicative_expression MULT cast_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OMULT, 2, $1, $3);
+	}
+	| multiplicative_expression DIV cast_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::ODIV, 2, $1, $3);
+	}
+	| multiplicative_expression MOD cast_expression {
+		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OMOD, 2, $1, $3);
+	}
 	;
 
 cast_expression // Node*
@@ -548,9 +598,13 @@ unary_expression // Node*
 				if ($2->etype & EUNSIGNED) {
 					throwWarning("Taking 2's complement of unsigned type.");
 				}
+				break;
 			case OperatorNode::OBNOT:
 			case OperatorNode::OLNOT:
 				_type = $2->etype;
+				break;
+			default:
+				break;
 		}
 		$$ = new OperatorNode(_type, $1, 1, $2);
 	}
@@ -558,7 +612,7 @@ unary_expression // Node*
 	| SIZEOF LPAREN type_name RPAREN { $$ = new OperatorNode(EINT | EUNSIGNED, OperatorNode::OSIZE, 1, $3); }
 	;
 
-unary_operator
+unary_operator // OperatorNode::OpType
 	: BAND { $$ = OperatorNode::OBAND; }
 	| MULT { $$ = OperatorNode::OMULT; }
 	| ADD { /* https://docs.microsoft.com/en-us/cpp/c-language/unary-arithmetic-operators?view=vs-2017 */ $$ = OperatorNode::OADD; }
@@ -567,7 +621,7 @@ unary_operator
 	| LNOT { $$ = OperatorNode::OLNOT; }
 	;
 
-postfix_expression
+postfix_expression // Node*
 	: primary_expression { $$ = $1; }
 	| postfix_expression LBRACKET expression RBRACKET { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression LPAREN RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
