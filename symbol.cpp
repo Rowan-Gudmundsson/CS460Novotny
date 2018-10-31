@@ -35,7 +35,11 @@ bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
 }
 
 std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
-	out << "<" << sym.name << ", line " << sym.lineNumber << ", scope " << sym.scopeLevel << ">";
+	if(sym.itype == Symbol::SymbolType::FUNCTION) {
+		out << "<" << sym.name << "(), line " << sym.lineNumber << ">";
+	} else {
+		out << "<" << sym.name << ", line " << sym.lineNumber << ">";
+	}
 	return out;
 }
 

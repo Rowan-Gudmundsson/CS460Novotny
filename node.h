@@ -29,6 +29,8 @@ class SyntaxNode {
 
 		SyntaxNode(Type type, EvalType etype, unsigned numChildren...);
 
+		// Semanticly check the node
+		// Make certain data types line up, smash unneeded nodes, etc.
 		virtual void semanticCheck();
 };
 
@@ -89,7 +91,16 @@ class OperatorNode : public SyntaxNode {
 class IdentifierNode : public SyntaxNode {
 	public:
 		Symbol::SymbolType * const sym;
-		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, EVOID, 0), sym(sPtr) {}
+		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, EUNKNOWN, 0), sym(sPtr) {}
+	private:
+		IdentifierNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(FUNCTION, EUNKNOWN, 1, child), sym(sPtr) {}
+		friend class FunctionNode;
+};
+
+class FunctionNode : public IdentifierNode {
+	public:
+		FunctionNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : IdentifierNode(sPtr, child) {}
+		FunctionNode(IdentifierNode* id, SyntaxNode* child) : IdentifierNode(id->sym, child) {}
 };
 
 std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t);

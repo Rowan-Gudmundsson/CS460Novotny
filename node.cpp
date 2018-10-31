@@ -20,20 +20,15 @@ void SyntaxNode::semanticCheck() {
 		if(child != nullptr) child->semanticCheck();
 	}
 	
-	switch(type) {
-		case GENERIC:
-			// Compress generic nodes
-			// If a generic node has generic children, then just gab all of the grandchildren
-			for(unsigned i = 0; i < children.size(); i++) {
-				if(children[i]->type == GENERIC) {
-					unsigned size = children[i]->children.size();
-					children.insert(children.begin() + i, children[i]->children.begin(), children[i]->children.end());
-					delete children[i + size];
-					children.erase(children.begin() + i + size);
-				}
-			}
-		default:
-			break;
+	// Compress generic nodes
+	// If a node has generic children, then just grab all of the grandchildren
+	for(unsigned i = 0; i < children.size(); i++) {
+		if(children[i]->type == GENERIC) {
+			unsigned size = children[i]->children.size();
+			children.insert(children.begin() + i, children[i]->children.begin(), children[i]->children.end());
+			delete children[i + size];
+			children.erase(children.begin() + i + size);
+		}
 	}
 }
 
@@ -60,7 +55,6 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(CONSTANT);
 			PROCESS_VAL(OPERATOR);
 			PROCESS_VAL(DECLARE_AND_INIT);
-			PROCESS_VAL(FUNCTION);
 			PROCESS_VAL(ASSIGN);
 		}
 	#undef PROCESS_VAL
@@ -73,6 +67,7 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 	out << "[.{";
 	switch(n->type) {
 		case SyntaxNode::Type::IDENTIFIER:
+		case SyntaxNode::Type::FUNCTION:
 			out << *((IdentifierNode*) n);
 			break;
 		case SyntaxNode::Type::CONSTANT:
@@ -214,5 +209,9 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
 	out << *n.sym << "} ";
+	
+	for(unsigned i = 0; i < n.children.size(); i++) {
+		out << n.children[i];
+	}
 	return out;
 }

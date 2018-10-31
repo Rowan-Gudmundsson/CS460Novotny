@@ -82,13 +82,13 @@ translation_unit // Node*
 	: external_declaration {
 		$$ = root = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
 		if(parseDLevel) {
-			std::cout << "Found: " << $1 << '\n';
+			std::cout << "Found Root Node: " << $1 << '\n';
 		}
 	}
 	| translation_unit external_declaration {
 		$$ = root = $1; $$->children.push_back($2);
 		if(parseDLevel) {
-			std::cout << "Found: " << $2 << '\n';
+			std::cout << "Found Root Node: " << $2 << '\n';
 		}
 	}
 	;
@@ -107,7 +107,14 @@ function_definition // Node*
 		  Should be easy, just need to traverse tree and find identifier
 		  Also need to find the eval type of the function
 		*/
-		$$ = new SyntaxNode(SyntaxNode::Type::FUNCTION, EUNKNOWN, 2, $2, $3);
+		//$$ = new SyntaxNode(SyntaxNode::Type::FUNCTION, EUNKNOWN, 2, $2, $3);
+		if($2->type == SyntaxNode::Type::IDENTIFIER) {
+			$$ = new FunctionNode((IdentifierNode*) $2, $3);
+			
+		} else {
+			throw "Identifier not found where it should be";
+		}
+
 		if(parseDLevel) {
 			std::cout << "Found function: \n"
 			          << $2 << '\n' << $3 << '\n';
