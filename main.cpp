@@ -43,20 +43,22 @@ int main(int argc, char** argv) {
 		treeFile.close();
 	}
 	
-	root->semanticCheck();
+	if(semanticCheck)
+	{
+		root->semanticCheck();
 
-	if(semTreeFileName != "") {
-		std::ofstream treeFile(semTreeFileName);
-		treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}\n\t\\Tree ";
-		std::stringstream ss;
-		ss << root;
-		// Sanitize underscores
-		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
-		treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
+			if(semTreeFileName != "") {
+				std::ofstream treeFile(semTreeFileName);
+				treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}\n\t\\Tree ";
+				std::stringstream ss;
+				ss << root;
+				// Sanitize underscores
+				std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+				treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
 
-		treeFile.close();
+				treeFile.close();
+			}
 	}
-
 	return 0;
 }
 
@@ -95,6 +97,10 @@ void doCmdArgs(int argc, char** argv) {
 		}
 		if(match[SEM_TREE_GROUP].matched) {
 			semTreeFileName = match[SEM_TREE_GROUP].str();
+		}
+		if(match[SEM_CHECK_GROUP].matched){
+
+			semanticCheck = true; 				
 		}
 		args = match.suffix().str();
 	}
