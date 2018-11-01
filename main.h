@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <sstream>
 #include "symbol.h"
 #include "node.h"
 #include "spi-c.tab.h"
