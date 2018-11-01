@@ -32,9 +32,25 @@ int main(int argc, char** argv) {
 	}
 
 	std::ofstream treeFile("tree.tex");
-	treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}\n\t\\Tree "
-	         << root
-	         << "\n\\end{tikzpicture}\n\\end{document}";
+	std::stringstream tex;
+	tex << '\\' << "documentclass{standalone}" << '\n'
+			<< '\\' << "usepackage{tikz}" << '\n'
+			<< '\\' << "usepackage{tikz-qtree}" << '\n'
+			<< '\\' << "usepackage[T1]{fontenc}" << '\n'
+			<< '\\' << "begin{document}" << '\n'
+			<< '\\' << "begin{tikzpicture}" << '\n'
+			<< '\t' << '\\' << "Tree "
+	    << root
+	    << '\n'
+			<< '\\' << "end{tikzpicture}" << '\n'
+			<< '\\' << "end{document}";
+	std::string sanitised = tex.str();
+	// auto found = sanitised.find('_');
+	// while (found != std::string::npos) {
+	// 	sanitised.insert(sanitised.begin() + found, '\\');
+	// 	found = sanitised.find('_', found);
+	// }
+	treeFile << sanitised;
 	return 0;
 }
 
