@@ -1,0 +1,8 @@
+
+int main()
+{
+	#REDUCE
+	int myArray[5]; 
+	#NOREDUCE
+return 0; 
+}

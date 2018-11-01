@@ -15,25 +15,24 @@ class SyntaxNode {
 			CONSTANT,
 			OPERATOR,
 			DECLARE_AND_INIT,
-			FUNCTION
+			FUNCTION,
+			ASSIGN,
+			CONDITIONAL
 		} type;
 
 		EvalType etype;
 		const unsigned line;
 		const unsigned columnno;
 
-		const unsigned& numChildren;
-		SyntaxNode** children;
+		std::vector<SyntaxNode*> children;
 
 		// TODO: Consider boolean 'constant' which checks whether or not this node can be evaluated at compile time ?
 
 		SyntaxNode(Type type, EvalType etype, unsigned numChildren...);
 
+		// Semanticly check the node
+		// Make certain data types line up, smash unneeded nodes, etc.
 		virtual void semanticCheck();
-		void pushChild(SyntaxNode* child);
-	private:
-	protected:
-		unsigned _numChildren;
 };
 
 class ConstantNode : public SyntaxNode {
@@ -56,15 +55,35 @@ class ConstantNode : public SyntaxNode {
 class OperatorNode : public SyntaxNode {
 	public:
 		const enum OpType {
-			OBAND = 1 << 0,
-			OMULT = 1 << 1,
-			OADD =  1 << 2,
-			OSUB =  1 << 3,
-			OBNOT = 1 << 4,
-			OLNOT = 1 << 5,
-			OINC =  1 << 6,
-			ODEC =  1 << 7,
-			OSIZE = 1 << 8
+			// Binary Operators
+			OBAND,
+			OBOR,
+			OBXOR,
+			OBNOT,
+			OLSHIFT,
+			ORSHIFT,
+			// Arithmetic
+			OMOD,
+			ODIV,
+			OMULT,
+			OADD,
+			OSUB,
+			OINC,
+			ODEC,
+			// Logic
+			OLNOT,
+			OLAND,
+			OLOR,
+			// Comparison
+			OLESS,
+			OGREAT,
+			OLEQ,
+			OGEQ,
+			OEQUAL,
+			ONEQ,
+			// Other
+			OSIZE,
+			OTERNARY
 		} opType;
 		OperatorNode(EvalType _type, OpType _opType, unsigned numChildren...);
 
@@ -73,7 +92,16 @@ class OperatorNode : public SyntaxNode {
 class IdentifierNode : public SyntaxNode {
 	public:
 		Symbol::SymbolType * const sym;
-		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, EVOID, 0), sym(sPtr) {}
+		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, EUNKNOWN, 0), sym(sPtr) {}
+	private:
+		IdentifierNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(FUNCTION, EUNKNOWN, 1, child), sym(sPtr) {}
+		friend class FunctionNode;
+};
+
+class FunctionNode : public IdentifierNode {
+	public:
+		FunctionNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : IdentifierNode(sPtr, child) {}
+		FunctionNode(IdentifierNode* id, SyntaxNode* child) : IdentifierNode(id->sym, child) {}
 };
 
 std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t);

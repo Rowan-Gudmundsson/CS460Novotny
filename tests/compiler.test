@@ -1,5 +1,37 @@
-#REDUCE
+void blah();
+
 int main() {
-	int x = 0, y = 2;
+	// This is a test
 	char z = 's';
+	#REDUCE
+	int x = 0, y = 2;
+
+	/* test */
+	{
+		/* This
+		   Is
+		   A
+		   Multiline
+		   Comment */ int x;
+	}
+
+	x = x + y / 2;
+	y *= 3 % z;
+
+	
+	if(x == 2 || y > z / 2) {
+		z = 3;
+	} else if (1) {
+		y = 3;
+	} else {
+		x;
+	}
+
+	#REDUCE
+	blah();
+}
+#NOREDUCE
+
+void blah() {
+	int x;
 }

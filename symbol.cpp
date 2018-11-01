@@ -1,10 +1,6 @@
 #include "symbol.h"
 #include <stdio.h>
 
-unsigned int lexDLevel = 0;
-unsigned int symDLevel = 0;
-unsigned int parseDLevel = 0;
-
 #ifdef YYDEBUG
 extern int yydebug;
 extern int yyparse;
@@ -39,7 +35,11 @@ bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
 }
 
 std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
-	out << "<" << sym.name << ", line " << sym.lineNumber << ", scope " << sym.scopeLevel << ">";
+	if(sym.itype == Symbol::SymbolType::FUNCTION) {
+		out << "<" << sym.name << "(), line " << sym.lineNumber << ">";
+	} else {
+		out << "<" << sym.name << ", line " << sym.lineNumber << ">";
+	}
 	return out;
 }
 
@@ -48,7 +48,7 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
  * @param None
  * @return None
  */
-Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
+Symbol::Symbol() : scopeLevel(_scopeLevel) {
 	pushScope();
 	mode = Mode::READ;
 }
@@ -86,7 +86,7 @@ std::ostream& operator << (std::ostream& out, const Symbol& table) {
 	while(conductor != nullptr) {
 		out << "Scope level: " << scopeLevel << std::endl << *conductor->tree << std::endl;
 		scopeLevel--;
-		conductor = conductor->next;
+		conductor = conductor->parent;
 	}
 	return out;
 }
@@ -104,6 +104,7 @@ unsigned Symbol::pushScope() {
 	}
 
 	Scope* tmp = new Scope(new BinaryTree<std::string, SymbolType>(), head);
+	head->children.push_back(tmp);
 	head = tmp;
 	_scopeLevel++;
 
@@ -134,7 +135,7 @@ Symbol::SymbolType* Symbol::find(std::string key) {
 		if (result != nullptr) {
 			return result;
 		}
-		conductor = conductor->next;
+		conductor = conductor->parent;
 	}
 	return nullptr;
 }
@@ -154,20 +155,17 @@ Symbol::SymbolType* Symbol::findInCurrentScope(std::string name) {
  * @return {unsigned} - New scope level
  */
 unsigned Symbol::popScope() {
-	if (head == nullptr) {
-		throw std::logic_error("Tried to pop a scope when there were no scopes.");
+	if (head->parent == nullptr) {
+		throw std::logic_error("Tried to pop a scope from global scope");
 	}
 
-	Scope* tmp = head;
-	head = head->next;
-	delete tmp->tree;
-	delete tmp;
-	tmp = nullptr;
+	head = head->parent;
 
 	_scopeLevel--;
 
 	return _scopeLevel;
 }
+
 /**
  * Clear the table
  * @param None
@@ -175,16 +173,22 @@ unsigned Symbol::popScope() {
  */
 bool Symbol::clear() {
 	Scope* tmp = head;
-	while(head != nullptr) {
-		tmp = head;
-		head = head->next;
-		delete tmp->tree;
-		delete tmp;
+	// Find the root
+	while(tmp->parent != nullptr) {
+		tmp = tmp->parent;
 	}
-	head = nullptr;
+	clearFrom(tmp);
 	return true;
 }
 
+void Symbol::clearFrom(Scope* s) {
+	if(s == nullptr) return;
+	for(Scope* _s : s->children) {
+		clearFrom(_s);
+	}
+
+	delete s;
+}
 
 /**
  * Destructor

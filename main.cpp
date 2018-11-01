@@ -31,26 +31,34 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	std::ofstream treeFile("tree.tex");
-	std::stringstream tex;
-	tex << '\\' << "documentclass{standalone}" << '\n'
-			<< '\\' << "usepackage{tikz}" << '\n'
-			<< '\\' << "usepackage{tikz-qtree}" << '\n'
-			<< '\\' << "usepackage[T1]{fontenc}" << '\n'
-			<< '\\' << "begin{document}" << '\n'
-			<< '\\' << "begin{tikzpicture}" << '\n'
-			<< '\t' << '\\' << "Tree "
-	    << root
-	    << '\n'
-			<< '\\' << "end{tikzpicture}" << '\n'
-			<< '\\' << "end{document}";
-	std::string sanitised = tex.str();
-	// auto found = sanitised.find('_');
-	// while (found != std::string::npos) {
-	// 	sanitised.insert(sanitised.begin() + found, '\\');
-	// 	found = sanitised.find('_', found);
-	// }
-	treeFile << sanitised;
+	if(treeFileName != "") {
+		std::ofstream treeFile(treeFileName);
+		treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}\n\t\\Tree ";
+		std::stringstream ss;
+		ss << root;
+		// Sanitize underscores
+		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+		treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
+
+		treeFile.close();
+	}
+	
+	if(semanticCheck)
+	{
+		root->semanticCheck();
+
+			if(semTreeFileName != "") {
+				std::ofstream treeFile(semTreeFileName);
+				treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}\n\t\\Tree ";
+				std::stringstream ss;
+				ss << root;
+				// Sanitize underscores
+				std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+				treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
+
+				treeFile.close();
+			}
+	}
 	return 0;
 }
 
@@ -83,6 +91,16 @@ void doCmdArgs(int argc, char** argv) {
 		}
 		if(match[HELP_GROUP].matched) {
 			helpMenu();
+		}
+		if(match[TREE_GROUP].matched) {
+			treeFileName = match[TREE_GROUP].str();
+		}
+		if(match[SEM_TREE_GROUP].matched) {
+			semTreeFileName = match[SEM_TREE_GROUP].str();
+		}
+		if(match[SEM_CHECK_GROUP].matched){
+
+			semanticCheck = true; 				
 		}
 		args = match.suffix().str();
 	}
@@ -130,8 +148,10 @@ void helpMenu() {
 	std::cout << "USAGE\n"
 	          << "  ./spi-c [flags] <input file>\n\n"
 	          << "FLAGS\n";
-	std::cout << "  -h, --help       - Display help menu\n"
-              << "  -o <output file> - Output to the given file\n"
+	std::cout << "  -h, --help       - Display help menu.\n"
+              << "  -o <output file> - Output to the given file.\n"
+              << "  -t <tree file>   - Output Abstract Syntax Tree representation to given file in latex.\n"
+              << "  -st <tree file>  - Output Abstract Syntax Tree to given file post semantic-checking.\n"
               << "  -d[debug levels] - Enable debug flags for various different stages of the compiler.\n"
               << "                     Allowable flags include: s#, l#, p#\n"
               << "                     for symbol table, lexer, and parser\n"

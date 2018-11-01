@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <vector>
 
 enum EvalType : unsigned {
 	ESIGNED =   1 << 0,
@@ -28,6 +29,8 @@ inline EvalType operator~(EvalType a)
 {return static_cast<EvalType>(~static_cast<unsigned>(a));}
 class Symbol {
 	public:
+		friend class Frame;
+
 		// Var type
 		class SymbolType {
 			public:
@@ -93,11 +96,14 @@ class Symbol {
 
 	private:
 		struct Scope {
-			Scope() {}
-			Scope(BinaryTree<std::string, SymbolType>* val, Scope* next_ptr): tree(val), next(next_ptr) {}
+			// Scope() {}
+			Scope(BinaryTree<std::string, SymbolType>* val, Scope* _parent): tree(val), parent(_parent) {}
 			BinaryTree<std::string, SymbolType>* tree;
-			Scope* next;
+			std::vector<Scope*> children;
+			Scope * const parent;
 		};
+
+		void clearFrom(Scope* s);
 
 		Scope* head;
 		unsigned _scopeLevel;

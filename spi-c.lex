@@ -47,9 +47,12 @@ SCOMMENT \/\/.*\n
 	std::string comment = yytext;
 	std::size_t lastPos;
 	std::size_t position = 0;
+	if(lexDLevel > 0) {
+		std::cout << "Found a comment:\n" << comment << std::endl << std::endl;
+	}
 	do {
 		lastPos = position;
-		position = comment.find('\n', lastPos);
+		position = comment.find('\n', lastPos + 1);
 		if (position != std::string::npos) {
 			lineno++;
 			column = 1;
@@ -57,11 +60,15 @@ SCOMMENT \/\/.*\n
 		};
 	} while (position != std::string::npos);
 
-	column += comment.size() - lastPos;
+	column += comment.size() - lastPos - 1;
 }
 {SCOMMENT}   {
+	if(lexDLevel > 0) {
+		std::cout << "Found a comment:\n" << yytext << std::endl << std::endl;
+	}
 	lineno++;
 	column = 0;
+	std::getline(inFile,currentLine);
 }
 
 {DELIM}+     { column += yyleng; }

@@ -1,50 +1,49 @@
 #include "node.h"
 
-SyntaxNode::SyntaxNode(Type t, EvalType e, unsigned n...) : type(t), etype(e), line(lineno), columnno(column), numChildren(_numChildren), _numChildren(n) {
-	if(numChildren > 0) {
+SyntaxNode::SyntaxNode(Type t, EvalType e, unsigned n...) : type(t), etype(e), line(lineno), columnno(column) {
+	if(n > 0) {
 		va_list args;
 		va_start(args, n);
 
-		children = new SyntaxNode*[n];
+		children.resize(n);
 
 		for(unsigned i = 0; i < n; i++) {
 			children[i] = va_arg(args, SyntaxNode*);
 		}
 
 		va_end(args);
-	} else {
-		children = nullptr;
 	}
 }
 
-void SyntaxNode::semanticCheck() {}
-
-void SyntaxNode::pushChild(SyntaxNode* child) {
-	_numChildren++;
-	SyntaxNode** temp = new SyntaxNode*[_numChildren];
-	temp[_numChildren - 1] = child;
-	for(unsigned i = 0; i < _numChildren - 1; i++) {
-		temp[i] = children[i];
+void SyntaxNode::semanticCheck() {
+	for(SyntaxNode* child : children) {
+		if(child != nullptr) child->semanticCheck();
 	}
-	delete [] children;
-	children = temp;
+	
+	// Compress generic nodes
+	// If a node has generic children, then just grab all of the grandchildren
+	for(unsigned i = 0; i < children.size(); i++) {
+		if(children[i]->type == GENERIC) {
+			unsigned size = children[i]->children.size();
+			children.insert(children.begin() + i, children[i]->children.begin(), children[i]->children.end());
+			delete children[i + size];
+			children.erase(children.begin() + i + size);
+		}
+	}
 }
 
 OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): SyntaxNode(OPERATOR, _type, 0), opType(_opType) {
-	_numChildren = n;
 	if (n > 0) {
 		va_list args;
 		va_start(args, n);
 
-		children = new SyntaxNode*[n];
+		children.resize(n);
 
 		for (unsigned i = 0; i < n; i++) {
 			children[i] = va_arg(args, SyntaxNode*);
 		}
 
 		va_end(args);
-	} else {
-		children = nullptr;
 	}
 }
 
@@ -56,7 +55,9 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(CONSTANT);
 			PROCESS_VAL(OPERATOR);
 			PROCESS_VAL(DECLARE_AND_INIT);
+			PROCESS_VAL(ASSIGN);
 			PROCESS_VAL(FUNCTION);
+			PROCESS_VAL(CONDITIONAL);
 		}
 	#undef PROCESS_VAL
 
@@ -64,9 +65,16 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 }
 
 std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
-	if(n == nullptr) return out;
+	out << "[.{";
+
+	if(n == nullptr) {
+		out << "\\textbf{nullptr}} ]";
+		return out;
+	}
+	
 	switch(n->type) {
 		case SyntaxNode::Type::IDENTIFIER:
+		case SyntaxNode::Type::FUNCTION:
 			out << *((IdentifierNode*) n);
 			break;
 		case SyntaxNode::Type::CONSTANT:
@@ -79,24 +87,22 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 			out << *n;
 			break;
 	}
-
-	return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const SyntaxNode& n) {
-	out << "[.{" << n.type << "} ";
-
-	for(unsigned i = 0; i < n.numChildren; i++) {
-		out << n.children[i];
-	}
-
 	out << ']';
 
 	return out;
 }
 
+std::ostream& operator<<(std::ostream& out, const SyntaxNode& n) {
+	out << n.type << "} ";
+
+	for(unsigned i = 0; i < n.children.size(); i++) {
+		out << n.children[i];
+	}
+
+	return out;
+}
+
 std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
-	out << "[.{";
 	if(n.etype & ECHAR) {
 		if(n.etype & EPOINTER) {
 			out << '\"' << *n.s << '\"';
@@ -108,25 +114,111 @@ std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
 	} else if(n.etype & EFLOAT || n.etype & EDOUBLE) {
 		out << n.f;
 	}
-	out << "} ]";
+	out << "} ";
 
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 	// TODO: Actually do this output
-	out << "[.{\\textbf{test} ";
+	out << "\\textbf{";
 
-	for(unsigned i = 0; i < n.numChildren; i++) {
-		out << n.children[i];
+	switch(n.opType) {
+		case OperatorNode::OpType::OBAND:
+			out << '&';
+			break;
+		case OperatorNode::OpType::OBOR:
+			out << '|';
+			break;
+		case OperatorNode::OpType::OBXOR:
+			out << '^';
+			break;
+		case OperatorNode::OpType::OBNOT:
+			out << '~';
+			break;
+		case OperatorNode::OpType::OLSHIFT:
+			out << "<<";
+			break;
+		case OperatorNode::OpType::ORSHIFT:
+			out << ">>";
+			break;
+		
+		// Arithmetic
+		case OperatorNode::OpType::OMOD:
+			out << '%';
+			break;
+		case OperatorNode::OpType::ODIV:
+			out << '/';
+			break;
+		case OperatorNode::OpType::OMULT:
+			out << '*';
+			break;
+		case OperatorNode::OpType::OADD:
+			out << '+';
+			break;
+		case OperatorNode::OpType::OSUB:
+			out << '-';
+			break;
+		case OperatorNode::OpType::OINC:
+			out << "++";
+			break;
+		case OperatorNode::OpType::ODEC:
+			out << "--";
+			break;
+		
+		// Logic
+		case OperatorNode::OpType::OLNOT:
+			out << '!';
+			break;
+		case OperatorNode::OpType::OLAND:
+			out << "&&";
+			break;
+		case OperatorNode::OpType::OLOR:
+			out << "||";
+			break;
+		
+		// Comparison
+		case OperatorNode::OpType::OLESS:
+			out << '<';
+			break;
+		case OperatorNode::OpType::OGREAT:
+			out << '>';
+			break;
+		case OperatorNode::OpType::OLEQ:
+			out << "\\leq";
+			break;
+		case OperatorNode::OpType::OGEQ:
+			out << "\\geq";
+			break;
+		case OperatorNode::OpType::OEQUAL:
+			out << "==";
+			break;
+		case OperatorNode::OpType::ONEQ:
+			out << "!=";
+			break;
+		
+		// Other
+		case OperatorNode::OpType::OSIZE:
+			out << "sizeof";
+			break;
+		case OperatorNode::OpType::OTERNARY:
+			out << "? :";
+			break;
 	}
 
-	out << ']';
+	out << "}} ";
 
+	for(unsigned i = 0; i < n.children.size(); i++) {
+		out << n.children[i];
+	}
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
-	out << "[.{" << *n.sym << "} ]";
+	out << *n.sym << "} ";
+
+	for(unsigned i = 0; i < n.children.size(); i++) {
+		out << n.children[i];
+	}
 	return out;
 }

@@ -35,12 +35,24 @@ To run:
 
 with the currently supported flags:
 ```
-  -h, --help       - Display help menu
-  -o <output file> - Output to the given file
+USAGE
+  ./spi-c [flags] <input file>
+
+FLAGS
+  -h, --help       - Display help menu.
+  -o <output file> - Output to the given file.
+  -t <tree file>   - Output Abstract Syntax Tree representation to given file in latex.
+  -st <tree file>  - Output Abstract Syntax Tree to given file post semantic-checking.
   -d[debug levels] - Enable debug flags for various different stages of the compiler.
                      Allowable flags include: s#, l#, p#
                      for symbol table, lexer, and parser
                      (examples: "-dl", "-dl1s4", "-dlps")
+```
+
+## Viewing Abstract Syntax Trees
+When using the `-t` or `-ts` command line flags, the program will output a representation of the final abstract syntax tree to the given file in LaTeX. To properly view the tree, LaTeX must be installed. The following command will generate the actual tree:
+```shell
+  pdflatex <tree file>
 ```
 
 ## Extra Credit
