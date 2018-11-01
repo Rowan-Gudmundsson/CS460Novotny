@@ -17,7 +17,8 @@ class SyntaxNode {
 			DECLARE_AND_INIT,
 			FUNCTION,
 			ASSIGN,
-			CONDITIONAL
+			CONDITIONAL,
+			LOOP
 		} type;
 
 		EvalType etype;
@@ -70,6 +71,8 @@ class OperatorNode : public SyntaxNode {
 			OSUB,
 			OINC,
 			ODEC,
+			OINCPOST,
+			ODECPOST,
 			// Logic
 			OLNOT,
 			OLAND,
@@ -104,9 +107,20 @@ class FunctionNode : public IdentifierNode {
 		FunctionNode(IdentifierNode* id, SyntaxNode* child) : IdentifierNode(id->sym, child) {}
 };
 
+class LoopNode : public SyntaxNode {
+	public:
+		LoopNode(SyntaxNode* pre, SyntaxNode* check, SyntaxNode* post, SyntaxNode* stmt, bool _pre_check = true)
+			: SyntaxNode(LOOP, EVOID, 4, pre, check, post, stmt),
+			  pre_check(_pre_check) {}
+		LoopNode(SyntaxNode* check, SyntaxNode* stmt, bool _pre_check = true)
+			: LoopNode(nullptr, check, nullptr, stmt, _pre_check) {}
+		bool pre_check;
+};
+
 std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t);
 std::ostream& operator<<(std::ostream& out, const SyntaxNode * n);
 std::ostream& operator<<(std::ostream& out, const SyntaxNode& n);
 std::ostream& operator<<(std::ostream& out, const ConstantNode& n);
 std::ostream& operator<<(std::ostream& out, const OperatorNode& n);
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n);
+std::ostream& operator<<(std::ostream& out, const LoopNode& n);

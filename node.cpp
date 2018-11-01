@@ -19,7 +19,7 @@ void SyntaxNode::semanticCheck() {
 	for(SyntaxNode* child : children) {
 		if(child != nullptr) child->semanticCheck();
 	}
-	
+
 	// Compress generic nodes
 	// If a node has generic children, then just grab all of the grandchildren
 	for(unsigned i = 0; i < children.size(); i++) {
@@ -50,7 +50,7 @@ OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): Synta
 std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 	#define PROCESS_VAL(p) case(SyntaxNode::Type::p): out << #p; break;
 		switch(t){
-			PROCESS_VAL(GENERIC);     
+			PROCESS_VAL(GENERIC);
 			PROCESS_VAL(IDENTIFIER);
 			PROCESS_VAL(CONSTANT);
 			PROCESS_VAL(OPERATOR);
@@ -58,6 +58,7 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(ASSIGN);
 			PROCESS_VAL(FUNCTION);
 			PROCESS_VAL(CONDITIONAL);
+			PROCESS_VAL(LOOP);
 		}
 	#undef PROCESS_VAL
 
@@ -71,7 +72,7 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 		out << "\\textbf{nullptr}} ]";
 		return out;
 	}
-	
+
 	switch(n->type) {
 		case SyntaxNode::Type::IDENTIFIER:
 		case SyntaxNode::Type::FUNCTION:
@@ -82,6 +83,9 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 			break;
 		case SyntaxNode::Type::OPERATOR:
 			out << *((OperatorNode*) n);
+			break;
+		case SyntaxNode::Type::LOOP:
+			out << *((LoopNode*) n);
 			break;
 		default:
 			out << *n;
@@ -142,7 +146,7 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 		case OperatorNode::OpType::ORSHIFT:
 			out << ">>";
 			break;
-		
+
 		// Arithmetic
 		case OperatorNode::OpType::OMOD:
 			out << '%';
@@ -159,13 +163,18 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 		case OperatorNode::OpType::OSUB:
 			out << '-';
 			break;
+		case OperatorNode::OpType::OINCPOST:
+			out << "POST++";
+			break;
 		case OperatorNode::OpType::OINC:
-			out << "++";
+			out << "++PRE";
+			break;
+		case OperatorNode::OpType::ODECPOST:
+			out << "POST--";
 			break;
 		case OperatorNode::OpType::ODEC:
-			out << "--";
+			out << "--PRE";
 			break;
-		
 		// Logic
 		case OperatorNode::OpType::OLNOT:
 			out << '!';
@@ -176,7 +185,7 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 		case OperatorNode::OpType::OLOR:
 			out << "||";
 			break;
-		
+
 		// Comparison
 		case OperatorNode::OpType::OLESS:
 			out << '<';
@@ -196,7 +205,7 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 		case OperatorNode::OpType::ONEQ:
 			out << "!=";
 			break;
-		
+
 		// Other
 		case OperatorNode::OpType::OSIZE:
 			out << "sizeof";
@@ -218,6 +227,15 @@ std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
 	out << *n.sym << "} ";
 
 	for(unsigned i = 0; i < n.children.size(); i++) {
+		out << n.children[i];
+	}
+	return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const LoopNode& n) {
+	out << (n.pre_check ? "PRE_CHECK_LOOP" : "POST_CHECK_LOOP") << "} ";
+
+	for (unsigned i = 0; i < n.children.size(); i++) {
 		out << n.children[i];
 	}
 	return out;
