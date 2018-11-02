@@ -277,6 +277,11 @@ direct_declarator // Node*
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
 			node->sym->isArray = true;
+			
+			node->children.push_back(new ArrayNode(EUNKNOWN, yyval.ival));
+
+			// if not immediately followed by an = {blah} this is an error to use this
+
 		} else {
 			throw "Error 1";
 		}
@@ -287,6 +292,7 @@ direct_declarator // Node*
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
 			node->sym->isArray = true;
+			//The size constant is in $3...need to get it into arraysize 
 			// TODO - set size
 		} else {
 			throw "Error 2";

@@ -18,6 +18,7 @@ class SyntaxNode {
 			FUNCTION,
 			ASSIGN,
 			CONDITIONAL,
+			ARRAY,
 			LOOP
 		} type;
 
@@ -51,6 +52,25 @@ class ConstantNode : public SyntaxNode {
 				delete s;
 			}
 		}
+};
+
+class ArrayNode	: public SyntaxNode 
+{
+	public:
+		ArrayNode(EvalType _type, int _size) : SyntaxNode(ARRAY, _type, 0), arraySize(_size), arrayValues(nullptr) {}
+		ArrayNode(EvalType _type, int _size, void* _values); 
+
+		int getSize() const
+		{
+			return arraySize;
+		}
+
+		 ~ArrayNode();
+
+	private:
+		int arraySize;  
+		void* arrayValues; 
+
 };
 
 class OperatorNode : public SyntaxNode {
@@ -123,4 +143,5 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode& n);
 std::ostream& operator<<(std::ostream& out, const ConstantNode& n);
 std::ostream& operator<<(std::ostream& out, const OperatorNode& n);
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n);
+std::ostream& operator<<(std::ostream& out, const ArrayNode& a);
 std::ostream& operator<<(std::ostream& out, const LoopNode& n);
