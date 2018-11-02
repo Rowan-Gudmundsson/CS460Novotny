@@ -54,7 +54,7 @@ class Symbol {
 				} itype = UNKNOWN;
 
 				bool isArray = false;
-				int arraySize = -1;
+				std::vector<int> arrayDimensions;
 
 
 				friend class Symbol;

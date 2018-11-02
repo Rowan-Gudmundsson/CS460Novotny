@@ -37,6 +37,12 @@ bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
 std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 	if(sym.itype == Symbol::SymbolType::FUNCTION) {
 		out << "<" << sym.name << "(), line " << sym.lineNumber << ">";
+	} else if (sym.isArray) {
+		out << "<" << sym.name;
+		for (auto i : sym.arrayDimensions) {
+			out << "[" << i << "]";
+		}
+		out << ", line " << sym.lineNumber << ">";
 	} else {
 		out << "<" << sym.name << ", line " << sym.lineNumber << ">";
 	}
