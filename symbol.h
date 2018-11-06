@@ -53,9 +53,15 @@ class Symbol {
 					TYPEDEF
 				} itype = UNKNOWN;
 
+				// Array stuff
 				bool isArray = false;
 				int arraySize = -1;
 
+				// Function stuff
+				// TODO - function overloading
+				bool isFunctionDefined = false;
+				unsigned functionDefLine;
+				unsigned functionDefCol;
 
 				friend class Symbol;
 			private:

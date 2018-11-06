@@ -36,7 +36,12 @@ bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
 
 std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 	if(sym.itype == Symbol::SymbolType::FUNCTION) {
-		out << "<" << sym.name << "(), line " << sym.lineNumber << ">";
+		if(sym.isFunctionDefined) {
+			out << "<" << sym.name << "(), line " << sym.functionDefLine << ">";
+		} else {
+			out << "<" << sym.name << "(), not defined>";
+		}
+		
 	} else {
 		out << "<" << sym.name << ", line " << sym.lineNumber << ">";
 	}

@@ -1,9 +1,10 @@
+#REDUCE
 void blah();
+#NOREDUCE
 
 int main() {
 	// This is a test
 	char z = 's';
-	#REDUCE
 	int x = 0, y = 2;
 
 	/* test */
@@ -27,11 +28,11 @@ int main() {
 		x;
 	}
 
-	#REDUCE
+	
 	blah();
 }
-#NOREDUCE
 
-void blah() {
-	int x;
-}
+
+#REDUCE
+void blah() {}
+#NOREDUCE
