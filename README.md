@@ -42,7 +42,8 @@ FLAGS
   -h, --help       - Display help menu.
   -o <output file> - Output to the given file.
   -t <tree file>   - Output Abstract Syntax Tree representation to given file in latex.
-  -st <tree file>  - Output Abstract Syntax Tree to given file post semantic-checking.
+  -ts <tree file>  - Output Abstract Syntax Tree to given file post semantic-checking.
+  -s               - Turn on semantic-checking. 
   -d[debug levels] - Enable debug flags for various different stages of the compiler.
                      Allowable flags include: s#, l#, p#
                      for symbol table, lexer, and parser

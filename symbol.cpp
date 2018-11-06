@@ -41,7 +41,12 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 		} else {
 			out << "<" << sym.name << "(), not defined>";
 		}
-		
+	} else if (sym.isArray) {
+		out << "<" << sym.name;
+		for (auto i : sym.arrayDimensions) {
+			out << "[" << i << "]";
+		}
+		out << ", line " << sym.lineNumber << ">";
 	} else {
 		out << "<" << sym.name << ", line " << sym.lineNumber << ">";
 	}

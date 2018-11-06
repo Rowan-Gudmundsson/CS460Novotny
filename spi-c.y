@@ -284,6 +284,11 @@ direct_declarator // Node*
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
 			node->sym->isArray = true;
+			node->sym->arrayDimensions.push_back(-1);
+
+			node->children.push_back(new ArrayNode(EUNKNOWN, yyval.ival));
+			// if not immediately followed by an = {blah} this is an error to use this
+
 		} else {
 			throw "Error 1";
 		}
@@ -294,6 +299,8 @@ direct_declarator // Node*
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
 			node->sym->isArray = true;
+			//The size constant is in $3...need to get it into arraysize
+			// Would work as node->sym->arrayDimensions.push_back(eval($3));
 			// TODO - set size
 		} else {
 			throw "Error 2";
@@ -431,16 +438,16 @@ selection_statement // Node*
 	;
 
 iteration_statement // Node*
-	: WHILE LPAREN expression RPAREN statement
-	| DO statement WHILE LPAREN expression RPAREN SEMI
-	| FOR LPAREN SEMI SEMI RPAREN statement
-	| FOR LPAREN SEMI SEMI expression RPAREN statement
-	| FOR LPAREN SEMI expression SEMI RPAREN statement
-	| FOR LPAREN SEMI expression SEMI expression RPAREN statement
-	| FOR LPAREN expression SEMI SEMI RPAREN statement
-	| FOR LPAREN expression SEMI SEMI expression RPAREN statement
-	| FOR LPAREN expression SEMI expression SEMI RPAREN statement
-	| FOR LPAREN expression SEMI expression SEMI expression RPAREN statement
+	: WHILE LPAREN expression RPAREN statement { $$ = new LoopNode($3, $5); }
+	| DO statement WHILE LPAREN expression RPAREN SEMI { $$ = new LoopNode($5, $2, false); }
+	| FOR LPAREN SEMI SEMI RPAREN statement { $$ = new LoopNode(nullptr, nullptr, nullptr, $6); }
+	| FOR LPAREN SEMI SEMI expression RPAREN statement { $$ = new LoopNode(nullptr, nullptr, $5, $7); }
+	| FOR LPAREN SEMI expression SEMI RPAREN statement { $$ = new LoopNode(nullptr, $4, nullptr, $7); }
+	| FOR LPAREN SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode(nullptr, $4, $6, $8); }
+	| FOR LPAREN expression SEMI SEMI RPAREN statement { $$ = new LoopNode($3, nullptr, nullptr, $7); }
+	| FOR LPAREN expression SEMI SEMI expression RPAREN statement { $$ = new LoopNode($3, nullptr, $6, $8); }
+	| FOR LPAREN expression SEMI expression SEMI RPAREN statement { $$ = new LoopNode($3, $5, nullptr, $8); }
+	| FOR LPAREN expression SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode($3, $5, $7, $9); }
 	;
 
 jump_statement // Node*
@@ -594,8 +601,8 @@ cast_expression // Node*
 
 unary_expression // Node*
 	: postfix_expression { $$ = $1; }
-	| INC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::OINC, 1, $2); }
-	| DEC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::ODEC, 1, $2); }
+	| INC_OP unary_expression { $$ = new OperatorNode(EUNKNOWN, OperatorNode::OINC, 1, $2); }
+	| DEC_OP unary_expression { $$ = new OperatorNode(EUNKNOWN, OperatorNode::ODEC, 1, $2); }
 	| unary_operator cast_expression {
 		EvalType _type;
 		switch($1) {
@@ -642,8 +649,8 @@ postfix_expression // Node*
 	| postfix_expression LPAREN argument_expression_list RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression PERIOD identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
-	| postfix_expression INC_OP { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
-	| postfix_expression DEC_OP { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression INC_OP { /* TODO(Rowan) -- Fix later */ $$ = new OperatorNode(EUNKNOWN, OperatorNode::OINCPOST, 1, $1); }
+	| postfix_expression DEC_OP { /* TODO(Rowan) -- Fix later */ $$ = new OperatorNode(EUNKNOWN, OperatorNode::ODECPOST, 1, $1); }
 	;
 
 primary_expression

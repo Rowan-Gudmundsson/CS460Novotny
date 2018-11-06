@@ -6,12 +6,13 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <sstream>
 #include "symbol.h"
 #include "node.h"
 #include "spi-c.tab.h"
 #include "errors.h"
 
-// https://regex101.com/r/SizYZH/7
+// https://regex101.com/r/SizYZH/8
 //                                  v group 1     v group 2     v group 3           v group 4                                     v group 5                                    v group 6           v group 7                                            v group 8                                     v group 9
 const std::regex rArgs("(?:(?:-d(?:l([1-9]?))?(?:s([1-9]?))?(?:p([1-9]?))?) ?|(?:-o ([a-zA-Z\\.\\/_0-9][a-zA-Z\\.\\/\\-_0-9]*)) ?|([a-zA-Z\\.\\/_0-9][a-zA-Z\\.\\/\\-_0-9]*) ?|(-h|--help) ?|(?:-t ([a-zA-Z\\.\\/_0-9][a-zA-Z\\.\\/\\-_0-9]*)) ?|(?:-ts ([a-zA-Z\\.\\/_0-9][a-zA-Z\\.\\/\\-_0-9]*)) ?|(-s|--semantic-check) ?)");
 // Which group is which - since named groups aren't supported in c++

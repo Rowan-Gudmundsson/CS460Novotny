@@ -2,7 +2,6 @@
 int main()
 {
 	#REDUCE
-	int myArray[5]; 
+	int myArray[][][];
 	#NOREDUCE
-return 0; 
 }

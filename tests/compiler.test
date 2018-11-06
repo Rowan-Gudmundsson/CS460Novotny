@@ -19,7 +19,7 @@ int main() {
 	x = x + y / 2;
 	y *= 3 % z;
 
-	
+
 	if(x == 2 || y > z / 2) {
 		z = 3;
 	} else if (1) {

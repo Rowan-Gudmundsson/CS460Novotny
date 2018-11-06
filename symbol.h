@@ -55,7 +55,7 @@ class Symbol {
 
 				// Array stuff
 				bool isArray = false;
-				int arraySize = -1;
+				std::vector<int> arrayDimensions;
 
 				// Function stuff
 				// TODO - function overloading
