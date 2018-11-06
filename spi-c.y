@@ -110,7 +110,7 @@ function_definition // Node*
 		//$$ = new SyntaxNode(SyntaxNode::Type::FUNCTION, EUNKNOWN, 2, $2, $3);
 		if($2->type == SyntaxNode::Type::IDENTIFIER) {
 			$$ = new FunctionNode((IdentifierNode*) $2, $3);
-
+			((FunctionNode*)$$)->sym->isFunctionDefined = true;
 		} else {
 			throw "Identifier not found where it should be";
 		}
@@ -138,6 +138,11 @@ declaration_list // Node*
 	: declaration {
 		table.mode = Symbol::Mode::READ;
 		$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
+		if(parseDLevel){
+			std::cout << "declaration_list\n";
+			std::cout << "GENERIC:\n"
+			          << $1 << std::endl << std::endl;
+		}
 	}
 	| declaration_list declaration {
 		table.mode = Symbol::Mode::READ;
@@ -214,7 +219,9 @@ init_declarator_list // Node*
 	;
 
 init_declarator // Node*
-	: declarator
+	: declarator {
+		$$ = $1;
+	}
 	| declarator ASSIGN initializer {
 		$$ = new SyntaxNode(SyntaxNode::Type::DECLARE_AND_INIT, EUNKNOWN, 2, $1, $3);
 		if(parseDLevel){

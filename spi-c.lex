@@ -201,7 +201,12 @@ SCOMMENT \/\/.*\n
 		idPtr = table.findInCurrentScope(varName);
 		Symbol::SymbolType* shadowIdPtr = table.find(varName);
 		if (idPtr != nullptr) {
-			throw ScannerError("Variable redeclaration");
+			if(idPtr->itype == Symbol::SymbolType::FUNCTION && !idPtr->isFunctionDefined) {
+				idPtr->functionDefLine = lineno;
+				idPtr->functionDefCol = column;
+			} else {
+				throw ScannerError("Variable redeclaration");
+			}
 		} else {
 			if (shadowIdPtr != nullptr) {
 				throwWarning("Variable \""s + varName + "\" shadows variable declared on line "s + std::to_string(shadowIdPtr->lineNumber));

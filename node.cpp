@@ -151,11 +151,21 @@ void SyntaxNode::semanticCheck() {
 	// Compress generic nodes
 	// If a node has generic children, then just grab all of the grandchildren
 	for(unsigned i = 0; i < children.size(); i++) {
-		if(children[i]->type == GENERIC) {
+		if(children[i] == nullptr) {
+			if(type == GENERIC) {
+				children.erase(children.begin() + i);
+				i--;
+			}
+		} else if(children[i]->type == GENERIC) {
 			unsigned size = children[i]->children.size();
 			children.insert(children.begin() + i, children[i]->children.begin(), children[i]->children.end());
 			delete children[i + size];
 			children.erase(children.begin() + i + size);
+			i--;
+		} else if(children[i]->type == IDENTIFIER && type == GENERIC) {
+			delete children[i];
+			children.erase(children.begin() + i);
+			i--;
 		}
 	}
 }
