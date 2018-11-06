@@ -1,5 +1,133 @@
 #include "node.h"
 
+template<typename T>
+T evalConst(SyntaxNode* node) {
+	if (!node->isConst) {
+		throw ParserError("Trying to evaluate non-constant expression.");
+	}
+	if (node->type == SyntaxNode::CONSTANT) {
+		ConstantNode* tmp = (ConstantNode*)node;
+		if (node->etype & EPOINTER) {
+			return tmp->s;
+		}
+		if (node->etype & EINT || node->etype & ECHAR) {
+			return tmp->i;
+		}
+		if (node->etype & EFLOAT || node->etype & EDOUBLE) {
+			return tmp->f;
+		}
+	} else if (node->type == SyntaxNode::OPERATOR) {
+		OperatorNode* tmp = (OperatorNode*)node;
+		switch (tmp->opType) {
+			case OperatorNode::OBAND:
+				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				return evalConst<long int>(tmp->children[0]) & evalConst<long int>(tmp->children[1]);
+			case OperatorNode::OBOR:
+				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				return evalConst<long int>(tmp->children[0]) | evalConst<long int>(tmp->children[1]);
+			case OperatorNode::OBXOR:
+				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				return evalConst<long int>(tmp->children[0]) ^ evalConst<long int>(tmp->children[1]);
+			case OperatorNode::OBNOT:
+				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				return ~evalConst<long int>(tmp->children[0]);
+			case OperatorNode::ORSHIFT:
+				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				return evalConst<long int>(tmp->children[0]) >> evalConst<long int>(tmp->children[1]);
+			case OperatorNode::OLSHIFT:
+				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				return evalConst<long int>(tmp->children[0]) << evalConst<long int>(tmp->children[1]);
+			case OperatorNode::OMOD:
+				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				return evalConst<long int>(tmp->children[0]) % evalConst<long int>(tmp->children[1]);
+			case OperatorNode::ODIV:
+				if (node->etype & EPOINTER) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				if (node->etype & EINT || node->etype & ECHAR) {
+					return evalConst<long int>(tmp->children[0]) / evalConst<long int>(tmp->children[1]);
+				}
+				return evalConst<double>(tmp->children[0]) / evalConst<double>(tmp->children[1]);
+			case OperatorNode::OMULT:
+				if (node->etype & EPOINTER) {
+					throw ParserError("Cannot perform operation on these operand types");
+				}
+				if (node->etype & EINT || node->etype & ECHAR) {
+					return evalConst<long int>(tmp->children[0]) * evalConst<long int>(tmp->children[1]);
+				}
+				return evalConst<double>(tmp->children[0]) * evalConst<double>(tmp->children[1]);
+			case OperatorNode::OADD:
+				if (node->etype & EINT || node->etype & ECHAR) {
+					return evalConst<long int>(tmp->children[0]) + evalConst<long int>(tmp->children[1]);
+				}
+				if (node->etype & EPOINTER) {
+					return evalConst<long int>(tmp->children[0]) + sizeof(char) * evalConst<long int>(tmp->children[1]);
+				}
+				return evalConst<double>(tmp->children[0]) + evalConst<double>(tmp->children[1]);
+			case OperatorNode::OSUB:
+				if (node->etype & EINT || node->etype & ECHAR) {
+					return evalConst<long int>(tmp->children[0]) - evalConst<long int>(tmp->children[1]);
+				}
+				if (node->etype & EPOINTER) {
+					return evalConst<long int>(tmp->children[0]) - sizeof(char) * evalConst<long int>(tmp->children[1]);
+				}
+				return evalConst<double>(tmp->children[0]) - evalConst<double>(tmp->children[1]);
+			case OperatorNode::OINC:
+			case OperatorNode::OINCPOST:
+				if (node->etype & EINT || node->etype & ECHAR) {
+					return evalConst<long int>(tmp->children[0]) + 1;
+				}
+				if (node->etype & EPOINTER) {
+					return evalConst<long int>(tmp->children[0]) + sizeof(char);
+				}
+				return evalConst<double>(tmp->children[0]) + 1;
+			case OperatorNode::ODEC:
+			case OperatorNode::ODECPOST:
+				if (node->etype & EINT || node->etype & ECHAR) {
+					return evalConst<long int>(tmp->children[0]) - 1;
+				}
+				if (node->etype & EPOINTER) {
+					return evalConst<long int>(tmp->children[0]) - sizeof(char);
+				}
+				return evalConst<double>(tmp->children[0]) - 1;
+			case OperatorNode::OLNOT:
+				if (node->etype & EINT || node->etype & ECHAR) {
+					return !evalConst<long int>(tmp->children[0]);
+				}
+				if (node->etype & EPOINTER) {
+					return 0;
+				}
+				return !evalConst<double>(tmp->children[0]);
+			case OperatorNode::OLAND:
+				if (node->etype & EINT || node->etype & ECHAR || node->etype & EPOINTER) {
+					return evalConst<long int>(tmp->children[0]) && evalConst<long int>(tmp->children[1]);
+				}
+				return evalConst<double>(tmp->children[0]) && evalConst<double>(tmp->children[1]);
+			case OperatorNode::OLOR:
+				if (node->etype & EINT || node->etype & ECHAR || node->etype & EPOINTER) {
+					return evalConst<long int>(tmp->children[0]) || evalConst<long int>(tmp->children[1]);
+				}
+				return evalConst<double>(tmp->children[0]) || evalConst<double>(tmp->children[1]);
+		}
+	} else {
+		throw ParserError("Node cannot be evaluated.");
+	}
+}
+
 SyntaxNode::SyntaxNode(Type t, EvalType e, unsigned n...) : type(t), etype(e), line(lineno), columnno(column) {
 	if(n > 0) {
 		va_list args;
@@ -42,15 +170,15 @@ void SyntaxNode::semanticCheck() {
 	}
 }
 
-ArrayNode::ArrayNode(EvalType _type, int _size, void* _values) : SyntaxNode(ARRAY, _type, 0), arraySize(_size) 
+ArrayNode::ArrayNode(EvalType _type, int _size, void* _values) : SyntaxNode(ARRAY, _type, 0), arraySize(_size)
 {
 	switch(_type)
 	{
-	
+
 		case ESIGNED:
 
 			arrayValues = new signed[_size];
-			break; 
+			break;
 		case EUNSIGNED:
 			arrayValues = new unsigned[_size];
 			break;
@@ -76,7 +204,7 @@ ArrayNode::ArrayNode(EvalType _type, int _size, void* _values) : SyntaxNode(ARRA
 			arrayValues = new void*[_size];
 			break;
 		case EUNKNOWN:
-		case EVOID: 
+		case EVOID:
 		default:
 			//ERROR
 			arrayValues = nullptr;
@@ -94,6 +222,7 @@ OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): Synta
 
 		for (unsigned i = 0; i < n; i++) {
 			children[i] = va_arg(args, SyntaxNode*);
+			isConst &= children[i]->isConst;
 		}
 
 		va_end(args);
@@ -183,12 +312,12 @@ std::ostream& operator<<(std::ostream& out, const ArrayNode& a)
 	out << "\\textbf{";
 	out << "Array of ";
 	out << a.getSize() << " ";
-	switch(a.etype) 
+	switch(a.etype)
 	{
 
 		case ESIGNED:
 			out << "signed";
-			break; 
+			break;
 		case EUNSIGNED:
 			out << "unsigned";
 			break;
@@ -214,7 +343,7 @@ std::ostream& operator<<(std::ostream& out, const ArrayNode& a)
 			out << "pointer";
 			break;
 		case EUNKNOWN:
-		case EVOID: 
+		case EVOID:
 		default:
 			break;
 	}
