@@ -3,6 +3,7 @@
 #include <cstdarg>
 #include <iostream>
 #include "symbol.h"
+#include "errors.h"
 
 extern unsigned lineno;
 extern unsigned column;
@@ -25,7 +26,7 @@ class SyntaxNode {
 		EvalType etype;
 		const unsigned line;
 		const unsigned columnno;
-
+		bool isConst = false;
 		std::vector<SyntaxNode*> children;
 
 		// TODO: Consider boolean 'constant' which checks whether or not this node can be evaluated at compile time ?
@@ -35,30 +36,35 @@ class SyntaxNode {
 		// Semanticly check the node
 		// Make certain data types line up, smash unneeded nodes, etc.
 		virtual void semanticCheck();
+		template<typename T>
+		friend T evalConst(SyntaxNode*);
 };
 
 class ConstantNode : public SyntaxNode {
 	public:
-		ConstantNode(EvalType _type, double _f) : SyntaxNode(CONSTANT, _type, 0), f(_f) {}
-		ConstantNode(EvalType _type, long int _i) : SyntaxNode(CONSTANT, _type, 0), i(_i) {}
-		ConstantNode(EvalType _type, std::string* _s) : SyntaxNode(CONSTANT, _type, 0), s(_s) {}
+		ConstantNode(EvalType _type, double _f) : SyntaxNode(CONSTANT, _type, 0), f(_f) { isConst = true; }
+		ConstantNode(EvalType _type, long int _i) : SyntaxNode(CONSTANT, _type, 0), i(_i) { isConst = true; }
+		ConstantNode(EvalType _type, std::string* _s) : SyntaxNode(CONSTANT, _type, 0), s(_s) { isConst = true; }
 		union {
 			double f;
 			long int i;
 			std::string* s;
 		};
 		~ConstantNode() {
-			if (type & EPOINTER) {
+			if (etype & EPOINTER) {
 				delete s;
 			}
 		}
 };
 
-class ArrayNode	: public SyntaxNode 
+class StringLiteralNode : public SyntaxNode {
+};
+
+class ArrayNode	: public SyntaxNode
 {
 	public:
 		ArrayNode(EvalType _type, int _size) : SyntaxNode(ARRAY, _type, 0), arraySize(_size), arrayValues(nullptr) {}
-		ArrayNode(EvalType _type, int _size, void* _values); 
+		ArrayNode(EvalType _type, int _size, void* _values);
 
 		int getSize() const
 		{
@@ -68,8 +74,8 @@ class ArrayNode	: public SyntaxNode
 		 ~ArrayNode();
 
 	private:
-		int arraySize;  
-		void* arrayValues; 
+		int arraySize;
+		void* arrayValues;
 
 };
 
