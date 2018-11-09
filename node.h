@@ -8,6 +8,12 @@
 extern unsigned lineno;
 extern unsigned column;
 
+struct PointerNode {
+	PointerNode() { level = 0; qualifier = TNONE; }
+	unsigned level;
+	TypeQualifier qualifier;
+};
+
 class SyntaxNode {
 	public:
 		const enum Type {
@@ -74,7 +80,7 @@ class ArrayNode	: public SyntaxNode
 
 	private:
 		SyntaxNode* arraySize;
-		
+
 
 };
 

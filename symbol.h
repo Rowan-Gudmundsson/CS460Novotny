@@ -27,6 +27,16 @@ inline EvalType operator&(EvalType a, EvalType b)
 {return static_cast<EvalType>(static_cast<unsigned>(a) & static_cast<unsigned>(b));}
 inline EvalType operator~(EvalType a)
 {return static_cast<EvalType>(~static_cast<unsigned>(a));}
+
+enum TypeQualifier : unsigned {
+	TNONE = 		0,
+	TCONST =    1 << 0,
+	TVOLATILE = 1 << 1,
+};
+
+inline TypeQualifier operator|(TypeQualifier a, TypeQualifier b)
+{return static_cast<TypeQualifier>(static_cast<unsigned>(a) | static_cast<unsigned>(b));}
+
 class Symbol {
 	public:
 		friend class Frame;
@@ -62,6 +72,7 @@ class Symbol {
 				bool isFunctionDefined = false;
 				unsigned functionDefLine;
 				unsigned functionDefCol;
+				unsigned pointerLevel = 0;
 
 				friend class Symbol;
 			private:

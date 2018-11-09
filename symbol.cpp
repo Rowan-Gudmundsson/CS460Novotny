@@ -47,6 +47,12 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 			out << "[" << i << "]";
 		}
 		out << ", line " << sym.lineNumber << ">";
+	} else if (sym.pointerLevel > 0) {
+		out << "<" << sym.name << "$^{";
+		for (unsigned i = 0; i < sym.pointerLevel; i++) {
+			out << "*";
+		}
+		out << "}$, line " << sym.lineNumber << ">";
 	} else {
 		out << "<" << sym.name << ", line " << sym.lineNumber << ">";
 	}

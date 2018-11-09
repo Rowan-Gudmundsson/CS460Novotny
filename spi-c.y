@@ -13,6 +13,7 @@
 	extern Symbol table;
 	extern unsigned int parseDLevel;
 	void throwWarning(const std::string& warning);
+
 %}
 
 %code top {
@@ -29,6 +30,8 @@
 	EvalType eval;
 	SyntaxNode* nval;
 	OperatorNode::OpType oval;
+	PointerNode* pval;
+	TypeQualifier qval;
 }
 
 %token DEBUG_SYMBOL_TABLE
@@ -65,14 +68,16 @@
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
-%type <eval> type_specifier declaration_specifiers storage_class_specifier type_qualifier specifier_qualifier_list type_name
+%type <eval> type_specifier declaration_specifiers storage_class_specifier specifier_qualifier_list type_name
 %type <oval> unary_operator assignment_operator
 %type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression
 %type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression
 %type <nval> direct_declarator constant primary_expression string expression identifier declaration declaration_list
-%type <nval> postfix_expression unary_expression cast_expression pointer initializer init_declarator init_declarator_list
+%type <nval> postfix_expression unary_expression cast_expression initializer init_declarator init_declarator_list
 %type <nval> compound_statement function_definition external_declaration translation_unit constant_expression expression_statement
 %type <nval> statement statement_list labeled_statement selection_statement iteration_statement jump_statement
+%type <pval> pointer
+%type <qval> type_qualifier_list type_qualifier
 
 %parse-param {SyntaxNode*& root}
 
@@ -157,8 +162,8 @@ declaration_specifiers // EvalType
 	| storage_class_specifier declaration_specifiers { $$ = $1 | $2; }
 	| type_specifier { $$ = $1; }
 	| type_specifier declaration_specifiers { $$ = $1 | $2; }
-	| type_qualifier { $$ = $1; }
-	| type_qualifier declaration_specifiers { $$ = $1 | $2; }
+	| type_qualifier { $$ = EUNKNOWN; }
+	| type_qualifier declaration_specifiers { $$ = EUNKNOWN; }
 	;
 
 storage_class_specifier // EvalType
@@ -184,9 +189,9 @@ type_specifier // EvalType
 	| TYPEDEF_NAME { table.mode = Symbol::Mode::WRITE; /* TODO Acutally do this */ $$ = EVOID; }
 	;
 
-type_qualifier // EvalType
-	: CONST
-	| VOLATILE
+type_qualifier // TypeQualifier
+	: CONST { $$ = TCONST; }
+	| VOLATILE { $$ = TVOLATILE; }
 	;
 
 struct_or_union_specifier
@@ -273,7 +278,15 @@ enumerator
 
 declarator // Node*
 	: direct_declarator { $$ = $1; }
-	| pointer direct_declarator { /* TODO: Pointer stuff */ $$ = $1; }
+	| pointer direct_declarator {
+		$$ = $2;
+		if ($$->type == SyntaxNode::IDENTIFIER) {
+			IdentifierNode* tmp = (IdentifierNode*)$$;
+			tmp->sym->pointerLevel += $1->level;
+		} else {
+			throw "Error pointer";
+		}
+	}
 	;
 
 direct_declarator // Node*
@@ -288,7 +301,7 @@ direct_declarator // Node*
 			node->sym->arrayDimensions.push_back(-1);
 
 			node->children.push_back(new ArrayNode(EUNKNOWN, $1));
-			
+
 
 		} else {
 			throw "Error 1";
@@ -331,16 +344,16 @@ direct_declarator // Node*
 	}
 	;
 
-pointer
-	: MULT
-	| MULT type_qualifier_list
-	| MULT pointer
-	| MULT type_qualifier_list pointer
+pointer // PointerNode
+	: MULT { $$ = new PointerNode(); $$->level++; }
+	| MULT type_qualifier_list { $$ = new PointerNode(); $$->level++; $$->qualifier = $2; }
+	| MULT pointer { $$ = $2; $$->level++; }
+	| MULT type_qualifier_list pointer { $$ = $3; $$->level++; $$->qualifier = $2; }
 	;
 
-type_qualifier_list
-	: type_qualifier
-	| type_qualifier_list type_qualifier
+type_qualifier_list // TypeQualifier
+	: type_qualifier { $$ = $1; }
+	| type_qualifier_list type_qualifier { $$ = $1 | $2; }
 	;
 
 parameter_type_list
