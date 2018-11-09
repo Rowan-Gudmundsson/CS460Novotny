@@ -659,7 +659,7 @@ unary_operator // OperatorNode::OpType
 
 postfix_expression // Node*
 	: primary_expression { $$ = $1; }
-	| postfix_expression LBRACKET expression RBRACKET { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression LBRACKET expression RBRACKET { $$ = new SyntaxNode(SyntaxNode::ACCESS, EUNKNOWN, 2, $1, $3); }
 	| postfix_expression LPAREN RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression LPAREN argument_expression_list RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression PERIOD identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }

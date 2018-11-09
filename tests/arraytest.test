@@ -1,7 +1,8 @@
 
 int main()
 {
-	#REDUCE
 	int myArray[5 << 1][2 * 7][6 + 2];
+	#REDUCE
+	myArray[1] = 5;
 	#NOREDUCE
 }

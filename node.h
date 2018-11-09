@@ -26,6 +26,7 @@ class SyntaxNode {
 			ASSIGN,
 			CONDITIONAL,
 			ARRAY,
+			ACCESS,
 			LOOP
 		} type;
 		EvalType etype;

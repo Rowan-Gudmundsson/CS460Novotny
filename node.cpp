@@ -280,6 +280,7 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(CONDITIONAL);
 			PROCESS_VAL(ARRAY);
 			PROCESS_VAL(LOOP);
+			PROCESS_VAL(ACCESS);
 		}
 	#undef PROCESS_VAL
 
