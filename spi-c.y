@@ -213,7 +213,8 @@ init_declarator_list // Node*
 	: init_declarator {
 		$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
 		if(parseDLevel){
-			std::cout << "GENERIC:\n"
+			std::cout << "init_declarator_list\n"
+			          << "GENERIC:\n"
 			          << $1 << std::endl;
 		}
 	}
@@ -475,7 +476,15 @@ jump_statement // Node*
 	;
 
 expression // Node*
-	: assignment_expression { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
+	: assignment_expression { 
+		/*$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
+		if(parseDLevel > 0) {
+			std::cout << "expression\n"
+			          << "GENERIC\n"
+			          << $1 << std::endl;
+		}*/
+		$$ = $1;
+	}
 	| expression COMMA assignment_expression { $$ = $1; $$->children.push_back($3); }
 	;
 
