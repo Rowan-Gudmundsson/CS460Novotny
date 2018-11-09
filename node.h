@@ -28,7 +28,6 @@ class SyntaxNode {
 			ARRAY,
 			LOOP
 		} type;
-
 		EvalType etype;
 		const unsigned line;
 		const unsigned columnno;
@@ -42,8 +41,6 @@ class SyntaxNode {
 		// Semanticly check the node
 		// Make certain data types line up, smash unneeded nodes, etc.
 		virtual void semanticCheck();
-		template<typename T>
-		friend T evalConst(SyntaxNode*);
 };
 
 class ConstantNode : public SyntaxNode {
@@ -61,6 +58,8 @@ class ConstantNode : public SyntaxNode {
 				delete s;
 			}
 		}
+
+		friend ConstantNode* evalConst(SyntaxNode*);
 };
 
 class StringLiteralNode : public SyntaxNode {
@@ -120,7 +119,7 @@ class OperatorNode : public SyntaxNode {
 			OTERNARY
 		} opType;
 		OperatorNode(EvalType _type, OpType _opType, unsigned numChildren...);
-
+		ConstantNode* evalNode();
 };
 
 class IdentifierNode : public SyntaxNode {
@@ -156,3 +155,5 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n);
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n);
 std::ostream& operator<<(std::ostream& out, const ArrayNode& a);
 std::ostream& operator<<(std::ostream& out, const LoopNode& n);
+
+ConstantNode* evalConst(SyntaxNode*);

@@ -2,6 +2,6 @@
 int main()
 {
 	#REDUCE
-	int myArray[5]; 
+	int myArray[5 << 1][2 * 7][6 + 2];
 	#NOREDUCE
 }

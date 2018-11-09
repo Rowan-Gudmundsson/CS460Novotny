@@ -1,131 +1,19 @@
 #include "node.h"
 
-template<typename T>
-T evalConst(SyntaxNode* node) {
+ConstantNode* evalConst(SyntaxNode* node) {
 	if (!node->isConst) {
-		throw ParserError("Trying to evaluate non-constant expression.");
+		throw ParserError("Cannot evaluate non-constant expression.");
 	}
+
 	if (node->type == SyntaxNode::CONSTANT) {
-		ConstantNode* tmp = (ConstantNode*)node;
-		if (node->etype & EPOINTER) {
-			return tmp->s;
-		}
-		if (node->etype & EINT || node->etype & ECHAR) {
-			return tmp->i;
-		}
-		if (node->etype & EFLOAT || node->etype & EDOUBLE) {
-			return tmp->f;
-		}
-	} else if (node->type == SyntaxNode::OPERATOR) {
-		OperatorNode* tmp = (OperatorNode*)node;
-		switch (tmp->opType) {
-			case OperatorNode::OBAND:
-				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				return evalConst<long int>(tmp->children[0]) & evalConst<long int>(tmp->children[1]);
-			case OperatorNode::OBOR:
-				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				return evalConst<long int>(tmp->children[0]) | evalConst<long int>(tmp->children[1]);
-			case OperatorNode::OBXOR:
-				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				return evalConst<long int>(tmp->children[0]) ^ evalConst<long int>(tmp->children[1]);
-			case OperatorNode::OBNOT:
-				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				return ~evalConst<long int>(tmp->children[0]);
-			case OperatorNode::ORSHIFT:
-				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				return evalConst<long int>(tmp->children[0]) >> evalConst<long int>(tmp->children[1]);
-			case OperatorNode::OLSHIFT:
-				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				return evalConst<long int>(tmp->children[0]) << evalConst<long int>(tmp->children[1]);
-			case OperatorNode::OMOD:
-				if (node->etype & EPOINTER || node->etype & EFLOAT || node->etype & EDOUBLE) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				return evalConst<long int>(tmp->children[0]) % evalConst<long int>(tmp->children[1]);
-			case OperatorNode::ODIV:
-				if (node->etype & EPOINTER) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				if (node->etype & EINT || node->etype & ECHAR) {
-					return evalConst<long int>(tmp->children[0]) / evalConst<long int>(tmp->children[1]);
-				}
-				return evalConst<double>(tmp->children[0]) / evalConst<double>(tmp->children[1]);
-			case OperatorNode::OMULT:
-				if (node->etype & EPOINTER) {
-					throw ParserError("Cannot perform operation on these operand types");
-				}
-				if (node->etype & EINT || node->etype & ECHAR) {
-					return evalConst<long int>(tmp->children[0]) * evalConst<long int>(tmp->children[1]);
-				}
-				return evalConst<double>(tmp->children[0]) * evalConst<double>(tmp->children[1]);
-			case OperatorNode::OADD:
-				if (node->etype & EINT || node->etype & ECHAR) {
-					return evalConst<long int>(tmp->children[0]) + evalConst<long int>(tmp->children[1]);
-				}
-				if (node->etype & EPOINTER) {
-					return evalConst<long int>(tmp->children[0]) + sizeof(char) * evalConst<long int>(tmp->children[1]);
-				}
-				return evalConst<double>(tmp->children[0]) + evalConst<double>(tmp->children[1]);
-			case OperatorNode::OSUB:
-				if (node->etype & EINT || node->etype & ECHAR) {
-					return evalConst<long int>(tmp->children[0]) - evalConst<long int>(tmp->children[1]);
-				}
-				if (node->etype & EPOINTER) {
-					return evalConst<long int>(tmp->children[0]) - sizeof(char) * evalConst<long int>(tmp->children[1]);
-				}
-				return evalConst<double>(tmp->children[0]) - evalConst<double>(tmp->children[1]);
-			case OperatorNode::OINC:
-			case OperatorNode::OINCPOST:
-				if (node->etype & EINT || node->etype & ECHAR) {
-					return evalConst<long int>(tmp->children[0]) + 1;
-				}
-				if (node->etype & EPOINTER) {
-					return evalConst<long int>(tmp->children[0]) + sizeof(char);
-				}
-				return evalConst<double>(tmp->children[0]) + 1;
-			case OperatorNode::ODEC:
-			case OperatorNode::ODECPOST:
-				if (node->etype & EINT || node->etype & ECHAR) {
-					return evalConst<long int>(tmp->children[0]) - 1;
-				}
-				if (node->etype & EPOINTER) {
-					return evalConst<long int>(tmp->children[0]) - sizeof(char);
-				}
-				return evalConst<double>(tmp->children[0]) - 1;
-			case OperatorNode::OLNOT:
-				if (node->etype & EINT || node->etype & ECHAR) {
-					return !evalConst<long int>(tmp->children[0]);
-				}
-				if (node->etype & EPOINTER) {
-					return 0;
-				}
-				return !evalConst<double>(tmp->children[0]);
-			case OperatorNode::OLAND:
-				if (node->etype & EINT || node->etype & ECHAR || node->etype & EPOINTER) {
-					return evalConst<long int>(tmp->children[0]) && evalConst<long int>(tmp->children[1]);
-				}
-				return evalConst<double>(tmp->children[0]) && evalConst<double>(tmp->children[1]);
-			case OperatorNode::OLOR:
-				if (node->etype & EINT || node->etype & ECHAR || node->etype & EPOINTER) {
-					return evalConst<long int>(tmp->children[0]) || evalConst<long int>(tmp->children[1]);
-				}
-				return evalConst<double>(tmp->children[0]) || evalConst<double>(tmp->children[1]);
-		}
-	} else {
-		throw ParserError("Node cannot be evaluated.");
+		return (ConstantNode*)node;
 	}
+
+	if (node->type == SyntaxNode::OPERATOR) {
+		return ((OperatorNode*)node)->evalNode();
+	}
+
+	throw ParserError("Something went horribly awry...");
 }
 
 SyntaxNode::SyntaxNode(Type t, EvalType e, unsigned n...) : type(t), etype(e), line(lineno), columnno(column) {
@@ -173,6 +61,7 @@ void SyntaxNode::semanticCheck() {
 
 
 OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): SyntaxNode(OPERATOR, _type, 0), opType(_opType) {
+	isConst = true;
 	if (n > 0) {
 		va_list args;
 		va_start(args, n);
@@ -185,6 +74,196 @@ OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): Synta
 		}
 
 		va_end(args);
+	}
+}
+
+ConstantNode* OperatorNode::evalNode() {
+	if (!isConst) {
+		throw ParserError("Cannot evaluate non-constant expression.");
+	}
+
+	ConstantNode* lhs = children[0]->type == SyntaxNode::CONSTANT
+		? (ConstantNode*)children[0]
+		: ((OperatorNode*)children[0])->evalNode();
+
+	ConstantNode* rhs = children.size() > 1
+		? children[1]->type == SyntaxNode::CONSTANT
+			? (ConstantNode*)children[1]
+			: ((OperatorNode*)children[1])->evalNode()
+		: nullptr;
+
+	switch (opType) {
+		// Binary Operators
+		case OBAND: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i & rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"&\" on non-integral types.");
+			}
+		}
+		case OBOR: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i | rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"|\" on non-integral types.");
+			}
+		}
+		case OBXOR: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i ^ rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"^\" on non-integral types.");
+			}
+		}
+		case OBNOT: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, ~lhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"~\" on non-integral types.");
+			}
+		}
+		case OLSHIFT: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i << rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"<<\" on non-integral types.");
+			}
+		}
+		case ORSHIFT: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i >> rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \">>\" on non-integral types.");
+			}
+		}
+		// Arithmetic
+		case OMOD: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i % rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"%\" on non-integral types.");
+			}
+		}
+		case ODIV: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i / rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"/\" on non-integral types.");
+			}
+		}
+		case OMULT: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i * rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"*\" on non-integral types.");
+			}
+		}
+		case OADD: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i + rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"+\" on non-integral types.");
+			}
+		}
+		case OSUB: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, lhs->i - rhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"-\" on non-integral types.");
+			}
+		}
+		case OINCPOST:
+		case OINC: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, ++lhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"++\" on non-integral types.");
+			}
+		}
+		case ODECPOST:
+		case ODEC: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, --lhs->i);
+			} else {
+				throw ParserError("Cannot perform operation of type \"%\" on non-integral types.");
+			}
+		}
+		// Logic
+		case OLNOT: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(!lhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \"!\" on non-integral types.");
+			}
+		}
+		case OLAND: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(lhs->i && rhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \"&&\" on non-integral types.");
+			}
+		}
+		case OLOR: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(lhs->i || rhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \"||\" on non-integral types.");
+			}
+		}
+		// Comparison
+		case OLESS: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(lhs->i < rhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \"<\" on non-integral types.");
+			}
+		}
+		case OGREAT: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(lhs->i > rhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \">\" on non-integral types.");
+			}
+		}
+		case OLEQ: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(lhs->i <= rhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \"<=\" on non-integral types.");
+			}
+		}
+		case OGEQ: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(lhs->i >= rhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \">=\" on non-integral types.");
+			}
+		}
+		case OEQUAL: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(lhs->i == rhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \"==\" on non-integral types.");
+			}
+		}
+		case ONEQ: {
+			if (etype & EINT || etype & ECHAR) {
+				return new ConstantNode(etype, (long int)(lhs->i != rhs->i));
+			} else {
+				throw ParserError("Cannot perform operation of type \"!=\" on non-integral types.");
+			}
+		}
+		// Other
+		case OSIZE: {
+			// TODO (Rowan) - This
+			return nullptr;
+		}
+		case OTERNARY: {
+			// TODO (Rowan) - This
+			return nullptr;
+		}
+		default:
+			return nullptr;
 	}
 }
 
@@ -309,7 +388,7 @@ std::ostream& operator<<(std::ostream& out, const ArrayNode& a)
 			break;
 	}
 
-	out << "}} ";
+	out << "} ";
 
 	return out;
 }

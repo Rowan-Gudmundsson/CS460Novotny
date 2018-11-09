@@ -13,7 +13,6 @@
 	extern Symbol table;
 	extern unsigned int parseDLevel;
 	void throwWarning(const std::string& warning);
-
 %}
 
 %code top {
@@ -313,6 +312,11 @@ direct_declarator // Node*
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
 			node->sym->isArray = true;
+			try {
+				node->sym->arrayDimensions.push_back(evalConst($3)->i);
+			} catch(ParserError e) {
+				std::cout << "Error in constant evaluation: " << e.what() << std::endl;
+			}
 			node->children.push_back(new ArrayNode(EUNKNOWN, $3));
 		} else {
 			throw "Error 2";
@@ -504,7 +508,7 @@ assignment_operator // OperatorNode::OpType
 conditional_expression // Node*
 	: logical_or_expression { $$ = $1; }
 	| logical_or_expression HUH expression COLON conditional_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OTERNARY, 3, $1, $3, $5);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::OTERNARY, 3, $1, $3, $5);
 	}
 	;
 
@@ -515,94 +519,94 @@ constant_expression // Node*
 logical_or_expression // Node*
 	: logical_and_expression { $$ = $1; }
 	| logical_or_expression OR_OP logical_and_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLOR, 2, $1, $3);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::OLOR, 2, $1, $3);
 	}
 	;
 
 logical_and_expression // Node*
 	: inclusive_or_expression { $$ = $1; }
 	| logical_and_expression AND_OP inclusive_or_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLAND, 2, $1, $3);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::OLAND, 2, $1, $3);
 	}
 	;
 
 inclusive_or_expression // Node*
 	: exclusive_or_expression { $$ = $1; }
 	| inclusive_or_expression BOR exclusive_or_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OBOR, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::OBOR, 2, $1, $3);
 	}
 	;
 
 exclusive_or_expression // Node*
 	: and_expression { $$ = $1; }
 	| exclusive_or_expression BXOR and_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OBXOR, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::OBXOR, 2, $1, $3);
 	}
 	;
 
 and_expression // Node*
 	: equality_expression { $$ = $1; }
 	| and_expression BAND equality_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OBAND, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::OBAND, 2, $1, $3);
 	}
 	;
 
 equality_expression // Node*
 	: relational_expression { $$ = $1; }
 	| equality_expression EQ_OP relational_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OEQUAL, 2, $1, $3);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::OEQUAL, 2, $1, $3);
 	}
 	| equality_expression NE_OP relational_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::ONEQ, 2, $1, $3);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::ONEQ, 2, $1, $3);
 	}
 	;
 
 relational_expression // Node*
 	: shift_expression { $$ = $1; }
 	| relational_expression LTHAN shift_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLESS, 2, $1, $3);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::OLESS, 2, $1, $3);
 	}
 	| relational_expression GTHAN shift_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OGREAT, 2, $1, $3);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::OGREAT, 2, $1, $3);
 	}
 	| relational_expression LE_OP shift_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLEQ, 2, $1, $3);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::OLEQ, 2, $1, $3);
 	}
 	| relational_expression GE_OP shift_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OGEQ, 2, $1, $3);
+		$$ = new OperatorNode(EINT, OperatorNode::OpType::OGEQ, 2, $1, $3);
 	}
 	;
 
 shift_expression // Node*
 	: additive_expression { $$ = $1; }
 	| shift_expression LEFT_OP additive_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OLSHIFT, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::OLSHIFT, 2, $1, $3);
 	}
 	| shift_expression RIGHT_OP additive_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::ORSHIFT, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::ORSHIFT, 2, $1, $3);
 	}
 	;
 
 additive_expression // Node*
 	: multiplicative_expression { $$ = $1; }
 	| additive_expression ADD multiplicative_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OADD, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::OADD, 2, $1, $3);
 	}
 	| additive_expression SUB multiplicative_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OSUB, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::OSUB, 2, $1, $3);
 	}
 	;
 
 multiplicative_expression // Node*
 	: cast_expression { $$ = $1; }
 	| multiplicative_expression MULT cast_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OMULT, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::OMULT, 2, $1, $3);
 	}
 	| multiplicative_expression DIV cast_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::ODIV, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::ODIV, 2, $1, $3);
 	}
 	| multiplicative_expression MOD cast_expression {
-		$$ = new OperatorNode(EUNKNOWN, OperatorNode::OpType::OMOD, 2, $1, $3);
+		$$ = new OperatorNode($1->etype, OperatorNode::OpType::OMOD, 2, $1, $3);
 	}
 	;
 
@@ -613,8 +617,8 @@ cast_expression // Node*
 
 unary_expression // Node*
 	: postfix_expression { $$ = $1; }
-	| INC_OP unary_expression { $$ = new OperatorNode(EUNKNOWN, OperatorNode::OINC, 1, $2); }
-	| DEC_OP unary_expression { $$ = new OperatorNode(EUNKNOWN, OperatorNode::ODEC, 1, $2); }
+	| INC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::OINC, 1, $2); }
+	| DEC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::ODEC, 1, $2); }
 	| unary_operator cast_expression {
 		EvalType _type;
 		switch($1) {
@@ -631,7 +635,6 @@ unary_expression // Node*
 				if ($2->etype & EUNSIGNED) {
 					throwWarning("Taking 2's complement of unsigned type.");
 				}
-				break;
 			case OperatorNode::OBNOT:
 			case OperatorNode::OLNOT:
 				_type = $2->etype;
@@ -661,8 +664,8 @@ postfix_expression // Node*
 	| postfix_expression LPAREN argument_expression_list RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression PERIOD identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
-	| postfix_expression INC_OP { /* TODO(Rowan) -- Fix later */ $$ = new OperatorNode(EUNKNOWN, OperatorNode::OINCPOST, 1, $1); }
-	| postfix_expression DEC_OP { /* TODO(Rowan) -- Fix later */ $$ = new OperatorNode(EUNKNOWN, OperatorNode::ODECPOST, 1, $1); }
+	| postfix_expression INC_OP { /* TODO(Rowan) -- Fix later */ $$ = new OperatorNode($1->etype, OperatorNode::OINCPOST, 1, $1); }
+	| postfix_expression DEC_OP { /* TODO(Rowan) -- Fix later */ $$ = new OperatorNode($1->etype, OperatorNode::ODECPOST, 1, $1); }
 	;
 
 primary_expression
