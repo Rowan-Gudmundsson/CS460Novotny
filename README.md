@@ -55,6 +55,7 @@ When using the `-t` or `-ts` command line flags, the program will output a repre
 ```shell
   pdflatex <tree file>
 ```
+.tex files can also be opened in Sublime Text and the shortcut Ctrl+B can be used to open the tree in pdf form
 
 ## Extra Credit
 The binary tree used (found in [binary_tree.hpp](https://github.com/alexander-novo/CS460Novotny/blob/master/binary_tree.hpp)) is a red-black tree. This can be seen by using the `DUMP` command in `symboTest`.
