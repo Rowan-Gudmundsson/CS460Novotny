@@ -170,48 +170,7 @@ void SyntaxNode::semanticCheck() {
 	}
 }
 
-ArrayNode::ArrayNode(EvalType _type, int _size, void* _values) : SyntaxNode(ARRAY, _type, 0), arraySize(_size)
-{
-	switch(_type)
-	{
 
-		case ESIGNED:
-
-			arrayValues = new signed[_size];
-			break;
-		case EUNSIGNED:
-			arrayValues = new unsigned[_size];
-			break;
-		case ECHAR:
-			arrayValues = new char[_size];
-			break;
-		case ESHORT:
-			arrayValues = new short[_size];
-			break;
-		case EINT:
-			arrayValues = new int[_size];
-			break;
-		case ELONG:
-			arrayValues = new long[_size];
-			break;
-		case EFLOAT:
-			arrayValues = new float[_size];
-			break;
-		case EDOUBLE:
-			arrayValues = new double[_size];
-			break;
-		case EPOINTER:
-			arrayValues = new void*[_size];
-			break;
-		case EUNKNOWN:
-		case EVOID:
-		default:
-			//ERROR
-			arrayValues = nullptr;
-	}
-
-	memcpy(arrayValues, _values, sizeof(arrayValues));
-}
 
 OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): SyntaxNode(OPERATOR, _type, 0), opType(_opType) {
 	if (n > 0) {
@@ -270,6 +229,8 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 		case SyntaxNode::Type::LOOP:
 			out << *((LoopNode*) n);
 			break;
+		case SyntaxNode::Type::ARRAY:
+			out << *((ArrayNode*) n);
 		default:
 			out << *n;
 			break;
@@ -308,7 +269,6 @@ std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
 
 std::ostream& operator<<(std::ostream& out, const ArrayNode& a)
 {
-	// DON'T KNOW LATEX BUT HERE IS A SHOT
 	out << "\\textbf{";
 	out << "Array of ";
 	out << a.getSize() << " ";
@@ -345,6 +305,7 @@ std::ostream& operator<<(std::ostream& out, const ArrayNode& a)
 		case EUNKNOWN:
 		case EVOID:
 		default:
+			out << "unknown";
 			break;
 	}
 

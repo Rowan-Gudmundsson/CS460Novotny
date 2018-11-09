@@ -63,10 +63,9 @@ class StringLiteralNode : public SyntaxNode {
 class ArrayNode	: public SyntaxNode
 {
 	public:
-		ArrayNode(EvalType _type, int _size) : SyntaxNode(ARRAY, _type, 0), arraySize(_size), arrayValues(nullptr) {}
-		ArrayNode(EvalType _type, int _size, void* _values);
+		ArrayNode(EvalType _type, SyntaxNode* _size) : SyntaxNode(ARRAY, _type, 0), arraySize(_size) {}
 
-		int getSize() const
+		SyntaxNode* getSize() const
 		{
 			return arraySize;
 		}
@@ -74,8 +73,8 @@ class ArrayNode	: public SyntaxNode
 		 ~ArrayNode();
 
 	private:
-		int arraySize;
-		void* arrayValues;
+		SyntaxNode* arraySize;
+		
 
 };
 

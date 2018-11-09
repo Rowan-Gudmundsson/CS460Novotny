@@ -1,11 +1,11 @@
-#REDUCE
+//#REDUCE
 void blah();
-#NOREDUCE
+//#NOREDUCE
 
 int main() {
 	// This is a test
 	char z = 's';
-	int x = 0, y = 2;
+#REDUCE	int x = 0 #NOREDUCE, y = 2;
 	int q[50 + 2];
 
 	/* test */

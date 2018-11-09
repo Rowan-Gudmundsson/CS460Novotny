@@ -3,6 +3,7 @@
 	#include <iostream>
 	#include <string>
 	#include "errors.h"
+	#include <cstdlib>
 
 	#define YYDEBUG 1
 
@@ -286,8 +287,8 @@ direct_declarator // Node*
 			node->sym->isArray = true;
 			node->sym->arrayDimensions.push_back(-1);
 
-			node->children.push_back(new ArrayNode(EUNKNOWN, yyval.ival));
-			// if not immediately followed by an = {blah} this is an error to use this
+			node->children.push_back(new ArrayNode(EUNKNOWN, $1));
+			
 
 		} else {
 			throw "Error 1";
@@ -299,9 +300,7 @@ direct_declarator // Node*
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
 			node->sym->isArray = true;
-			//The size constant is in $3...need to get it into arraysize
-			// Would work as node->sym->arrayDimensions.push_back(eval($3));
-			// TODO - set size
+			node->children.push_back(new ArrayNode(EUNKNOWN, $3));
 		} else {
 			throw "Error 2";
 		}
