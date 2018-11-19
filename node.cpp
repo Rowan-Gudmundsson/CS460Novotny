@@ -296,8 +296,10 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 	}
 
 	switch(n->type) {
-		case SyntaxNode::Type::IDENTIFIER:
 		case SyntaxNode::Type::FUNCTION:
+			out << *((FunctionNode*) n);
+			break;
+		case SyntaxNode::Type::IDENTIFIER:
 			out << *((IdentifierNode*) n);
 			break;
 		case SyntaxNode::Type::CONSTANT:
@@ -347,14 +349,11 @@ std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
 	return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const ArrayNode& a)
-{
+std::ostream& operator<<(std::ostream& out, const ArrayNode& a) {
 	out << "\\textbf{";
 	out << "Array of ";
 	out << a.getSize() << " ";
-	switch(a.etype)
-	{
-
+	switch(a.etype) {
 		case ESIGNED:
 			out << "signed";
 			break;
@@ -496,6 +495,32 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
 	out << *n.sym << "} ";
+
+	for(unsigned i = 0; i < n.children.size(); i++) {
+		out << n.children[i];
+	}
+	return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
+	out << n.sym->name << "(";
+	// std::cout << *n.sym << std::endl;
+	// std::cout << "defined: " << n.func->defined << std::endl
+	//           << "line: " << n.func->functionDefLine << std::endl
+	//           << "col: " << n.func->functionDefCol << std::endl
+	//           << "params: " << n.func->parameters.size() << std::endl;
+	// std::cout << "Address: " << ((void*) &n.func) << std::endl;
+
+	for(unsigned i = 0; i < n.func->parameters.size(); i++) {
+		// std::cout << "Doing the thing" << std::endl;
+		// std::cout << "i: " << i << std::endl;
+		out << n.func->parameters.at(i);
+		// std::cout << n.func->parameters.at(i) << std::endl;
+		if(i < n.func->parameters.size() - 1) {
+			out << ", ";
+		}
+	}
+	out << ")} ";
 
 	for(unsigned i = 0; i < n.children.size(); i++) {
 		out << n.children[i];

@@ -12,6 +12,7 @@
 
 	extern Symbol table;
 	extern unsigned int parseDLevel;
+	extern unsigned lineno;
 	void throwWarning(const std::string& warning);
 %}
 
@@ -31,6 +32,7 @@
 	OperatorNode::OpType oval;
 	PointerNode* pval;
 	TypeQualifier qval;
+	std::vector<EvalType>* eList;
 }
 
 %token DEBUG_SYMBOL_TABLE
@@ -67,7 +69,7 @@
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
-%type <eval> type_specifier declaration_specifiers storage_class_specifier specifier_qualifier_list type_name
+%type <eval> type_specifier declaration_specifiers storage_class_specifier specifier_qualifier_list type_name parameter_declaration
 %type <oval> unary_operator assignment_operator
 %type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression
 %type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression
@@ -77,6 +79,7 @@
 %type <nval> statement statement_list labeled_statement selection_statement iteration_statement jump_statement
 %type <pval> pointer
 %type <qval> type_qualifier_list type_qualifier
+%type <eList> parameter_list parameter_type_list
 
 %parse-param {SyntaxNode*& root}
 
@@ -113,12 +116,17 @@ function_definition // Node*
 		  Also need to find the eval type of the function
 		*/
 		//$$ = new SyntaxNode(SyntaxNode::Type::FUNCTION, EUNKNOWN, 2, $2, $3);
-		if($2->type == SyntaxNode::Type::IDENTIFIER) {
-			$$ = new FunctionNode((IdentifierNode*) $2, $3);
-			((FunctionNode*)$$)->sym->isFunctionDefined = true;
+		if($2->type == SyntaxNode::Type::FUNCTION) {
+			$$ = new FunctionNode(((FunctionNode*) $2), $3);
+			delete $2;
+			((FunctionNode*)$$)->func->defined = true;
+			((FunctionNode*)$$)->func->functionDefLine =  lineno;
 		} else {
-			throw "Identifier not found where it should be";
+			std::cout << $2->type << " " << $2 << std::endl;
+			throw std::logic_error("Function not found where it should be");
 		}
+
+		table.popBackToGlobal();
 
 		if(parseDLevel) {
 			std::cout << "Found function: \n"
@@ -129,7 +137,11 @@ function_definition // Node*
 	;
 
 declaration // Node*
-	: declaration_specifiers SEMI
+	: declaration_specifiers SEMI {
+		// Ignore this
+		// TODO - come back to this maybe? No use AFAIK...
+		$$ = nullptr;
+	}
 	| declaration_specifiers init_declarator_list SEMI {
 		/*
 		  TODO: Apply declaration specifiers
@@ -282,14 +294,14 @@ declarator // Node*
 		$$ = $2;
 		if ($$->type == SyntaxNode::IDENTIFIER) {
 			IdentifierNode* tmp = (IdentifierNode*)$$;
-			tmp->sym->pointerLevel += $1->level;
+			tmp->sym->v.pointerLevel += $1->level;
 		} else {
 			throw "Error pointer";
 		}
 	}
 	;
 
-direct_declarator // Node*
+direct_declarator // IdentifierNode* (or FunctionNode*)
 	: identifier { $$ = $1; }
 	| LPAREN declarator RPAREN { /* Parentheses don't do anything...? */ $$ = $2; }
 	| direct_declarator LBRACKET RBRACKET {
@@ -297,8 +309,8 @@ direct_declarator // Node*
 		if($$->type == SyntaxNode::Type::IDENTIFIER) {
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
-			node->sym->isArray = true;
-			node->sym->arrayDimensions.push_back(-1);
+			node->sym->v.isArray = true;
+			node->sym->v.arrayDimensions.push_back(-1);
 
 			node->children.push_back(new ArrayNode(EUNKNOWN, $1));
 
@@ -312,9 +324,9 @@ direct_declarator // Node*
 		if($$->type == SyntaxNode::Type::IDENTIFIER) {
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
-			node->sym->isArray = true;
+			node->sym->v.isArray = true;
 			try {
-				node->sym->arrayDimensions.push_back(evalConst($3)->i);
+				node->sym->v.arrayDimensions.push_back(evalConst($3)->i);
 			} catch(ParserError e) {
 				std::cout << "Error in constant evaluation: " << e.what() << std::endl;
 			}
@@ -324,20 +336,60 @@ direct_declarator // Node*
 		}
 	}
 	| direct_declarator LPAREN RPAREN {
-		$$ = $1;
 		if($$->type == SyntaxNode::Type::IDENTIFIER) {
-			IdentifierNode* node = (IdentifierNode*) $$;
-			node->sym->itype = Symbol::SymbolType::FUNCTION;
-			// TODO - set paramaters
+			IdentifierNode* inode = (IdentifierNode*) $1;
+			inode->sym->itype = Symbol::SymbolType::FUNCTION;
+
+			FunctionNode* fnode = nullptr;
+
+			// See if this function already exists
+			for(auto& f : inode->sym->functions) {
+				if(f.parameters.empty()) {
+					fnode = new FunctionNode(inode, &f);
+					break;
+				}
+			}
+
+			if(fnode == nullptr) {
+				// Found a new function
+				Symbol::FunctionType f;
+				inode->sym->functions.push_back(f);
+				fnode = new FunctionNode(inode, &inode->sym->functions.back());
+			}
+
+			$$ = fnode;
+			// TODO - set paramters
 		} else {
 			throw "Error 3";
 		}
 	}
+	// Passing up a FunctionNode* here, but since it inherits from IdentifierNode, we're good
+	// Probably
 	| direct_declarator LPAREN parameter_type_list RPAREN {
-		$$ = $1;
 		if($$->type == SyntaxNode::Type::IDENTIFIER) {
-			IdentifierNode* node = (IdentifierNode*) $$;
-			node->sym->itype = Symbol::SymbolType::FUNCTION;
+			table.unPopScope();
+			IdentifierNode* inode = (IdentifierNode*) $1;
+			inode->sym->itype = Symbol::SymbolType::FUNCTION;
+
+			FunctionNode* fnode = nullptr;
+
+			// See if this function already exists
+			for(auto& f : inode->sym->functions) {
+				if(f.parameters == *$3) {
+					fnode = new FunctionNode(inode, &f);
+					break;
+				}
+			}
+
+			if(fnode == nullptr) {
+				// Found a new function
+				Symbol::FunctionType f;
+				f.parameters = *$3;
+				inode->sym->functions.push_back(f);
+				fnode = new FunctionNode(inode, &inode->sym->functions.back());
+			}
+
+			$$ = fnode;
 			// TODO - set paramters
 		} else {
 			throw "Error 4";
@@ -361,20 +413,33 @@ type_qualifier_list // TypeQualifier
 	| type_qualifier_list type_qualifier { $$ = $1 | $2; }
 	;
 
-parameter_type_list
-	: parameter_list { table.mode = Symbol::Mode::READ; }
-	| parameter_list COMMA ELIPSIS { table.mode = Symbol::Mode::READ; }
+parameter_type_list // std::vector<EvalType>*
+	: parameter_list { $$ = $1; table.mode = Symbol::Mode::READ; }
+	| parameter_list COMMA ELIPSIS { throw "We ain't dealing with this shit"; table.mode = Symbol::Mode::READ; }
 	;
 
-parameter_list
-	: parameter_declaration
-	| parameter_list COMMA parameter_declaration
+parameter_list // std::vector<EvalType>*
+	: parameter_declaration {
+		// std::cout << "The thing happened" << std::endl;
+		$$ = new std::vector<EvalType>();
+		$$->push_back($1);
+	}
+	| parameter_list COMMA parameter_declaration {
+		$$ = $1;
+		$$->push_back($3);
+	}
 	;
 
-parameter_declaration
-	: declaration_specifiers declarator
-	| declaration_specifiers
-	| declaration_specifiers abstract_declarator
+// We only need to pass the types up the tree, for prototype matching
+parameter_declaration // EvalType
+	: declaration_specifiers declarator {
+		((IdentifierNode*) $2)->sym->etype = $1;
+		$$ = $1;
+	}
+	| declaration_specifiers {
+		$$ = $1;
+	}
+	| declaration_specifiers abstract_declarator {/* TODO: WTF is abstract */ throw "ahhhhhhhh"; }
 	;
 
 identifier_list

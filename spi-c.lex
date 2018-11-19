@@ -129,8 +129,8 @@ SCOMMENT \/\/.*\n
 "|="        { RETURN_TOKEN(OR_ASSIGN); }
 "{"         { table.pushScope(); RETURN_TOKEN(LBRACE); }
 "}"         { table.popScope(); RETURN_TOKEN(RBRACE); }
-"("         { RETURN_TOKEN(LPAREN); }
-")"         { RETURN_TOKEN(RPAREN); }
+"("         { table.pushScope(); RETURN_TOKEN(LPAREN); }
+")"         { table.popScope(); RETURN_TOKEN(RPAREN); }
 "["         { RETURN_TOKEN(LBRACKET); }
 "]"         { RETURN_TOKEN(RBRACKET); }
 "+"         { RETURN_TOKEN(ADD); }
@@ -201,9 +201,11 @@ SCOMMENT \/\/.*\n
 		idPtr = table.findInCurrentScope(varName);
 		Symbol::SymbolType* shadowIdPtr = table.find(varName);
 		if (idPtr != nullptr) {
-			if(idPtr->itype == Symbol::SymbolType::FUNCTION && !idPtr->isFunctionDefined) {
-				idPtr->functionDefLine = lineno;
-				idPtr->functionDefCol = column;
+			if(idPtr->itype == Symbol::SymbolType::FUNCTION) {
+				// We can't do much until we know about the parameters
+				// TODO - figure out what to put here, if anything
+				// idPtr->functionDefLine = lineno;
+				// idPtr->functionDefCol = column;
 			} else {
 				throw ScannerError("Variable redeclaration");
 			}

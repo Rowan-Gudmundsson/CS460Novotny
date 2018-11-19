@@ -22,17 +22,14 @@ lex.yy.c: spi-c.lex
 parser.o: spi-c.tab.c
 	$(CC) $(CFLAGS) -c spi-c.tab.c -o parser.o
 
-spi-c.tab.c: spi-c.y
+spi-c.tab.c: spi-c.y node.h
 	bison -d -v spi-c.y
 
 main.o: main.cpp main.h spi-c.tab.h
 	$(CC) $(CFLAGS) -c main.cpp -o main.o
 
-symbol.o: symbol.cpp symbol.h binary_tree.o
+symbol.o: symbol.cpp symbol.h
 	$(CC) $(CFLAGS) -c symbol.cpp -o symbol.o
-
-binary_tree.o: binary_tree.hpp
-	$(CC) $(CFLAGS) -c binary_tree.hpp -o binary_tree.o
 
 node.o: node.h node.cpp
 	$(CC) $(CFLAGS) -c node.cpp -o node.o

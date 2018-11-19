@@ -25,6 +25,15 @@ int main(int argc, char** argv) {
 			std::cout << "ERROR! " << error.what() << std::endl;
 			std::cout << "On line " << lineno << ", column " << column << std::endl;
 			doArrowErrThing();
+		} catch (const std::exception& error) {
+			std::cout << "------------------------\n" 
+			          << "IMPORTANT COMPILER ERROR\n"
+			          << "------------------------\n";
+			std::cout << "ERROR! " << error.what() << std::endl;
+			std::cout << "On line " << lineno << ", column " << column << std::endl;
+			doArrowErrThing();
+		} catch (const char* s) {
+			std::cout << "UH OH" << std::endl << s << std::endl;
 		}
 	} else {
 		std::cerr << "Input file not found!" << std::endl;
@@ -42,7 +51,7 @@ int main(int argc, char** argv) {
 
 		treeFile.close();
 	}
-	
+
 	if(semanticCheck)
 	{
 		root->semanticCheck();
@@ -58,6 +67,10 @@ int main(int argc, char** argv) {
 
 			treeFile.close();
 		}
+	}
+
+	if(root != nullptr) {
+		delete root;
 	}
 	return 0;
 }

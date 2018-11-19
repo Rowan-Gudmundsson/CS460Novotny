@@ -42,6 +42,8 @@ class SyntaxNode {
 		// Semanticly check the node
 		// Make certain data types line up, smash unneeded nodes, etc.
 		virtual void semanticCheck();
+
+		virtual ~SyntaxNode() { for(SyntaxNode* c : children){ delete c; }}
 };
 
 class ConstantNode : public SyntaxNode {
@@ -55,9 +57,10 @@ class ConstantNode : public SyntaxNode {
 			std::string* s;
 		};
 		~ConstantNode() {
-			if (etype & EPOINTER) {
+			if (etype & EPOINTER && s != nullptr) {
 				delete s;
 			}
+			for(SyntaxNode* c : children){ delete c; }
 		}
 
 		friend ConstantNode* evalConst(SyntaxNode*);
@@ -75,9 +78,6 @@ class ArrayNode	: public SyntaxNode
 		{
 			return arraySize;
 		}
-
-		 ~ArrayNode();
-
 	private:
 		SyntaxNode* arraySize;
 
@@ -125,7 +125,7 @@ class OperatorNode : public SyntaxNode {
 
 class IdentifierNode : public SyntaxNode {
 	public:
-		Symbol::SymbolType * const sym;
+		Symbol::SymbolType* const sym;
 		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, EUNKNOWN, 0), sym(sPtr) {}
 	private:
 		IdentifierNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(FUNCTION, EUNKNOWN, 1, child), sym(sPtr) {}
@@ -134,8 +134,11 @@ class IdentifierNode : public SyntaxNode {
 
 class FunctionNode : public IdentifierNode {
 	public:
-		FunctionNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : IdentifierNode(sPtr, child) {}
-		FunctionNode(IdentifierNode* id, SyntaxNode* child) : IdentifierNode(id->sym, child) {}
+		Symbol::FunctionType* const func;
+		FunctionNode(Symbol::SymbolType* sPtr, Symbol::FunctionType* f) : IdentifierNode(sPtr, nullptr), func(f) {}
+		FunctionNode(IdentifierNode* id, Symbol::FunctionType* f) : IdentifierNode(id->sym, nullptr), func(f) {}
+		FunctionNode(FunctionNode* f, SyntaxNode* child) : IdentifierNode(f->sym, child), func(f->func) {}
+		// FunctionNode(IdentifierNode* id, Symbol::FunctionType* f) : IdentifierNode(id->sym), func(f) {}
 };
 
 class LoopNode : public SyntaxNode {
@@ -154,6 +157,7 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode& n);
 std::ostream& operator<<(std::ostream& out, const ConstantNode& n);
 std::ostream& operator<<(std::ostream& out, const OperatorNode& n);
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n);
+std::ostream& operator<<(std::ostream& out, const FunctionNode& n);
 std::ostream& operator<<(std::ostream& out, const ArrayNode& a);
 std::ostream& operator<<(std::ostream& out, const LoopNode& n);
 

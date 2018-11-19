@@ -64,3 +64,7 @@ debug_parser\.txt
 *.aux
 
 *.gz
+
+*.fls
+
+*.fdb_latexmk

@@ -7,6 +7,8 @@
 
 template <typename KeyType, typename NodeVal>
 class BinaryTree {
+	private:
+		unsigned _size = 0;
 	public:
 		// Constructors
 		BinaryTree();
@@ -23,6 +25,8 @@ class BinaryTree {
 
 		template <typename K, typename T>
 		friend std::ostream& operator<< (std::ostream& stream, const BinaryTree<K,T>& rhs);
+
+		const unsigned& size = _size;
 
 		// Destructors
 		~BinaryTree();
@@ -97,6 +101,7 @@ BinaryTree<K,T>::BinaryTree(const BinaryTree<K,T>& other) {
 template<typename K, typename T>
 BinaryTree<K,T>& BinaryTree<K,T>::operator = (const BinaryTree<K,T>& other) {
 	root = assignmentHelper(other.root, nullptr);
+	_size = other._size;
 }
 
 /**
@@ -167,6 +172,8 @@ T* BinaryTree<K,T>::insert(const K& key, const T& val) {
 		}
 		root = newRoot;
 	}
+
+	_size++;
 
 	return &newNode->pair.second;
 }

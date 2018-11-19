@@ -1,6 +1,8 @@
 #pragma once
 
 #include "binary_tree.hpp"
+#include <algorithm>
+#include <list>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -37,9 +39,39 @@ enum TypeQualifier : unsigned {
 inline TypeQualifier operator|(TypeQualifier a, TypeQualifier b)
 {return static_cast<TypeQualifier>(static_cast<unsigned>(a) | static_cast<unsigned>(b));}
 
+inline std::ostream& operator<<(std::ostream& out, EvalType a) {
+	if(a & ESIGNED);
+	if(a & EUNSIGNED) out << "unsigned ";
+	if(a & EVOID) out << "void ";
+	if(a & ECHAR) out << "char ";
+	if(a & ESHORT) out << "short ";
+	if(a & EINT) out << "int ";
+	if(a & ELONG) out << "long ";
+	if(a & EFLOAT) out << "float ";
+	if(a & EDOUBLE) out << "double ";
+	if(a & EPOINTER) out << "* ";
+	if(a & EUNKNOWN) out << "UNKNOWN ";
+
+	return out;
+}
+
 class Symbol {
 	public:
-		friend class Frame;
+		class FunctionType {
+		public:
+			bool defined = false;
+			unsigned functionDefLine;
+			unsigned functionDefCol;
+
+			std::vector<EvalType> parameters;
+			EvalType returnType;
+		};
+
+		struct VarType {
+			bool isArray = false;
+			std::vector<int> arrayDimensions;
+			unsigned pointerLevel = 0;
+		};
 
 		// Var type
 		class SymbolType {
@@ -54,7 +86,7 @@ class Symbol {
 				const std::string name;
 				const unsigned lineNumber;
 				const unsigned scopeLevel;
-				EvalType etype;
+				EvalType etype = EUNKNOWN;
 				enum {
 					UNKNOWN,
 					VARIABLE,
@@ -63,16 +95,17 @@ class Symbol {
 					TYPEDEF
 				} itype = UNKNOWN;
 
-				// Array stuff
-				bool isArray = false;
-				std::vector<int> arrayDimensions;
+				// TODO - figure a union out maybe?
+				//union {
+					// Variable stuff
+					VarType v;
 
-				// Function stuff
-				// TODO - function overloading
-				bool isFunctionDefined = false;
-				unsigned functionDefLine;
-				unsigned functionDefCol;
-				unsigned pointerLevel = 0;
+					// Function stuff
+					std::list<FunctionType> functions;
+
+					// TODO - ENUM?
+					// TODO - TYPEDEF?
+				//};
 
 				friend class Symbol;
 			private:
@@ -105,6 +138,8 @@ class Symbol {
 		SymbolType* find(std::string name);
 		SymbolType* findInCurrentScope(std::string name);
 		unsigned popScope();
+		unsigned unPopScope();
+		void popBackToGlobal();
 
 		// Destructor
 		~Symbol();
@@ -124,4 +159,8 @@ class Symbol {
 
 		Scope* head;
 		unsigned _scopeLevel;
+
+		// For when we pop a scope and it's empty so we delete it
+		// If we then try to unpop it - don't do anything
+		bool recentlyDeletedScope = false;
 };

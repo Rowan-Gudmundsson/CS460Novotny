@@ -36,20 +36,21 @@ bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
 
 std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 	if(sym.itype == Symbol::SymbolType::FUNCTION) {
-		if(sym.isFunctionDefined) {
-			out << "<" << sym.name << "(), line " << sym.functionDefLine << ">";
-		} else {
-			out << "<" << sym.name << "(), not defined>";
-		}
-	} else if (sym.isArray) {
+		// TODO - figure this out
+		//if(sym.isFunctionDefined) {
+		//	out << "<" << sym.name << "(), line " << sym.functionDefLine << ">";
+		//} else {
+			out << "<" << sym.name << "()>";
+		//}
+	} else if (sym.v.isArray) {
 		out << "<" << sym.name;
-		for (auto i : sym.arrayDimensions) {
+		for (auto i : sym.v.arrayDimensions) {
 			out << "[" << i << "]";
 		}
 		out << ", line " << sym.lineNumber << ">";
-	} else if (sym.pointerLevel > 0) {
+	} else if (sym.v.pointerLevel > 0) {
 		out << "<" << sym.name << "$^{";
-		for (unsigned i = 0; i < sym.pointerLevel; i++) {
+		for (unsigned i = 0; i < sym.v.pointerLevel; i++) {
 			out << "*";
 		}
 		out << "}$, line " << sym.lineNumber << ">";
@@ -124,6 +125,7 @@ unsigned Symbol::pushScope() {
 	head = tmp;
 	_scopeLevel++;
 
+	recentlyDeletedScope = true;
 
 	return _scopeLevel;
 }
@@ -175,11 +177,37 @@ unsigned Symbol::popScope() {
 		throw std::logic_error("Tried to pop a scope from global scope");
 	}
 
-	head = head->parent;
+	// If there are no variables in this scope - it is useless
+	if(head->tree->size == 0 && head->children.size() == 0) {
+		Scope* parent = head->parent;
+		std::vector<Scope*>& pchild = parent->children;
+		pchild.erase(std::find(pchild.begin(), pchild.end(), head));
+		delete head;
+		head = parent;
+		recentlyDeletedScope = true;
+	} else {
+		recentlyDeletedScope = false;
+		head = head->parent;
+	}
 
 	_scopeLevel--;
 
 	return _scopeLevel;
+}
+
+unsigned Symbol::unPopScope() {
+	if(recentlyDeletedScope) return _scopeLevel;
+
+	head = head->children.back();
+	_scopeLevel++;
+
+	return _scopeLevel;
+}
+
+void Symbol::popBackToGlobal() {
+	if(head->parent != nullptr) {
+		while(popScope() > 0);
+	}
 }
 
 /**
@@ -199,10 +227,18 @@ bool Symbol::clear() {
 
 void Symbol::clearFrom(Scope* s) {
 	if(s == nullptr) return;
-	for(Scope* _s : s->children) {
+	for(Scope*& _s : s->children) {
 		clearFrom(_s);
 	}
 
+	s->children.clear();
+
+	Scope* parent = head->parent;
+	if(parent != nullptr) {
+		std::vector<Scope*>& pchild = parent->children;
+		pchild.erase(std::find(pchild.begin(), pchild.end(), s));
+	}
+	delete s->tree;
 	delete s;
 }
 
@@ -214,36 +250,3 @@ void Symbol::clearFrom(Scope* s) {
 Symbol::~Symbol() {
 	clear();
 }
-
-// void Symbol::debug_token(std::string tokenName, int tokenLine, unsigned tokenScope)
-// {
-// 	std::cout << "XXX DEBUG TOKEN CALLED" << std::endl;
-// 	if(lexDLevel > 0 || debug_token_enabled)
-// 	{
-// 		debug_token_stream << "Identifier found: " << tokenName
-// 		          << " on line: " << tokenLine
-// 		          << " in scope level: " << tokenScope
-// 		          << " (current scope level: " << scopeLevel << ")" << std::endl;
-// 	}
-// }
-
-
-// void Symbol::toggleDebug_token_enabled()
-// {
-// 	debug_token_enabled = !debug_token_enabled;
-// }
-
-// void Symbol::toggleDebug_parse_enabled()
-// {
-// 	#ifdef YYDEBUG
-// 	debug_parse_enabled = !debug_parse_enabled;
-// 	if(parseDLevel == 0)
-// 	{
-// 		yydebug = debug_parse_enabled ? 1 : 0;
-// 	}
-
-// 	std::cout << "XXX PARSER DEBUG CALLED " << yydebug << std::endl;
-
-// 	#endif
-
-// }
