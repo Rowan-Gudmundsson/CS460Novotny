@@ -103,7 +103,11 @@ translation_unit // Node*
 
 external_declaration // Node*
 	: function_definition { table.mode = Symbol::Mode::READ;  $$ = $1; }
-	| declaration { $$ = $1; }
+	| declaration {
+		// Actually there shouldn't be any code generated for a declaration
+		$$ = nullptr;
+		if($1 != nullptr) delete $1;
+	}
 	;
 
 function_definition // Node*
