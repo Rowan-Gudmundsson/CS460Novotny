@@ -22,7 +22,7 @@ class SyntaxNode {
 			CONSTANT,
 			OPERATOR,
 			DECLARE_AND_INIT,
-			FUNCTION,
+			FUNCTION, // Function definition/declaration ONLY - not call
 			ASSIGN,
 			CONDITIONAL,
 			ARRAY,
