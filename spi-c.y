@@ -14,6 +14,7 @@
 	extern unsigned int parseDLevel;
 	extern unsigned lineno;
 	void throwWarning(const std::string& warning);
+	using namespace std::string_literals;
 %}
 
 %code top {
@@ -152,9 +153,18 @@ declaration // Node*
 		  This should be fairly easy, we just need to traverse the tree until we find identifiers
 		*/
 		for (auto i : $2->children) {
-			IdentifierNode* tmp = (IdentifierNode*)i;
-			tmp->etype = $1;
-			tmp->sym->etype = $1;
+			if (i->type == SyntaxNode::Type::IDENTIFIER) {
+				IdentifierNode* tmp = (IdentifierNode*)i;
+				tmp->etype = $1;
+				tmp->sym->etype = $1;
+			} else if (i->type == SyntaxNode::Type::DECLARE_AND_INIT) {
+				IdentifierNode* tmp = (IdentifierNode*)i->children[0];
+				tmp->etype = $1;
+				tmp->sym->etype = $1;
+			} else {
+				std::cout << "Found type: " << i->type << std::endl;
+				throw ParserError("001: Expected type IDENTIFIER or DECLARE_AND_INIT");
+			}
 		}
 		$$ = $2;
 	}
