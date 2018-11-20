@@ -29,8 +29,6 @@ inline EvalType operator&(EvalType a, EvalType b)
 {return static_cast<EvalType>(static_cast<unsigned>(a) & static_cast<unsigned>(b));}
 inline EvalType operator~(EvalType a)
 {return static_cast<EvalType>(~static_cast<unsigned>(a));}
-inline EvalType operator unsigned (EvalType a)
-{ return static_cast<unsigned>(a); }
 
 const std::unordered_map<unsigned, unsigned> precedence({
 	{ECHAR, 0}, {EUNSIGNED | ECHAR, 1}, {ESHORT | EINT, 2}, {EUNSIGNED | ESHORT | EINT, 3},
