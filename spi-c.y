@@ -161,9 +161,13 @@ declaration // Node*
 				IdentifierNode* tmp = (IdentifierNode*)i->children[0];
 				tmp->etype = $1;
 				tmp->sym->etype = $1;
+			} else if (i->type == SyntaxNode::Type::FUNCTION) {
+				FunctionNode* tmp = (FunctionNode*)i;
+				tmp->etype = $1;
+				tmp->func->returnType = $1;
 			} else {
 				std::cout << "Found type: " << i->type << std::endl;
-				throw ParserError("001: Expected type IDENTIFIER or DECLARE_AND_INIT");
+				throw ParserError("001: Expected type IDENTIFIER, FUNCTION, or DECLARE_AND_INIT");
 			}
 		}
 		$$ = $2;

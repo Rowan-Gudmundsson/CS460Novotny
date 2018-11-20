@@ -62,8 +62,7 @@ inline std::ostream& operator<<(std::ostream& out, EvalType a) {
 
 class Symbol {
 	public:
-		class FunctionType {
-		public:
+		struct FunctionType {
 			bool defined = false;
 			unsigned functionDefLine;
 			unsigned functionDefCol;
