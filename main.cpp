@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
 			std::cout << "ERROR! " << error.what() << std::endl;
 			std::cout << "On line " << lineno << ", column " << column << std::endl;
 			doArrowErrThing();
+			return 1;
 		} catch (const std::exception& error) {
 			std::cout << "------------------------\n" 
 			          << "IMPORTANT COMPILER ERROR\n"
@@ -32,8 +33,10 @@ int main(int argc, char** argv) {
 			std::cout << "ERROR! " << error.what() << std::endl;
 			std::cout << "On line " << lineno << ", column " << column << std::endl;
 			doArrowErrThing();
+			return 1;
 		} catch (const char* s) {
 			std::cout << "UH OH" << std::endl << s << std::endl;
+			return 1;
 		}
 	} else {
 		std::cerr << "Input file not found!" << std::endl;
