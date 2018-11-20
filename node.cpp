@@ -281,6 +281,7 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(ARRAY);
 			PROCESS_VAL(LOOP);
 			PROCESS_VAL(ACCESS);
+			PROCESS_VAL(COERCION);
 		}
 	#undef PROCESS_VAL
 
@@ -354,9 +355,6 @@ std::ostream& operator<<(std::ostream& out, const ArrayNode& a) {
 	out << "Array of ";
 	out << a.getSize() << " ";
 	switch(a.etype) {
-		case ESIGNED:
-			out << "signed";
-			break;
 		case EUNSIGNED:
 			out << "unsigned";
 			break;
@@ -494,7 +492,7 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 }
 
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
-	out << *n.sym << "} ";
+	out << *n.sym << " " << n.etype << "} ";
 
 	for(unsigned i = 0; i < n.children.size(); i++) {
 		out << n.children[i];

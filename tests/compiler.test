@@ -37,7 +37,7 @@ int main() {
 
 	blah(4);
 	blah('4');
-	
+
 	blah();
 }
 

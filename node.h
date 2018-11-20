@@ -27,15 +27,15 @@ class SyntaxNode {
 			CONDITIONAL,
 			ARRAY,
 			ACCESS,
-			LOOP
+			LOOP,
+			COERCION
 		} type;
 		EvalType etype;
 		const unsigned line;
 		const unsigned columnno;
+		// TODO: Consider boolean 'constant' which checks whether or not this node can be evaluated at compile time ?
 		bool isConst = false;
 		std::vector<SyntaxNode*> children;
-
-		// TODO: Consider boolean 'constant' which checks whether or not this node can be evaluated at compile time ?
 
 		SyntaxNode(Type type, EvalType etype, unsigned numChildren...);
 
@@ -44,6 +44,12 @@ class SyntaxNode {
 		virtual void semanticCheck();
 
 		virtual ~SyntaxNode() { for(SyntaxNode* c : children){ delete c; }}
+};
+
+class CoercionNode : public SyntaxNode {
+	public:
+		CoercionNode(EvalType _from, EvalType _to, SyntaxNode* child) : SyntaxNode(COERCION, _to, 1, child), from(_from), to(_to) {}
+		EvalType from, to;
 };
 
 class ConstantNode : public SyntaxNode {
@@ -126,9 +132,9 @@ class OperatorNode : public SyntaxNode {
 class IdentifierNode : public SyntaxNode {
 	public:
 		Symbol::SymbolType* const sym;
-		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, EUNKNOWN, 0), sym(sPtr) {}
+		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, sPtr->etype, 0), sym(sPtr) {}
 	private:
-		IdentifierNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(FUNCTION, EUNKNOWN, 1, child), sym(sPtr) {}
+		IdentifierNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(FUNCTION, sPtr->etype, 1, child), sym(sPtr) {}
 		friend class FunctionNode;
 };
 

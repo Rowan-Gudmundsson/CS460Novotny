@@ -8,18 +8,18 @@
 #include <fstream>
 #include <stdexcept>
 #include <vector>
+#include <unordered_map>
 
 enum EvalType : unsigned {
-	ESIGNED =   1 << 0,
-	EUNSIGNED = 1 << 1,
-	EVOID =     1 << 2,
-	ECHAR =     1 << 3,
-	ESHORT =    1 << 4,
-	EINT =      1 << 5,
-	ELONG =     1 << 6,
-	EFLOAT =    1 << 7,
-	EDOUBLE =   1 << 8,
-	EPOINTER =  1 << 9,
+	EUNSIGNED = 1 << 0,
+	EVOID =     1 << 1,
+	ECHAR =     1 << 2,
+	ESHORT =    1 << 3,
+	EINT =      1 << 4,
+	ELONG =     1 << 5,
+	EFLOAT =    1 << 6,
+	EDOUBLE =   1 << 7,
+	EPOINTER =  1 << 8,
 	EUNKNOWN =  1 << 30
 };
 
@@ -30,8 +30,14 @@ inline EvalType operator&(EvalType a, EvalType b)
 inline EvalType operator~(EvalType a)
 {return static_cast<EvalType>(~static_cast<unsigned>(a));}
 
+const std::unordered_map<EvalType, unsigned> precedence({
+	{ECHAR, 0}, {EUNSIGNED | ECHAR, 1}, {ESHORT | EINT, 2}, {EUNSIGNED | ESHORT | EINT, 3},
+	{EINT, 4}, {EUNSIGNED | EINT, 5}, {ELONG | EINT, 6}, {EUNSIGNED | ELONG | EINT, 7},
+	{EFLOAT, 8}, {EDOUBLE, 9}
+});
+
 enum TypeQualifier : unsigned {
-	TNONE = 		0,
+	TNONE =     0,
 	TCONST =    1 << 0,
 	TVOLATILE = 1 << 1,
 };
@@ -40,7 +46,6 @@ inline TypeQualifier operator|(TypeQualifier a, TypeQualifier b)
 {return static_cast<TypeQualifier>(static_cast<unsigned>(a) | static_cast<unsigned>(b));}
 
 inline std::ostream& operator<<(std::ostream& out, EvalType a) {
-	if(a & ESIGNED);
 	if(a & EUNSIGNED) out << "unsigned ";
 	if(a & EVOID) out << "void ";
 	if(a & ECHAR) out << "char ";
