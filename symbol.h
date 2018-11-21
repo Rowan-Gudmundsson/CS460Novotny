@@ -8,7 +8,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <vector>
-#include <unordered_map>
+#include <map>
 
 enum EvalType : unsigned {
 	EUNSIGNED = 1 << 0,
@@ -29,13 +29,14 @@ inline EvalType operator&(EvalType a, EvalType b)
 {return static_cast<EvalType>(static_cast<unsigned>(a) & static_cast<unsigned>(b));}
 inline EvalType operator~(EvalType a)
 {return static_cast<EvalType>(~static_cast<unsigned>(a));}
+inline bool operator < (EvalType a, EvalType b)
+{return unsigned(a) < unsigned(b);}
 
-const std::unordered_map<unsigned, unsigned> precedence({
+const std::map<EvalType, unsigned> precedence({
 	{ECHAR, 0}, {EUNSIGNED | ECHAR, 1}, {ESHORT | EINT, 2}, {EUNSIGNED | ESHORT | EINT, 3},
 	{EINT, 4}, {EUNSIGNED | EINT, 5}, {ELONG | EINT, 6}, {EUNSIGNED | ELONG | EINT, 7},
 	{EFLOAT, 8}, {EDOUBLE, 9}
 });
-
 enum TypeQualifier : unsigned {
 	TNONE =     0,
 	TCONST =    1 << 0,
