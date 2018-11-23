@@ -58,8 +58,6 @@ void SyntaxNode::semanticCheck() {
 	}
 }
 
-
-
 OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): SyntaxNode(OPERATOR, _type, 0), opType(_opType) {
 	isConst = true;
 	if (n > 0) {

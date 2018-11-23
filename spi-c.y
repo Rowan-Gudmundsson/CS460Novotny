@@ -152,19 +152,26 @@ declaration // Node*
 		  TODO: Apply declaration specifiers
 		  This should be fairly easy, we just need to traverse the tree until we find identifiers
 		*/
+		EvalType tmp_type = $1;
+		if ((tmp_type & ELONG) && !(tmp_type & ECHAR || tmp_type & EDOUBLE)) {
+			tmp_type = tmp_type | EINT;
+		}
+		if (tmp_type & ESHORT) {
+			tmp_type = tmp_type | EINT;
+		}
 		for (auto i : $2->children) {
 			if (i->type == SyntaxNode::Type::IDENTIFIER) {
 				IdentifierNode* tmp = (IdentifierNode*)i;
-				tmp->etype = $1;
-				tmp->sym->etype = $1;
+				tmp->etype = tmp_type;
+				tmp->sym->etype = tmp_type;
 			} else if (i->type == SyntaxNode::Type::DECLARE_AND_INIT) {
 				IdentifierNode* tmp = (IdentifierNode*)i->children[0];
-				tmp->etype = $1;
-				tmp->sym->etype = $1;
+				tmp->etype = tmp_type;
+				tmp->sym->etype = tmp_type;
 			} else if (i->type == SyntaxNode::Type::FUNCTION) {
 				FunctionNode* tmp = (FunctionNode*)i;
-				tmp->etype = $1;
-				tmp->func->returnType = $1;
+				tmp->etype = tmp_type;
+				tmp->func->returnType = tmp_type;
 			} else {
 				std::cout << "Found type: " << i->type << std::endl;
 				throw ParserError("001: Expected type IDENTIFIER, FUNCTION, or DECLARE_AND_INIT");
@@ -954,7 +961,7 @@ multiplicative_expression // Node*
 		}
 	}
 	| multiplicative_expression MOD cast_expression {
-		if (!($1->etype & EINT) || !($3->etype & EINT)) {
+		if (!($1->etype & EINT || $1->etype & ECHAR) || !($3->etype & EINT || $3->etype & ECHAR)) {
 			throw ParserError("Operator '%' not valid on non integral types.");
 		}
 		if ($1->etype != $3->etype) {

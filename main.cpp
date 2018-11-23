@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 			doArrowErrThing();
 			return 1;
 		} catch (const std::exception& error) {
-			std::cout << "------------------------\n" 
+			std::cout << "------------------------\n"
 			          << "IMPORTANT COMPILER ERROR\n"
 			          << "------------------------\n";
 			std::cout << "ERROR! " << error.what() << std::endl;
@@ -116,7 +116,7 @@ void doCmdArgs(int argc, char** argv) {
 		}
 		if(match[SEM_CHECK_GROUP].matched){
 
-			semanticCheck = true; 				
+			semanticCheck = true;
 		}
 		args = match.suffix().str();
 	}

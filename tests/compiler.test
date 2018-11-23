@@ -6,7 +6,7 @@ void blah(char);
 int main() {
 	// This is a test
 	char z = 's';
-	int x = 0 , y = 2;
+	short x = 0 , y = 2;
 	int q[50 + 2];
 	#DUMP
 
