@@ -596,15 +596,21 @@ assignment_expression // Node*
 			if (shouldCoerce) {
 				CoercionNode* coerce = new CoercionNode(from, to, $3);
 				$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, $1->etype, 2, $1, coerce);
-			}
-			$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, $1->etype, 2, $1, $3);
-		} else {
-			OperatorNode* temp = new OperatorNode(to, $2, 2, $1, $3);
-			if (shouldCoerce) {
-				CoercionNode* coerce = new CoercionNode(from, to, temp);
-				$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, to, 2, $1, coerce);
 			} else {
-				$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, to, 2, $1, temp);
+				$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, $1->etype, 2, $1, $3);
+			}
+		} else {
+			// TODO - the left side might not be strictly an IdentifierNode?
+			if($1->type == SyntaxNode::Type::IDENTIFIER) {
+				OperatorNode* temp = new OperatorNode(to, $2, 2, new IdentifierNode(((IdentifierNode*) $1)->sym), $3);
+				if (shouldCoerce) {
+					CoercionNode* coerce = new CoercionNode(from, to, temp);
+					$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, to, 2, $1, coerce);
+				} else {
+					$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, to, 2, $1, temp);
+				}
+			} else {
+				throw "Gotta get that working";
 			}
 		}
 	}

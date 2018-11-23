@@ -44,7 +44,7 @@ class SyntaxNode {
 		virtual void semanticCheck();
 		// virtual void print3AC(std::fstream&);
 
-		virtual ~SyntaxNode() { for(SyntaxNode* c : children){ delete c; }}
+		virtual ~SyntaxNode();
 };
 
 class CoercionNode : public SyntaxNode {

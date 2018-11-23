@@ -227,11 +227,10 @@ bool Symbol::clear() {
 
 void Symbol::clearFrom(Scope* s) {
 	if(s == nullptr) return;
-	for(Scope*& _s : s->children) {
-		clearFrom(_s);
-	}
 
-	s->children.clear();
+	while(!s->children.empty()) {
+		clearFrom(s->children.front());
+	}
 
 	Scope* parent = s->parent;
 	if(parent != nullptr) {
