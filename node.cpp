@@ -546,9 +546,10 @@ std::ostream& operator<<(std::ostream& out, const LoopNode& n) {
 	return out;
 }
 
-SyntaxNode::~SyntaxNode() {
+void SyntaxNode::clear() {
 	for(SyntaxNode*& c : children) {
-		if(c != nullptr){
+		if(c != nullptr) {
+			c->clear();
 			delete c;
 			c = nullptr;
 		}

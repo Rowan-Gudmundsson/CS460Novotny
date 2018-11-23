@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
 	}
 
 	if(root != nullptr) {
+		root->clear();
 		delete root;
 	}
 	return 0;
