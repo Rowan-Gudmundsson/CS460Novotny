@@ -65,7 +65,7 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
  * @param None
  * @return None
  */
-Symbol::Symbol() : scopeLevel(_scopeLevel) {
+Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	pushScope();
 	mode = Mode::READ;
 }
@@ -233,9 +233,9 @@ void Symbol::clearFrom(Scope* s) {
 
 	s->children.clear();
 
-	Scope* parent = head->parent;
+	Scope* parent = s->parent;
 	if(parent != nullptr) {
-		if(parent->children.size() > 0) {
+		if(!parent->children.empty()) {
 			auto i = std::find(parent->children.begin(), parent->children.end(), s);
 			if(i != parent->children.end()) {
 				parent->children.erase(i);
