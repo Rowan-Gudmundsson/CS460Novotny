@@ -61,4 +61,4 @@ endif
 
 .PHONY: clean
 clean:
-	rm -f *.o *~ lex.yy.c spi-c.tab.c spi-c.tab.h
+	rm -f *.o *.aux *.log *.pdf *.tex *.synctex.gz *.out *~ lex.yy.c spi-c.tab.c spi-c.tab.h

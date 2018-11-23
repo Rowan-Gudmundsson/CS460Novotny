@@ -235,8 +235,12 @@ void Symbol::clearFrom(Scope* s) {
 
 	Scope* parent = head->parent;
 	if(parent != nullptr) {
-		std::vector<Scope*>& pchild = parent->children;
-		pchild.erase(std::find(pchild.begin(), pchild.end(), s));
+		if(parent->children.size() > 0) {
+			auto i = std::find(parent->children.begin(), parent->children.end(), s);
+			if(i != parent->children.end()) {
+				parent->children.erase(i);
+			}
+		}
 	}
 	delete s->tree;
 	delete s;
