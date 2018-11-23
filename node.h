@@ -51,7 +51,7 @@ class CoercionNode : public SyntaxNode {
 	public:
 		CoercionNode(EvalType _from, EvalType _to, SyntaxNode* child) : SyntaxNode(COERCION, _to, 1, child), from(_from), to(_to) {}
 		EvalType from, to;
-		void print3AC(std::fstream&);
+		// void print3AC(std::fstream&);
 };
 
 class ConstantNode : public SyntaxNode {
@@ -173,5 +173,6 @@ std::ostream& operator<<(std::ostream& out, const IdentifierNode& n);
 std::ostream& operator<<(std::ostream& out, const FunctionNode& n);
 std::ostream& operator<<(std::ostream& out, const ArrayNode& a);
 std::ostream& operator<<(std::ostream& out, const LoopNode& n);
+std::ostream& operator<<(std::ostream& out, const CoercionNode& n);
 
 ConstantNode* evalConst(SyntaxNode*);

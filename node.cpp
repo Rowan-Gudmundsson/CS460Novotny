@@ -310,8 +310,12 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 		case SyntaxNode::Type::LOOP:
 			out << *((LoopNode*) n);
 			break;
-		case SyntaxNode::Type::ARRAY:
-			out << *((ArrayNode*) n);
+		// case SyntaxNode::Type::ARRAY:
+		// 	out << *((ArrayNode*) n);
+		// 	break;
+		case SyntaxNode::Type::COERCION:
+			out << *((CoercionNode*) n);
+			break;
 		default:
 			out << *n;
 			break;
@@ -498,6 +502,15 @@ std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
 	return out;
 }
 
+std::ostream& operator<<(std::ostream& out, const CoercionNode& n) {
+	out << "COERCION from: " << n.from << "->" << n.to << "} ";
+
+	for (auto i : n.children) {
+		out << i;
+	}
+
+	return out;
+}
 std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
 	out << n.sym->name << "(";
 	// std::cout << *n.sym << std::endl;
