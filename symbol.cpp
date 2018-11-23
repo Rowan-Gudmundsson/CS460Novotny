@@ -65,7 +65,7 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
  * @param None
  * @return None
  */
-Symbol::Symbol() : scopeLevel(_scopeLevel) {
+Symbol::Symbol() : scopeLevel(_scopeLevel), head(nullptr) {
 	pushScope();
 	mode = Mode::READ;
 }
