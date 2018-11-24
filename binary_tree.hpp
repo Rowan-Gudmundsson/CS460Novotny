@@ -9,29 +9,7 @@ template <typename KeyType, typename NodeVal>
 class BinaryTree {
 	private:
 		unsigned _size = 0;
-	public:
-		// Constructors
-		BinaryTree();
-		BinaryTree(const BinaryTree& other);
 
-		// Operators
-		BinaryTree<KeyType, NodeVal>& operator = (const BinaryTree<KeyType, NodeVal>& other);
-
-		// Member functions
-		NodeVal* insert(const KeyType& key, const NodeVal& val);
-		BinaryTree<KeyType, NodeVal>* copy() const;
-
-		NodeVal* find(const KeyType& key);
-
-		template <typename K, typename T>
-		friend std::ostream& operator<< (std::ostream& stream, const BinaryTree<K,T>& rhs);
-
-		const unsigned& size = _size;
-
-		// Destructors
-		~BinaryTree();
-
-	private:
 		struct Node {
 			Node() {};
 			Node(const std::pair<KeyType, NodeVal>& _pair, Node* left_ptr, Node* right_ptr, Node* parent_ptr, bool is_red):
@@ -62,6 +40,123 @@ class BinaryTree {
 			}
 		};
 
+	public:
+		class iterator {
+			private:
+				Node* v;
+			public:
+				using self_type = iterator;
+				using value_type = NodeVal;
+				using reference = NodeVal&;
+				using pointer = NodeVal*;
+				using iterator_category =  std::forward_iterator_tag;
+				using difference_type = int;
+
+				iterator(Node* p = nullptr) : v(p) {}
+
+				NodeVal& operator*() {
+					return v->pair.second;
+				}
+
+				NodeVal* operator->() {
+					return &v->pair.second;
+				}
+
+				// inorder (left to right) traversal
+				iterator& operator++() {
+					if(v == nullptr) return *this;
+
+					// If there is something to the right - go there then go all the way to the left
+					if(v->right != nullptr) {
+						v = v->right;
+						while(v->left != nullptr) {
+							v = v->left;
+						}
+					} else {
+						// Find the highest node where we aren't in its right branch
+						Node* temp = v->parent;
+
+						// If we're at the top - we're done
+						if(temp == nullptr) {
+							v = nullptr;
+							return *this;
+						}
+
+						while(temp->parent != nullptr && v == temp->right) {
+							v = temp;
+							temp = temp->parent;
+						}
+	
+						// If we were in the right branch of the root - we're done
+						if(v == temp->right) {
+							v = nullptr;
+							return *this;
+						}
+	
+						v = temp;
+					}
+
+					return *this;
+				}
+
+				iterator operator++(int i) {
+					iterator it = *this;
+					operator++();
+					return it;
+				}
+
+				bool operator==(const iterator& other) const {
+					return v == other.v;
+				}
+
+				bool operator!=(const iterator& other) const {
+					return v != other.v;
+				}
+		};
+
+		// Constructors
+		BinaryTree();
+		BinaryTree(const BinaryTree& other);
+
+		// Operators
+		BinaryTree<KeyType, NodeVal>& operator = (const BinaryTree<KeyType, NodeVal>& other);
+
+		// Member functions
+		NodeVal* insert(const KeyType& key, const NodeVal& val);
+		BinaryTree<KeyType, NodeVal>* copy() const;
+
+		NodeVal* find(const KeyType& key);
+
+		template <typename K, typename T>
+		friend std::ostream& operator<< (std::ostream& stream, const BinaryTree<K,T>& rhs);
+
+		const unsigned& size = _size;
+
+		// template<typename K, typename T>
+		// friend iterator begin(BinaryTree<K,T>*& tree);
+
+		iterator begin() {
+			if(root == nullptr) {
+				return iterator(nullptr);
+			}
+
+			// Return furthest left node
+			Node* temp = root;
+			while(temp->left != nullptr) {
+				temp = temp->left;
+			}
+
+			return iterator(temp);
+		}
+
+		iterator end() {
+			return iterator(nullptr);
+		}
+
+		// Destructors
+		~BinaryTree();
+
+	private:
 		Node* root;
 
 		void insertRepair(Node* repairFrom);
@@ -72,6 +167,21 @@ class BinaryTree {
 		Node* assignmentHelper(const Node* node, Node* parent);
 		void outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) const;
 };
+
+// template<typename K, typename T>
+// typename BinaryTree<K,T>::iterator begin(BinaryTree<K,T>*& tree) {
+// 	if(tree->root == nullptr) {
+// 		return BinaryTree<K,T>::iterator(nullptr);
+// 	}
+
+// 	// Return furthest left node
+// 	typename BinaryTree<K,T>::Node* temp = tree->root;
+// 	while(temp->left != nullptr) {
+// 		temp = temp->left;
+// 	}
+
+// 	return BinaryTree<K,T>::iterator(temp);
+// }
 
 /**
  * Constructor.

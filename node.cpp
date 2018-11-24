@@ -556,3 +556,38 @@ void SyntaxNode::clear() {
 	}
 	children.clear();
 }
+
+void SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions) {
+	for(SyntaxNode* c : children) {
+		if(c != nullptr) {
+			c->gen3AC(instructions);
+		}
+	}
+}
+
+void FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions) {
+	instructions.emplace_back();
+	instructions.back().op = "LABEL";
+
+
+	if(func->label == "") {
+		unsigned i = 1;
+		for(const auto& f : sym->functions) {
+			if(&f == func) {
+				func->label = instructions.back().op1 = sym->name + std::to_string(i);
+				break;
+			}
+			i++;
+		}
+	} else {
+		instructions.back().op1 = func->label;
+	}
+	
+	for(SyntaxNode* c : children) {
+		if(c != nullptr) {
+			c->gen3AC(instructions);
+		}
+	}
+
+
+}

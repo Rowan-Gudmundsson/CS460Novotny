@@ -210,6 +210,30 @@ void Symbol::popBackToGlobal() {
 	}
 }
 
+void Symbol::calcOffsets() {
+	Scope* tmp = head;
+	// Find the root
+	while(tmp->parent != nullptr) {
+		tmp = tmp->parent;
+	}
+
+	for(Scope* s : tmp->children) {
+		calcOffsetsFrom(s, 0);
+	}
+}
+
+void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
+	for(Symbol::SymbolType& s : *scope->tree) {
+		s._offset = offset;
+		std::cout << "Offset of " << s << ": " << offset << std::endl;
+		offset += size(s.etype);
+	}
+
+	for(Scope* s : scope->children) {
+		calcOffsetsFrom(s, offset);
+	}
+}
+
 /**
  * Clear the table
  * @param None

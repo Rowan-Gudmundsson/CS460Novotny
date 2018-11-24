@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <regex>
 #include <sstream>
 #include "symbol.h"
@@ -49,6 +50,7 @@ void throwWarning(const std::string& warning);
 void doArrowErrThing();
 void replaceInString(std::string& str, char init, char replace);
 void helpMenu();
+void gen3AC(SyntaxNode* root);
 
 extern int yyparse(SyntaxNode*& root);
 extern unsigned lineno;
@@ -56,3 +58,4 @@ extern unsigned column;
 extern unsigned yyleng;
 extern int yydebug;
 extern FILE* yyin;
+extern Symbol table;

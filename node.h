@@ -14,6 +14,13 @@ struct PointerNode {
 	TypeQualifier qualifier;
 };
 
+struct ThreeAddress {
+	std::string op;
+	std::string op1;
+	std::string op2;
+	std::string dest;
+};
+
 class SyntaxNode {
 	public:
 		const enum Type {
@@ -42,7 +49,7 @@ class SyntaxNode {
 		// Semanticly check the node
 		// Make certain data types line up, smash unneeded nodes, etc.
 		virtual void semanticCheck();
-		// virtual void print3AC(std::fstream&);
+		virtual void gen3AC(std::vector<ThreeAddress>& instructions);
 
 		virtual void clear();
 
@@ -53,7 +60,6 @@ class CoercionNode : public SyntaxNode {
 	public:
 		CoercionNode(EvalType _from, EvalType _to, SyntaxNode* child) : SyntaxNode(COERCION, _to, 1, child), from(_from), to(_to) {}
 		EvalType from, to;
-		// void print3AC(std::fstream&);
 };
 
 class ConstantNode : public SyntaxNode {
@@ -72,7 +78,6 @@ class ConstantNode : public SyntaxNode {
 			}
 			for(SyntaxNode* c : children){ delete c; }
 		}
-		// void print3AC(std::fstream&);
 		friend ConstantNode* evalConst(SyntaxNode*);
 };
 
@@ -88,7 +93,6 @@ class ArrayNode	: public SyntaxNode
 		{
 			return arraySize;
 		}
-		// void print3AC(std::fstream&);
 	private:
 		SyntaxNode* arraySize;
 
@@ -132,14 +136,12 @@ class OperatorNode : public SyntaxNode {
 		} opType;
 		OperatorNode(EvalType _type, OpType _opType, unsigned numChildren...);
 		ConstantNode* evalNode();
-		// void print3AC(std::fstream&);
 };
 
 class IdentifierNode : public SyntaxNode {
 	public:
 		Symbol::SymbolType* const sym;
 		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, sPtr->etype, 0), sym(sPtr) {}
-		// void print3AC(std::fstream&);
 	private:
 		IdentifierNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(FUNCTION, sPtr->etype, 1, child), sym(sPtr) {}
 		friend class FunctionNode;
@@ -151,8 +153,8 @@ class FunctionNode : public IdentifierNode {
 		FunctionNode(Symbol::SymbolType* sPtr, Symbol::FunctionType* f) : IdentifierNode(sPtr, nullptr), func(f) {}
 		FunctionNode(IdentifierNode* id, Symbol::FunctionType* f) : IdentifierNode(id->sym, nullptr), func(f) {}
 		FunctionNode(FunctionNode* f, SyntaxNode* child) : IdentifierNode(f->sym, child), func(f->func) {}
-		// void print3AC(std::fstream&);
-		// FunctionNode(IdentifierNode* id, Symbol::FunctionType* f) : IdentifierNode(id->sym), func(f) {}
+
+		void gen3AC(std::vector<ThreeAddress>& instructions);
 };
 
 class LoopNode : public SyntaxNode {
@@ -163,7 +165,6 @@ class LoopNode : public SyntaxNode {
 		LoopNode(SyntaxNode* check, SyntaxNode* stmt, bool _pre_check = true)
 			: LoopNode(nullptr, check, nullptr, stmt, _pre_check) {}
 		bool pre_check;
-		// void print3AC(std::fstream&);
 };
 
 std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t);

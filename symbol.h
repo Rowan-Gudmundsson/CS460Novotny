@@ -61,6 +61,18 @@ inline std::ostream& operator<<(std::ostream& out, EvalType a) {
 	return out;
 }
 
+inline unsigned size(EvalType a) {
+	if(a & EUNKNOWN) return -1;
+	if(a & EVOID) return 0;
+	if(a & ECHAR) return 1;
+	if(a & ESHORT) return 4;
+	if(a & EINT) return 4;
+	if(a & ELONG) return 4;
+	if(a & EFLOAT) return 4;
+	if(a & EDOUBLE) return 8;
+	if(a & EPOINTER) return 4;
+}
+
 class Symbol {
 	public:
 		struct FunctionType {
@@ -70,6 +82,7 @@ class Symbol {
 
 			std::vector<EvalType> parameters;
 			EvalType returnType;
+			std::string label = "";
 		};
 
 		struct VarType {
@@ -80,6 +93,8 @@ class Symbol {
 
 		// Var type
 		class SymbolType {
+			private:
+				unsigned _offset = -1;
 			public:
 				SymbolType(const SymbolType& other) : name(other.name), lineNumber(other.lineNumber), scopeLevel(other.scopeLevel) {}
 				bool operator < (const SymbolType& rhs) const;
@@ -99,6 +114,8 @@ class Symbol {
 					ENUMCONSTANT,
 					TYPEDEF
 				} itype = UNKNOWN;
+
+				const unsigned& offset = _offset;
 
 				// TODO - figure a union out maybe?
 				//union {
@@ -146,6 +163,9 @@ class Symbol {
 		unsigned unPopScope();
 		void popBackToGlobal();
 
+		// Calculate offsets - only to be used AFTER symbol table has been completely constructed
+		void calcOffsets();
+
 		// Destructor
 		~Symbol();
 
@@ -160,6 +180,7 @@ class Symbol {
 			Scope * const parent;
 		};
 
+		void calcOffsetsFrom(Scope* s, unsigned offset);
 		void clearFrom(Scope* s);
 
 		Scope* head;

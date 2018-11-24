@@ -21,7 +21,12 @@ int main(int argc, char** argv) {
 		yyin = fopen(inputFile.c_str(), "r");
 		try {
 			yyparse(root);
-		} catch (ScannerError error) {
+		} catch (const ScannerError& error) {
+			std::cout << "ERROR! " << error.what() << std::endl;
+			std::cout << "On line " << lineno << ", column " << column << std::endl;
+			doArrowErrThing();
+			return 1;
+		} catch(const ParserError& error) {
 			std::cout << "ERROR! " << error.what() << std::endl;
 			std::cout << "On line " << lineno << ", column " << column << std::endl;
 			doArrowErrThing();
@@ -35,7 +40,12 @@ int main(int argc, char** argv) {
 			doArrowErrThing();
 			return 1;
 		} catch (const char* s) {
-			std::cout << "UH OH" << std::endl << s << std::endl;
+			std::cout << "------------------------\n"
+			          << "IMPORTANT COMPILER ERROR\n"
+			          << "------------------------\n";
+			std::cout << "ERROR! " << s << std::endl;
+			std::cout << "On line " << lineno << ", column " << column << std::endl;
+			doArrowErrThing();
 			return 1;
 		}
 	} else {
@@ -71,6 +81,8 @@ int main(int argc, char** argv) {
 			treeFile.close();
 		}
 	}
+
+	gen3AC(root);
 
 	if(root != nullptr) {
 		root->clear();
@@ -174,4 +186,21 @@ void helpMenu() {
               << "                     Allowable flags include: s#, l#, p#\n"
               << "                     for symbol table, lexer, and parser\n"
               << "                     (examples: \"-dl\", \"-dl1s4\", \"-dlps\")" << std::endl;
+}
+
+void gen3AC(SyntaxNode* root) {
+	std::vector<ThreeAddress> instructions;
+	instructions.reserve(100);
+
+	table.calcOffsets();
+
+	instructions.emplace_back();
+	instructions.back().op = "BR";
+	instructions.back().dest = "main1";
+
+	root->gen3AC(instructions);
+
+	for(const ThreeAddress& i : instructions) {
+		std::cout << std::left << std::setw(16) << i.op << std::setw(16) << i.op1 << std::setw(16) << i.op2 << std::setw(16) << i.dest <<std::endl; 
+	}
 }
