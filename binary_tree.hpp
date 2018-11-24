@@ -132,9 +132,7 @@ class BinaryTree {
 
 		const unsigned& size = _size;
 
-		// template<typename K, typename T>
-		// friend iterator begin(BinaryTree<K,T>*& tree);
-
+		// Iterator stuff
 		iterator begin() {
 			if(root == nullptr) {
 				return iterator(nullptr);
@@ -167,21 +165,6 @@ class BinaryTree {
 		Node* assignmentHelper(const Node* node, Node* parent);
 		void outputHelper(std::string spaces, Node* node, std::ostream& out, bool isLeft) const;
 };
-
-// template<typename K, typename T>
-// typename BinaryTree<K,T>::iterator begin(BinaryTree<K,T>*& tree) {
-// 	if(tree->root == nullptr) {
-// 		return BinaryTree<K,T>::iterator(nullptr);
-// 	}
-
-// 	// Return furthest left node
-// 	typename BinaryTree<K,T>::Node* temp = tree->root;
-// 	while(temp->left != nullptr) {
-// 		temp = temp->left;
-// 	}
-
-// 	return BinaryTree<K,T>::iterator(temp);
-// }
 
 /**
  * Constructor.

@@ -65,21 +65,18 @@ int main(int argc, char** argv) {
 		treeFile.close();
 	}
 
-	if(semanticCheck)
-	{
-		root->semanticCheck();
+	root->semanticCheck();
 
-		if(semTreeFileName != "") {
-			std::ofstream treeFile(semTreeFileName);
-			treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}[sibling distance=20pt]\n\t\\tikzset{level 1/.style={level distance=36pt}}\n\t\\tikzset{level 2/.style={level distance=34pt}}\n\t\\tikzset{level 3+/.style={level distance=32pt}}\n\t\\Tree ";
-			std::stringstream ss;
-			ss << root;
-			// Sanitize underscores
-			std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
-			treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
+	if(semTreeFileName != "") {
+		std::ofstream treeFile(semTreeFileName);
+		treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}[sibling distance=20pt]\n\t\\tikzset{level 1/.style={level distance=36pt}}\n\t\\tikzset{level 2/.style={level distance=34pt}}\n\t\\tikzset{level 3+/.style={level distance=32pt}}\n\t\\Tree ";
+		std::stringstream ss;
+		ss << root;
+		// Sanitize underscores
+		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+		treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
 
-			treeFile.close();
-		}
+		treeFile.close();
 	}
 
 	gen3AC(root);

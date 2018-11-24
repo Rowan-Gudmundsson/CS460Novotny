@@ -226,7 +226,11 @@ void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
 	for(Symbol::SymbolType& s : *scope->tree) {
 		s._offset = offset;
 		std::cout << "Offset of " << s << ": " << offset << std::endl;
-		offset += size(s.etype);
+		unsigned mult = 1;
+		for(unsigned i : s.v.arrayDimensions) {
+			mult *= i;
+		}
+		offset += mult * size(s.etype);
 	}
 
 	for(Scope* s : scope->children) {

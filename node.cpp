@@ -563,6 +563,14 @@ void SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions) {
 			c->gen3AC(instructions);
 		}
 	}
+
+	switch(type) {
+		case DECLARE_AND_INIT:
+			// TODO - the actual assignment part
+			instructions.emplace_back();
+			instructions.back().op = "ASSIGN";
+			instructions.back().dest = "(Local " + std::to_string(((IdentifierNode*) children[0])->sym->offset) + ")";
+	}
 }
 
 void FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions) {
