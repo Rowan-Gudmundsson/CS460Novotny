@@ -342,7 +342,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			node->sym->v.isArray = true;
 			node->sym->v.arrayDimensions.push_back(-1);
 
-			node->children.push_back(new ArrayNode(EUNKNOWN, $1));
+			/* node->children.push_back(new ArrayNode(EUNKNOWN, $1)); */
 
 
 		} else {
@@ -360,7 +360,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			} catch(ParserError e) {
 				std::cout << "Error in constant evaluation: " << e.what() << std::endl;
 			}
-			node->children.push_back(new ArrayNode(EUNKNOWN, $3));
+			/* node->children.push_back(new ArrayNode(EUNKNOWN, $3)); */
 		} else {
 			throw "Error 2";
 		}

@@ -82,23 +82,18 @@ class ConstantNode : public SyntaxNode {
 		friend ConstantNode* evalConst(SyntaxNode*);
 };
 
-class StringLiteralNode : public SyntaxNode {
-};
-
-class ArrayNode	: public SyntaxNode
-{
-	public:
-		ArrayNode(EvalType _type, SyntaxNode* _size) : SyntaxNode(ARRAY, _type, 0), arraySize(_size) {}
-
-		SyntaxNode* getSize() const
-		{
-			return arraySize;
-		}
-	private:
-		SyntaxNode* arraySize;
-
-
-};
+// class ArrayNode	: public SyntaxNode
+// {
+// 	public:
+// 		ArrayNode(EvalType _type, SyntaxNode* _size) : SyntaxNode(ARRAY, _type, 0), arraySize(_size) {}
+//
+// 		SyntaxNode* getSize() const
+// 		{
+// 			return arraySize;
+// 		}
+// 	private:
+// 		SyntaxNode* arraySize;
+// };
 
 class OperatorNode : public SyntaxNode {
 	public:
@@ -184,7 +179,7 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n);
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n);
 std::ostream& operator<<(std::ostream& out, const FunctionNode& n);
 std::ostream& operator<<(std::ostream& out, const FunctionCallNode& n);
-std::ostream& operator<<(std::ostream& out, const ArrayNode& a);
+// std::ostream& operator<<(std::ostream& out, const ArrayNode& a);
 std::ostream& operator<<(std::ostream& out, const LoopNode& n);
 std::ostream& operator<<(std::ostream& out, const CoercionNode& n);
 

@@ -356,46 +356,46 @@ std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
 	return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const ArrayNode& a) {
-	out << "\\textbf{";
-	out << "Array of ";
-	out << a.getSize() << " ";
-	switch(a.etype) {
-		case EUNSIGNED:
-			out << "unsigned";
-			break;
-		case ECHAR:
-			out << "char";
-			break;
-		case ESHORT:
-			out << "short";
-			break;
-		case EINT:
-			out << "int";
-			break;
-		case ELONG:
-			out << "long";
-			break;
-		case EFLOAT:
-			out << "float";
-			break;
-		case EDOUBLE:
-			out << "double";
-			break;
-		case EPOINTER:
-			out << "pointer";
-			break;
-		case EUNKNOWN:
-		case EVOID:
-		default:
-			out << "unknown";
-			break;
-	}
-
-	out << "} ";
-
-	return out;
-}
+// std::ostream& operator<<(std::ostream& out, const ArrayNode& a) {
+// 	out << "\\textbf{";
+// 	out << "Array of ";
+// 	out << a.getSize() << " ";
+// 	switch(a.etype) {
+// 		case EUNSIGNED:
+// 			out << "unsigned";
+// 			break;
+// 		case ECHAR:
+// 			out << "char";
+// 			break;
+// 		case ESHORT:
+// 			out << "short";
+// 			break;
+// 		case EINT:
+// 			out << "int";
+// 			break;
+// 		case ELONG:
+// 			out << "long";
+// 			break;
+// 		case EFLOAT:
+// 			out << "float";
+// 			break;
+// 		case EDOUBLE:
+// 			out << "double";
+// 			break;
+// 		case EPOINTER:
+// 			out << "pointer";
+// 			break;
+// 		case EUNKNOWN:
+// 		case EVOID:
+// 		default:
+// 			out << "unknown";
+// 			break;
+// 	}
+//
+// 	out << "} ";
+//
+// 	return out;
+// }
 
 std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 	// TODO: Actually do this output
