@@ -557,10 +557,10 @@ void SyntaxNode::clear() {
 	children.clear();
 }
 
-void SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions) {
+unsigned SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
 	for(SyntaxNode* c : children) {
 		if(c != nullptr) {
-			c->gen3AC(instructions);
+			c->gen3AC(instructions, tempTicker);
 		}
 	}
 
@@ -570,10 +570,13 @@ void SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions) {
 			instructions.emplace_back();
 			instructions.back().op = "ASSIGN";
 			instructions.back().dest = "(Local " + std::to_string(((IdentifierNode*) children[0])->sym->offset) + ")";
+			break;
 	}
+
+	return 0;
 }
 
-void FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions) {
+unsigned FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
 	instructions.emplace_back();
 	instructions.back().op = "LABEL";
 
@@ -593,9 +596,9 @@ void FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions) {
 	
 	for(SyntaxNode* c : children) {
 		if(c != nullptr) {
-			c->gen3AC(instructions);
+			c->gen3AC(instructions, tempTicker);
 		}
 	}
 
-
+	return 0;
 }
