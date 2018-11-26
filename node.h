@@ -50,7 +50,7 @@ class SyntaxNode {
 		// Semanticly check the node
 		// Make certain data types line up, smash unneeded nodes, etc.
 		virtual void semanticCheck();
-		virtual void gen3AC(std::vector<ThreeAddress>& instructions);
+		virtual unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 
 		virtual void clear();
 
@@ -150,7 +150,7 @@ class FunctionNode : public IdentifierNode {
 		FunctionNode(IdentifierNode* id, Symbol::FunctionType* f) : IdentifierNode(id->sym, nullptr), func(f) {}
 		FunctionNode(FunctionNode* f, SyntaxNode* child) : IdentifierNode(f->sym, child), func(f->func) {}
 
-		void gen3AC(std::vector<ThreeAddress>& instructions);
+		unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 };
 
 class FunctionCallNode : public SyntaxNode {

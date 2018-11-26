@@ -189,13 +189,15 @@ void gen3AC(SyntaxNode* root) {
 	std::vector<ThreeAddress> instructions;
 	instructions.reserve(100);
 
+	unsigned tempTicker = 0;
+
 	table.calcOffsets();
 
 	instructions.emplace_back();
 	instructions.back().op = "BR";
-	instructions.back().dest = "main1";
+	instructions.back().dest = "(LABEL main1)";
 
-	root->gen3AC(instructions);
+	root->gen3AC(instructions, tempTicker);
 
 	for(const ThreeAddress& i : instructions) {
 		std::cout << std::left << std::setw(16) << i.op << std::setw(16) << i.op1 << std::setw(16) << i.op2 << std::setw(16) << i.dest <<std::endl; 

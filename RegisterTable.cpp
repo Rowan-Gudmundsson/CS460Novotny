@@ -65,8 +65,8 @@ RegisterTable::RegisterTable()
 	/* frame pointer */
 	populateRegister(registers[30], "fp", true);
 
-	/* return address (aka program counter) */
-	populateRegister(registers[31], "pc", true);
+	/* return address */
+	populateRegister(registers[31], "ra", true);
 
 }
 
