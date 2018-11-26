@@ -1,4 +1,4 @@
-
+void blah();
 void blah(int);
 void blah(char);
 
@@ -38,6 +38,7 @@ int main() {
 	blah(4);
 	blah('4');
 
+	#DUMP
 	blah();
 }
 

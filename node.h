@@ -30,6 +30,7 @@ class SyntaxNode {
 			OPERATOR,
 			DECLARE_AND_INIT,
 			FUNCTION, // Function definition/declaration ONLY - not call
+			FUNCTION_CALL,
 			ASSIGN,
 			CONDITIONAL,
 			ARRAY,
@@ -157,6 +158,14 @@ class FunctionNode : public IdentifierNode {
 		void gen3AC(std::vector<ThreeAddress>& instructions);
 };
 
+class FunctionCallNode : public SyntaxNode {
+	public:
+		FunctionCallNode(Symbol::SymbolType* sPtr, Symbol::FunctionType* fPtr) : SyntaxNode(FUNCTION_CALL, fPtr->returnType, 0), func(fPtr), sym(sPtr) {}
+		Symbol::FunctionType* const func;
+		Symbol::SymbolType* const sym;
+		std::vector<SyntaxNode*> callParameters;
+};
+
 class LoopNode : public SyntaxNode {
 	public:
 		LoopNode(SyntaxNode* pre, SyntaxNode* check, SyntaxNode* post, SyntaxNode* stmt, bool _pre_check = true)
@@ -174,6 +183,7 @@ std::ostream& operator<<(std::ostream& out, const ConstantNode& n);
 std::ostream& operator<<(std::ostream& out, const OperatorNode& n);
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n);
 std::ostream& operator<<(std::ostream& out, const FunctionNode& n);
+std::ostream& operator<<(std::ostream& out, const FunctionCallNode& n);
 std::ostream& operator<<(std::ostream& out, const ArrayNode& a);
 std::ostream& operator<<(std::ostream& out, const LoopNode& n);
 std::ostream& operator<<(std::ostream& out, const CoercionNode& n);

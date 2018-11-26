@@ -280,6 +280,7 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(LOOP);
 			PROCESS_VAL(ACCESS);
 			PROCESS_VAL(COERCION);
+			PROCESS_VAL(FUNCTION_CALL);
 		}
 	#undef PROCESS_VAL
 
@@ -297,6 +298,9 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 	switch(n->type) {
 		case SyntaxNode::Type::FUNCTION:
 			out << *((FunctionNode*) n);
+			break;
+		case SyntaxNode::Type::FUNCTION_CALL:
+			out << *((FunctionCallNode*) n);
 			break;
 		case SyntaxNode::Type::IDENTIFIER:
 			out << *((IdentifierNode*) n);
@@ -511,6 +515,7 @@ std::ostream& operator<<(std::ostream& out, const CoercionNode& n) {
 
 	return out;
 }
+
 std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
 	out << n.sym->name << "(";
 	// std::cout << *n.sym << std::endl;
@@ -534,6 +539,46 @@ std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
 	for(unsigned i = 0; i < n.children.size(); i++) {
 		out << n.children[i];
 	}
+	return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const FunctionCallNode& n) {
+	out << "CALL TO " << n.sym->name << "( ";
+
+	for (unsigned i = 0; i < n.callParameters.size(); i++) {
+		SyntaxNode* tmp = n.callParameters.at(i);
+		switch (tmp->type) {
+			case SyntaxNode::Type::CONSTANT: {
+				ConstantNode* constant = (ConstantNode*)tmp;
+				if (constant->etype & EINT || constant->etype & ECHAR) {
+					out << constant->i;
+				} else if (constant->etype & EFLOAT || constant->etype & EDOUBLE) {
+					out << constant->f;
+				} else if (constant->etype & EPOINTER) {
+					out << *(constant->s);
+				}
+				break;
+			}
+			case SyntaxNode::Type::OPERATOR: {
+				OperatorNode* op = (OperatorNode*)tmp;
+				out << (*op);
+				break;
+			}
+			case SyntaxNode::Type::IDENTIFIER: {
+				IdentifierNode* id = (IdentifierNode*)tmp;
+				out << (*id);
+				break;
+			}
+			default:
+				throw ParserError("Cannot call function with this parameter.");
+		}
+		out << " " << tmp->etype;
+		if (i != n.callParameters.size() - 1) {
+			out << ", ";
+		}
+	}
+	out << ")} ";
+
 	return out;
 }
 
@@ -590,7 +635,7 @@ void FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions) {
 	} else {
 		instructions.back().op1 = func->label;
 	}
-	
+
 	for(SyntaxNode* c : children) {
 		if(c != nullptr) {
 			c->gen3AC(instructions);
