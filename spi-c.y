@@ -77,7 +77,7 @@
 %type <nval> direct_declarator constant primary_expression string expression identifier declaration declaration_list
 %type <nval> postfix_expression unary_expression cast_expression initializer init_declarator init_declarator_list
 %type <nval> compound_statement function_definition external_declaration translation_unit constant_expression expression_statement
-%type <nval> statement statement_list labeled_statement selection_statement iteration_statement jump_statement
+%type <nval> statement statement_list labeled_statement selection_statement iteration_statement jump_statement argument_expression_list
 %type <pval> pointer
 %type <qval> type_qualifier_list type_qualifier
 %type <eList> parameter_list parameter_type_list
@@ -1037,24 +1037,62 @@ unary_operator // OperatorNode::OpType
 postfix_expression // Node*
 	: primary_expression { $$ = $1; }
 	| postfix_expression LBRACKET expression RBRACKET { $$ = new SyntaxNode(SyntaxNode::ACCESS, EUNKNOWN, 2, $1, $3); }
-	| postfix_expression LPAREN RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
-	| postfix_expression LPAREN argument_expression_list RPAREN { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression LPAREN RPAREN {
+		if ($1->type != SyntaxNode::Type::IDENTIFIER) {
+			throw ParserError("002: Expected type IDENTIFIER.");
+		}
+		IdentifierNode* tmp = (IdentifierNode*)$1;
+		$$ = nullptr;
+		for (auto& f : tmp->sym->functions) {
+			if (f.parameters.empty()) {
+				$$ = new FunctionCallNode(tmp->sym, &f);
+				((FunctionCallNode*)$$)->callParameters.clear();
+			}
+		}
+		if ($$ == nullptr) {
+			throw ParserError("No matching function to call.");
+		}
+	}
+	| postfix_expression LPAREN argument_expression_list RPAREN {
+		if ($1->type != SyntaxNode::Type::IDENTIFIER) {
+			throw ParserError("003: Expected type IDENTIFIER.");
+		}
+		IdentifierNode* tmp = (IdentifierNode*)$1;
+		$$ = nullptr;
+		std::vector<EvalType> paramTypes;
+		for (auto i : $3->children) {
+			paramTypes.push_back(i->etype);
+		}
+		bool match = true;
+		for (auto& f : tmp->sym->functions) {
+			if (f.parameters == paramTypes) {
+				$$ = new FunctionCallNode(tmp->sym, &f);
+			}
+		}
+		if ($$ == nullptr) {
+			throw ParserError("No matching function to call.");
+		}
+		FunctionCallNode* function = (FunctionCallNode*)$$;
+		for (auto i : $3->children) {
+			function->callParameters.push_back(i);
+		}
+	}
 	| postfix_expression PERIOD identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
-	| postfix_expression INC_OP { /* TODO(Rowan) -- Fix later */ $$ = new OperatorNode($1->etype, OperatorNode::OINCPOST, 1, $1); }
-	| postfix_expression DEC_OP { /* TODO(Rowan) -- Fix later */ $$ = new OperatorNode($1->etype, OperatorNode::ODECPOST, 1, $1); }
+	| postfix_expression INC_OP { $$ = new OperatorNode($1->etype, OperatorNode::OINCPOST, 1, $1); }
+	| postfix_expression DEC_OP { $$ = new OperatorNode($1->etype, OperatorNode::ODECPOST, 1, $1); }
 	;
 
-primary_expression
+primary_expression // Node*
 	: identifier { $$ = $1; }
 	| constant { $$ = $1; }
 	| string { $$ = $1; }
 	| LPAREN expression RPAREN { $$ = $2; }
 	;
 
-argument_expression_list
-	: assignment_expression
-	| argument_expression_list COMMA assignment_expression
+argument_expression_list // Node*
+	: assignment_expression { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
+	| argument_expression_list COMMA assignment_expression { $$ = $1; $$->children.push_back($3); }
 	;
 
 constant

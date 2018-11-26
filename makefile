@@ -47,16 +47,16 @@ symboTest.o: symboTest.cpp symboTest.h
 .PHONY:
 test: tests/compiler.test tests/redeclaration.test tests/shadowing.test tests/undefined_reference.test spi-c
 ifeq ($(OS),Windows_NT)
-	.\spi-c tests/compiler.test > tests/compiler.out
-	.\spi-c tests/redeclaration.test > tests/redeclaration.out
-	.\spi-c tests/shadowing.test > tests/shadowing.out
-	.\spi-c tests/undefined_reference.test > tests/undefined_reference.out
-	.\symboTest < "symbol table tests/test1" > "symbol table tests/test1.out"
+	-.\spi-c tests/compiler.test > tests/compiler.out
+	-.\spi-c tests/redeclaration.test > tests/redeclaration.out
+	-.\spi-c tests/shadowing.test > tests/shadowing.out
+	-.\spi-c tests/undefined_reference.test > tests/undefined_reference.out
+	-.\symboTest < "symbol table tests/test1" > "symbol table tests/test1.out"
 else
-	./spi-c tests/compiler.test > tests/compiler.out
-	./spi-c tests/redeclaration.test > tests/redeclaration.out
-	./spi-c tests/shadowing.test > tests/shadowing.out
-	./spi-c tests/undefined_reference.test > tests/undefined_reference.out
+	-./spi-c tests/compiler.test > tests/compiler.out
+	-./spi-c tests/redeclaration.test > tests/redeclaration.out
+	-./spi-c tests/shadowing.test > tests/shadowing.out
+	-./spi-c tests/undefined_reference.test > tests/undefined_reference.out
 endif
 
 .PHONY: clean
