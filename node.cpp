@@ -616,8 +616,186 @@ unsigned SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& t
 			instructions.back().op = "ASSIGN";
 			instructions.back().dest = "(Local " + std::to_string(((IdentifierNode*) children[0])->sym->offset) + ")";
 			break;
+		default:
+			break;
 	}
 
+	return 0;
+}
+
+unsigned OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+	instructions.emplace_back();
+	unsigned rhs, lhs = -1;
+	// Get tmp register location of rhs
+	rhs = children[0]->gen3AC(instructions, tempTicker);
+	// If lhs exists get register location of it
+	if (children.size() > 1) {
+		lhs = children[0]->gen3AC(instructions, tempTicker);
+	}
+
+	// We only need one type since we already coerce
+	std::string rhsType = children[0]->etype & EINT | children[0]->etype & ECHAR | children[0]->etype & EPOINTER
+		? "ITemp"
+		: "FTemp";
+
+	instructions.back().dest = "(" + rhsType + " " + std::to_string(tempTicker) + ")";
+	unsigned tmp = tempTicker;
+	tempTicker++;
+
+	switch (opType) {
+		case OBAND: {
+			instructions.back().op = "AND";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OBOR: {
+			instructions.back().op = "OR";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OBXOR: {
+			instructions.back().op = "XOR";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OBNOT: {
+			instructions.back().op = "NOT";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			break;
+		}
+		case OLSHIFT: {
+			instructions.back().op = "SLL";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case ORSHIFT: {
+			instructions.back().op = "SRL";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		// Arithmetic
+		case OMOD: {
+			instructions.back().op = "MOD"; // Not an instruction in mips but will need to happen in 3ac->asm
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case ODIV: {
+			instructions.back().op = "DIV";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OMULT: {
+			instructions.back().op = "MULT";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OADD: {
+			instructions.back().op = "ADD";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OSUB: {
+			instructions.back().op = "SUB";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OINCPOST:
+		case OINC: {
+			instructions.back().op = "ADDI";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "1";
+			break;
+		}
+		case ODECPOST:
+		case ODEC: {
+			instructions.back().op = "SUBI";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "1";
+			break;
+		}
+		// Logic
+		case OLNOT: {
+			instructions.back().op = "NOT";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			break;
+		}
+		case OLAND: {
+			instructions.back().op = "LAND";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OLOR: {
+			instructions.back().op = "LOR";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		// Comparison
+		case OLESS: {
+			instructions.back().op = "LT";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OGREAT: {
+			instructions.back().op = "GT";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OLEQ: {
+			instructions.back().op = "LE";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OGEQ: {
+			instructions.back().op = "GE";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OEQUAL: {
+			instructions.back().op = "EQ";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case ONEQ: {
+			instructions.back().op = "NE";
+			instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		// Other
+		case OSIZE: {
+			// TODO(Rowan) - Maybe get around to this
+			throw ParserError("Not dealing with sizeof.");
+			// instructions.back().op = "XOR";
+			// instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			// instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+		case OTERNARY: {
+			// TODO(Rowan) - Maybe get around to this
+			throw ParserError("Not dealing with turnary operator.");
+			// instructions.back().op = "XOR";
+			// instructions.back().op1 = "(" + rhsType + " " + std::to_string(rhs) + ")";
+			// instructions.back().op2 = "(" + rhsType + " " + std::to_string(lhs) + ")";
+			break;
+		}
+	}
 	return 0;
 }
 
@@ -629,8 +807,12 @@ unsigned IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigne
 		? "ITemp"
 		: "FTemp";
 
+	std::string scope = sym->scopeLevel == 0
+		? "Global"
+		: "Local";
+
 	instructions.back().dest = std::string("(") + type + " " + std::to_string(tempTicker) + ")";
-	instructions.back().op1 = std::string("(Local ") + std::to_string(sym->offset) + ")";
+	instructions.back().op1 = "(" + scope + " " + std::to_string(sym->offset) + ")";
 	unsigned tmp = tempTicker;
 	tempTicker++;
 

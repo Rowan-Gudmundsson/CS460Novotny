@@ -132,6 +132,7 @@ class OperatorNode : public SyntaxNode {
 		} opType;
 		OperatorNode(EvalType _type, OpType _opType, unsigned numChildren...);
 		ConstantNode* evalNode();
+		unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 };
 
 class IdentifierNode : public SyntaxNode {
