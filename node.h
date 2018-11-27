@@ -138,6 +138,8 @@ class IdentifierNode : public SyntaxNode {
 	public:
 		Symbol::SymbolType* const sym;
 		IdentifierNode(Symbol::SymbolType* sPtr) : SyntaxNode(IDENTIFIER, sPtr->etype, 0), sym(sPtr) {}
+
+		unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 	private:
 		IdentifierNode(Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(FUNCTION, sPtr->etype, 1, child), sym(sPtr) {}
 		friend class FunctionNode;

@@ -621,6 +621,22 @@ unsigned SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& t
 	return 0;
 }
 
+unsigned IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+	instructions.emplace_back();
+	instructions.back().op = "ASSIGN";
+
+	std::string type = etype & EINT || etype & ECHAR || sym->v.pointerLevel != 0
+		? "ITemp"
+		: "FTemp";
+
+	instructions.back().dest = std::string("(") + type + " " + std::to_string(tempTicker) + ")";
+	instructions.back().op1 = std::string("(Local ") + std::to_string(sym->offset) + ")";
+	unsigned tmp = tempTicker;
+	tempTicker++;
+
+	return tmp;
+}
+
 unsigned FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
 	instructions.emplace_back();
 	instructions.back().op = "LABEL";
