@@ -16,7 +16,7 @@ ConstantNode* evalConst(SyntaxNode* node) {
 	throw ParserError("Something went horribly awry...");
 }
 
-SyntaxNode::SyntaxNode(Type t, EvalType e, unsigned n...) : type(t), etype(e), line(lineno), columnno(column) {
+SyntaxNode::SyntaxNode(const Source& s, Type t, EvalType e, unsigned n...) : type(t), etype(e), line(s.line), source(s.source) {
 	if(n > 0) {
 		va_list args;
 		va_start(args, n);
@@ -58,7 +58,7 @@ void SyntaxNode::semanticCheck() {
 	}
 }
 
-OperatorNode::OperatorNode(EvalType _type, OpType _opType, unsigned n...): SyntaxNode(OPERATOR, _type, 0), opType(_opType) {
+OperatorNode::OperatorNode(const Source& s, EvalType _type, OpType _opType, unsigned n...): SyntaxNode(s, OPERATOR, _type, 0), opType(_opType) {
 	isConst = true;
 	if (n > 0) {
 		va_list args;
@@ -94,42 +94,42 @@ ConstantNode* OperatorNode::evalNode() {
 		// Binary Operators
 		case OBAND: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i & rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i & rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"&\" on non-integral types.");
 			}
 		}
 		case OBOR: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i | rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i | rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"|\" on non-integral types.");
 			}
 		}
 		case OBXOR: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i ^ rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i ^ rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"^\" on non-integral types.");
 			}
 		}
 		case OBNOT: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, ~lhs->i);
+				return new ConstantNode({line, source}, etype, ~lhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"~\" on non-integral types.");
 			}
 		}
 		case OLSHIFT: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i << rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i << rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"<<\" on non-integral types.");
 			}
 		}
 		case ORSHIFT: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i >> rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i >> rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \">>\" on non-integral types.");
 			}
@@ -137,35 +137,35 @@ ConstantNode* OperatorNode::evalNode() {
 		// Arithmetic
 		case OMOD: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i % rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i % rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"%\" on non-integral types.");
 			}
 		}
 		case ODIV: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i / rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i / rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"/\" on non-integral types.");
 			}
 		}
 		case OMULT: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i * rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i * rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"*\" on non-integral types.");
 			}
 		}
 		case OADD: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i + rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i + rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"+\" on non-integral types.");
 			}
 		}
 		case OSUB: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, lhs->i - rhs->i);
+				return new ConstantNode({line, source}, etype, lhs->i - rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"-\" on non-integral types.");
 			}
@@ -173,7 +173,7 @@ ConstantNode* OperatorNode::evalNode() {
 		case OINCPOST:
 		case OINC: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, ++lhs->i);
+				return new ConstantNode({line, source}, etype, ++lhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"++\" on non-integral types.");
 			}
@@ -181,7 +181,7 @@ ConstantNode* OperatorNode::evalNode() {
 		case ODECPOST:
 		case ODEC: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, --lhs->i);
+				return new ConstantNode({line, source}, etype, --lhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"%\" on non-integral types.");
 			}
@@ -189,21 +189,21 @@ ConstantNode* OperatorNode::evalNode() {
 		// Logic
 		case OLNOT: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(!lhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(!lhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"!\" on non-integral types.");
 			}
 		}
 		case OLAND: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(lhs->i && rhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(lhs->i && rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"&&\" on non-integral types.");
 			}
 		}
 		case OLOR: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(lhs->i || rhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(lhs->i || rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"||\" on non-integral types.");
 			}
@@ -211,42 +211,42 @@ ConstantNode* OperatorNode::evalNode() {
 		// Comparison
 		case OLESS: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(lhs->i < rhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(lhs->i < rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"<\" on non-integral types.");
 			}
 		}
 		case OGREAT: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(lhs->i > rhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(lhs->i > rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \">\" on non-integral types.");
 			}
 		}
 		case OLEQ: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(lhs->i <= rhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(lhs->i <= rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"<=\" on non-integral types.");
 			}
 		}
 		case OGEQ: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(lhs->i >= rhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(lhs->i >= rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \">=\" on non-integral types.");
 			}
 		}
 		case OEQUAL: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(lhs->i == rhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(lhs->i == rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"==\" on non-integral types.");
 			}
 		}
 		case ONEQ: {
 			if (etype & EINT || etype & ECHAR) {
-				return new ConstantNode(etype, (long int)(lhs->i != rhs->i));
+				return new ConstantNode({line, source}, etype, (long int)(lhs->i != rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"!=\" on non-integral types.");
 			}
@@ -314,9 +314,6 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 		case SyntaxNode::Type::LOOP:
 			out << *((LoopNode*) n);
 			break;
-		// case SyntaxNode::Type::ARRAY:
-		// 	out << *((ArrayNode*) n);
-		// 	break;
 		case SyntaxNode::Type::COERCION:
 			out << *((CoercionNode*) n);
 			break;
@@ -351,47 +348,6 @@ std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
 	} else if(n.etype & EFLOAT || n.etype & EDOUBLE) {
 		out << n.f;
 	}
-	out << "} ";
-
-	return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const ArrayNode& a) {
-	out << "\\textbf{";
-	out << "Array of ";
-	out << a.getSize() << " ";
-	switch(a.etype) {
-		case EUNSIGNED:
-			out << "unsigned";
-			break;
-		case ECHAR:
-			out << "char";
-			break;
-		case ESHORT:
-			out << "short";
-			break;
-		case EINT:
-			out << "int";
-			break;
-		case ELONG:
-			out << "long";
-			break;
-		case EFLOAT:
-			out << "float";
-			break;
-		case EDOUBLE:
-			out << "double";
-			break;
-		case EPOINTER:
-			out << "pointer";
-			break;
-		case EUNKNOWN:
-		case EVOID:
-		default:
-			out << "unknown";
-			break;
-	}
-
 	out << "} ";
 
 	return out;
@@ -615,6 +571,7 @@ unsigned SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& t
 			instructions.emplace_back();
 			instructions.back().op = "ASSIGN";
 			instructions.back().dest = "(Local " + std::to_string(((IdentifierNode*) children[0])->sym->offset) + ")";
+			instructions.back().source = source;
 			break;
 	}
 
@@ -624,6 +581,7 @@ unsigned SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& t
 unsigned FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
 	instructions.emplace_back();
 	instructions.back().op = "LABEL";
+	instructions.back().source = source;
 
 
 	if(func->label == "") {

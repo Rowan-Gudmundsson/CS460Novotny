@@ -200,6 +200,6 @@ void gen3AC(SyntaxNode* root) {
 	root->gen3AC(instructions, tempTicker);
 
 	for(const ThreeAddress& i : instructions) {
-		std::cout << std::left << std::setw(16) << i.op << std::setw(16) << i.op1 << std::setw(16) << i.op2 << std::setw(16) << i.dest <<std::endl; 
+		std::cout << std::left << std::setw(16) << i.op << std::setw(16) << i.op1 << std::setw(16) << i.op2 << std::setw(16) << i.dest << "    " << i.source << std::endl; 
 	}
 }

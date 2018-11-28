@@ -13,6 +13,7 @@
 	extern Symbol table;
 	extern unsigned int parseDLevel;
 	extern unsigned lineno;
+	extern std::string currentLine;
 	void throwWarning(const std::string& warning);
 	using namespace std::string_literals;
 %}
@@ -89,7 +90,7 @@
 
 translation_unit // Node*
 	: external_declaration {
-		$$ = root = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
+		$$ = root = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
 		if(parseDLevel) {
 			std::cout << "Found Root Node: " << $1 << '\n';
 		}
@@ -122,7 +123,7 @@ function_definition // Node*
 		*/
 		//$$ = new SyntaxNode(SyntaxNode::Type::FUNCTION, EUNKNOWN, 2, $2, $3);
 		if($2->type == SyntaxNode::Type::FUNCTION) {
-			$$ = new FunctionNode(((FunctionNode*) $2), $3);
+			$$ = new FunctionNode({$2->line, $2->source}, ((FunctionNode*) $2), $3);
 			delete $2;
 			((FunctionNode*)$$)->func->defined = true;
 			((FunctionNode*)$$)->func->functionDefLine =  lineno;
@@ -184,7 +185,7 @@ declaration // Node*
 declaration_list // Node*
 	: declaration {
 		table.mode = Symbol::Mode::READ;
-		$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
+		$$ = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
 		if(parseDLevel){
 			std::cout << "declaration_list\n";
 			std::cout << "GENERIC:\n"
@@ -253,7 +254,7 @@ struct_declaration_list
 
 init_declarator_list // Node*
 	: init_declarator {
-		$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
+		$$ = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
 		if(parseDLevel){
 			std::cout << "init_declarator_list\n"
 			          << "GENERIC:\n"
@@ -271,7 +272,7 @@ init_declarator // Node*
 		$$ = $1;
 	}
 	| declarator ASSIGN initializer {
-		$$ = new SyntaxNode(SyntaxNode::Type::DECLARE_AND_INIT, EUNKNOWN, 2, $1, $3);
+		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::DECLARE_AND_INIT, EUNKNOWN, 2, $1, $3);
 		if(parseDLevel){
 			std::cout << "DECLARE_AND_INIT:\n"
 			          << $1 << '\n'
@@ -342,7 +343,8 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			node->sym->v.isArray = true;
 			node->sym->v.arrayDimensions.push_back(-1);
 
-			node->children.push_back(new ArrayNode(EUNKNOWN, $1));
+			// TODO Figure this shit out
+			// node->children.push_back(new ArrayNode({lineno, currentLine}, EUNKNOWN, $1));
 
 
 		} else {
@@ -360,7 +362,9 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			} catch(ParserError e) {
 				std::cout << "Error in constant evaluation: " << e.what() << std::endl;
 			}
-			node->children.push_back(new ArrayNode(EUNKNOWN, $3));
+
+			// TODO Figure this shit out
+			// node->children.push_back(new ArrayNode({lineno, currentLine}, EUNKNOWN, $3));
 		} else {
 			throw "Error 2";
 		}
@@ -375,7 +379,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			// See if this function already exists
 			for(auto& f : inode->sym->functions) {
 				if(f.parameters.empty()) {
-					fnode = new FunctionNode(inode, &f);
+					fnode = new FunctionNode({lineno, currentLine}, inode, &f);
 					break;
 				}
 			}
@@ -384,7 +388,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 				// Found a new function
 				Symbol::FunctionType f;
 				inode->sym->functions.push_back(f);
-				fnode = new FunctionNode(inode, &inode->sym->functions.back());
+				fnode = new FunctionNode({lineno, currentLine}, inode, &inode->sym->functions.back());
 			}
 
 			$$ = fnode;
@@ -406,7 +410,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			// See if this function already exists
 			for(auto& f : inode->sym->functions) {
 				if(f.parameters == *$3) {
-					fnode = new FunctionNode(inode, &f);
+					fnode = new FunctionNode({lineno, currentLine}, inode, &f);
 					break;
 				}
 			}
@@ -416,7 +420,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 				Symbol::FunctionType f;
 				f.parameters = *$3;
 				inode->sym->functions.push_back(f);
-				fnode = new FunctionNode(inode, &inode->sym->functions.back());
+				fnode = new FunctionNode({lineno, currentLine}, inode, &inode->sym->functions.back());
 			}
 
 			$$ = fnode;
@@ -535,31 +539,31 @@ compound_statement // Node*
 	: LBRACE RBRACE { $$ = nullptr; }
 	| LBRACE statement_list RBRACE { $$ = $2; }
 	| LBRACE declaration_list RBRACE { $$ = $2; }
-	| LBRACE declaration_list statement_list RBRACE { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 2, $2, $3); }
+	| LBRACE declaration_list statement_list RBRACE { $$ = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EUNKNOWN, 2, $2, $3); }
 	;
 
 statement_list // Node*
-	: statement { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
+	: statement { $$ = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
 	| statement_list statement { $$ = $1; $$->children.push_back($2); }
 	;
 
 selection_statement // Node*
-	: IF LPAREN expression RPAREN statement { $$ = new SyntaxNode(SyntaxNode::Type::CONDITIONAL, EVOID, 2, $3, $5); }
-	| IF LPAREN expression RPAREN statement ELSE statement { $$ = new SyntaxNode(SyntaxNode::Type::CONDITIONAL, EVOID, 3, $3, $5, $7); }
+	: IF LPAREN expression RPAREN statement { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::CONDITIONAL, EVOID, 2, $3, $5); }
+	| IF LPAREN expression RPAREN statement ELSE statement { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::CONDITIONAL, EVOID, 3, $3, $5, $7); }
 	| SWITCH LPAREN expression RPAREN statement { $$ = nullptr; /* TODO: Switch Statements */ }
 	;
 
 iteration_statement // Node*
-	: WHILE LPAREN expression RPAREN statement { $$ = new LoopNode($3, $5); }
-	| DO statement WHILE LPAREN expression RPAREN SEMI { $$ = new LoopNode($5, $2, false); }
-	| FOR LPAREN SEMI SEMI RPAREN statement { $$ = new LoopNode(nullptr, nullptr, nullptr, $6); }
-	| FOR LPAREN SEMI SEMI expression RPAREN statement { $$ = new LoopNode(nullptr, nullptr, $5, $7); }
-	| FOR LPAREN SEMI expression SEMI RPAREN statement { $$ = new LoopNode(nullptr, $4, nullptr, $7); }
-	| FOR LPAREN SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode(nullptr, $4, $6, $8); }
-	| FOR LPAREN expression SEMI SEMI RPAREN statement { $$ = new LoopNode($3, nullptr, nullptr, $7); }
-	| FOR LPAREN expression SEMI SEMI expression RPAREN statement { $$ = new LoopNode($3, nullptr, $6, $8); }
-	| FOR LPAREN expression SEMI expression SEMI RPAREN statement { $$ = new LoopNode($3, $5, nullptr, $8); }
-	| FOR LPAREN expression SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode($3, $5, $7, $9); }
+	: WHILE LPAREN expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, $5); }
+	| DO statement WHILE LPAREN expression RPAREN SEMI { $$ = new LoopNode({lineno, currentLine}, $5, $2, false); }
+	| FOR LPAREN SEMI SEMI RPAREN statement { $$ = new LoopNode({lineno, currentLine}, nullptr, nullptr, nullptr, $6); }
+	| FOR LPAREN SEMI SEMI expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, nullptr, nullptr, $5, $7); }
+	| FOR LPAREN SEMI expression SEMI RPAREN statement { $$ = new LoopNode({lineno, currentLine}, nullptr, $4, nullptr, $7); }
+	| FOR LPAREN SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, nullptr, $4, $6, $8); }
+	| FOR LPAREN expression SEMI SEMI RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, nullptr, nullptr, $7); }
+	| FOR LPAREN expression SEMI SEMI expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, nullptr, $6, $8); }
+	| FOR LPAREN expression SEMI expression SEMI RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, $5, nullptr, $8); }
+	| FOR LPAREN expression SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, $5, $7, $9); }
 	;
 
 jump_statement // Node*
@@ -594,20 +598,20 @@ assignment_expression // Node*
 		}
 		if($2 == OperatorNode::OpType::OTERNARY) {
 			if (shouldCoerce) {
-				CoercionNode* coerce = new CoercionNode(from, to, $3);
-				$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, $1->etype, 2, $1, coerce);
+				CoercionNode* coerce = new CoercionNode({lineno, currentLine}, from, to, $3);
+				$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::ASSIGN, $1->etype, 2, $1, coerce);
 			} else {
-				$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, $1->etype, 2, $1, $3);
+				$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::ASSIGN, $1->etype, 2, $1, $3);
 			}
 		} else {
 			// TODO - the left side might not be strictly an IdentifierNode?
 			if($1->type == SyntaxNode::Type::IDENTIFIER) {
-				OperatorNode* temp = new OperatorNode(to, $2, 2, new IdentifierNode(((IdentifierNode*) $1)->sym), $3);
+				OperatorNode* temp = new OperatorNode({lineno, currentLine}, to, $2, 2, new IdentifierNode({lineno, currentLine}, ((IdentifierNode*) $1)->sym), $3);
 				if (shouldCoerce) {
-					CoercionNode* coerce = new CoercionNode(from, to, temp);
-					$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, to, 2, $1, coerce);
+					CoercionNode* coerce = new CoercionNode({lineno, currentLine}, from, to, temp);
+					$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::ASSIGN, to, 2, $1, coerce);
 				} else {
-					$$ = new SyntaxNode(SyntaxNode::Type::ASSIGN, to, 2, $1, temp);
+					$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::ASSIGN, to, 2, $1, temp);
 				}
 			} else {
 				throw "Gotta get that working";
@@ -633,7 +637,7 @@ assignment_operator // OperatorNode::OpType
 conditional_expression // Node*
 	: logical_or_expression { $$ = $1; }
 	| logical_or_expression HUH expression COLON conditional_expression {
-		$$ = new OperatorNode(EINT, OperatorNode::OpType::OTERNARY, 3, $1, $3, $5);
+		$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OTERNARY, 3, $1, $3, $5);
 	}
 	;
 
@@ -651,12 +655,12 @@ logical_or_expression // Node*
 				throw ParserError("Cannot perform operation '||' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::OLOR, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLOR, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::OLOR, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLOR, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode(EINT, OperatorNode::OpType::OLOR, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLOR, 2, $1, $3);
 		}
 	}
 	;
@@ -671,12 +675,12 @@ logical_and_expression // Node*
 				throw ParserError("Cannot perform operation '&&' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::OLAND, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLAND, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::OLAND, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLAND, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode(EINT, OperatorNode::OpType::OLAND, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLAND, 2, $1, $3);
 		}
 	}
 	;
@@ -694,12 +698,12 @@ inclusive_or_expression // Node*
 				throw ParserError("Cannot perform operation '|' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OBOR, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OBOR, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OBOR, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OBOR, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OBOR, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OBOR, 2, $1, $3);
 		}
 	}
 	;
@@ -717,12 +721,12 @@ exclusive_or_expression // Node*
 				throw ParserError("Cannot perform operation '^' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OBXOR, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OBXOR, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OBXOR, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OBXOR, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OBXOR, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OBXOR, 2, $1, $3);
 		}
 	}
 	;
@@ -740,12 +744,12 @@ and_expression // Node*
 				throw ParserError("Cannot perform operation '&' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OBAND, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OBAND, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OBAND, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OBAND, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OBAND, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OBAND, 2, $1, $3);
 		}
 	}
 	;
@@ -760,12 +764,12 @@ equality_expression // Node*
 				throw ParserError("Cannot perform operation '==' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::OEQUAL, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OEQUAL, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::OEQUAL, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OEQUAL, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode(EINT, OperatorNode::OpType::OEQUAL, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OEQUAL, 2, $1, $3);
 		}
 	}
 	| equality_expression NE_OP relational_expression {
@@ -776,12 +780,12 @@ equality_expression // Node*
 				throw ParserError("Cannot perform operation '!=' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::ONEQ, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::ONEQ, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::ONEQ, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::ONEQ, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode(EINT, OperatorNode::OpType::ONEQ, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::ONEQ, 2, $1, $3);
 		}
 	}
 	;
@@ -796,12 +800,12 @@ relational_expression // Node*
 				throw ParserError("Cannot perform operation '<' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::OLESS, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLESS, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(EINT, OperatorNode::OpType::OLESS, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLESS, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode(EINT, OperatorNode::OpType::OLESS, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, EINT, OperatorNode::OpType::OLESS, 2, $1, $3);
 		}
 	}
 	| relational_expression GTHAN shift_expression {
@@ -812,12 +816,12 @@ relational_expression // Node*
 				throw ParserError("Cannot perform operation '>' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OGREAT, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OGREAT, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OGREAT, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OGREAT, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OGREAT, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OGREAT, 2, $1, $3);
 		}
 	}
 	| relational_expression LE_OP shift_expression {
@@ -828,12 +832,12 @@ relational_expression // Node*
 				throw ParserError("Cannot perform operation '<=' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OLEQ, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OLEQ, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OLEQ, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OLEQ, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OLEQ, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OLEQ, 2, $1, $3);
 		}
 	}
 	| relational_expression GE_OP shift_expression {
@@ -844,12 +848,12 @@ relational_expression // Node*
 				throw ParserError("Cannot perform operation '>=' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OGEQ, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OGEQ, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OGEQ, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OGEQ, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OGEQ, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OGEQ, 2, $1, $3);
 		}
 	}
 	;
@@ -867,12 +871,12 @@ shift_expression // Node*
 				throw ParserError("Cannot perform operation '<<' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OLSHIFT, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OLSHIFT, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OLSHIFT, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OLSHIFT, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OLSHIFT, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OLSHIFT, 2, $1, $3);
 		}
 	}
 	| shift_expression RIGHT_OP additive_expression {
@@ -886,12 +890,12 @@ shift_expression // Node*
 				throw ParserError("Cannot perform operation '>>' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::ORSHIFT, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::ORSHIFT, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::ORSHIFT, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::ORSHIFT, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::ORSHIFT, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::ORSHIFT, 2, $1, $3);
 		}
 	}
 	;
@@ -906,12 +910,12 @@ additive_expression // Node*
 				throw ParserError("Cannot perform operation '+' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OADD, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OADD, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OADD, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OADD, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OADD, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OADD, 2, $1, $3);
 		}
 	}
 	| additive_expression SUB multiplicative_expression {
@@ -922,12 +926,12 @@ additive_expression // Node*
 				throw ParserError("Cannot perform operation '-' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OSUB, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OSUB, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OSUB, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OSUB, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OSUB, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OSUB, 2, $1, $3);
 		}
 	}
 	;
@@ -942,12 +946,12 @@ multiplicative_expression // Node*
 				throw ParserError("Cannot perform operation '*' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OMULT, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OMULT, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OMULT, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OMULT, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OMULT, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OMULT, 2, $1, $3);
 		}
 	}
 	| multiplicative_expression DIV cast_expression {
@@ -958,12 +962,12 @@ multiplicative_expression // Node*
 				throw ParserError("Cannot perform operation '/' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::ODIV, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::ODIV, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::ODIV, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::ODIV, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::ODIV, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::ODIV, 2, $1, $3);
 		}
 	}
 	| multiplicative_expression MOD cast_expression {
@@ -977,25 +981,25 @@ multiplicative_expression // Node*
 				throw ParserError("Cannot perform operation '%' on non primative types.");
 			}
 			if (a->second > b->second) {
-				$$ = new OperatorNode(a->first, OperatorNode::OpType::OMOD, 2, $1, new CoercionNode(b->first, a->first, $3));
+				$$ = new OperatorNode({lineno, currentLine}, a->first, OperatorNode::OpType::OMOD, 2, $1, new CoercionNode({lineno, currentLine}, b->first, a->first, $3));
 			} else {
-				$$ = new OperatorNode(b->first, OperatorNode::OpType::OMOD, 2, new CoercionNode(a->first, b->first, $1), $3);
+				$$ = new OperatorNode({lineno, currentLine}, b->first, OperatorNode::OpType::OMOD, 2, new CoercionNode({lineno, currentLine}, a->first, b->first, $1), $3);
 			}
 		} else {
-			$$ = new OperatorNode($1->etype, OperatorNode::OpType::OMOD, 2, $1, $3);
+			$$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OpType::OMOD, 2, $1, $3);
 		}
 	}
 	;
 
 cast_expression // Node*
 	: unary_expression { $$ = $1; }
-	| LPAREN type_name RPAREN cast_expression { $$ = new CoercionNode($4->etype, $2, $4); }
+	| LPAREN type_name RPAREN cast_expression { $$ = new CoercionNode({lineno, currentLine}, $4->etype, $2, $4); }
 	;
 
 unary_expression // Node*
 	: postfix_expression { $$ = $1; }
-	| INC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::OINC, 1, $2); }
-	| DEC_OP unary_expression { $$ = new OperatorNode($2->etype, OperatorNode::ODEC, 1, $2); }
+	| INC_OP unary_expression { $$ = new OperatorNode({lineno, currentLine}, $2->etype, OperatorNode::OINC, 1, $2); }
+	| DEC_OP unary_expression { $$ = new OperatorNode({lineno, currentLine}, $2->etype, OperatorNode::ODEC, 1, $2); }
 	| unary_operator cast_expression {
 		EvalType _type;
 		switch($1) {
@@ -1019,10 +1023,10 @@ unary_expression // Node*
 			default:
 				break;
 		}
-		$$ = new OperatorNode(_type, $1, 1, $2);
+		$$ = new OperatorNode({lineno, currentLine}, _type, $1, 1, $2);
 	}
-	| SIZEOF unary_expression { $$ = new OperatorNode(EINT | EUNSIGNED, OperatorNode::OSIZE, 1, $2); }
-	| SIZEOF LPAREN type_name RPAREN { $$ = new OperatorNode(EINT | EUNSIGNED, OperatorNode::OSIZE, 1, $3); }
+	| SIZEOF unary_expression { $$ = new OperatorNode({lineno, currentLine}, EINT | EUNSIGNED, OperatorNode::OSIZE, 1, $2); }
+	| SIZEOF LPAREN type_name RPAREN { $$ = new OperatorNode({lineno, currentLine}, EINT | EUNSIGNED, OperatorNode::OSIZE, 1, $3); }
 	;
 
 unary_operator // OperatorNode::OpType
@@ -1036,7 +1040,7 @@ unary_operator // OperatorNode::OpType
 
 postfix_expression // Node*
 	: primary_expression { $$ = $1; }
-	| postfix_expression LBRACKET expression RBRACKET { $$ = new SyntaxNode(SyntaxNode::ACCESS, EUNKNOWN, 2, $1, $3); }
+	| postfix_expression LBRACKET expression RBRACKET { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, EUNKNOWN, 2, $1, $3); }
 	| postfix_expression LPAREN RPAREN {
 		if ($1->type != SyntaxNode::Type::IDENTIFIER) {
 			throw ParserError("002: Expected type IDENTIFIER.");
@@ -1045,7 +1049,7 @@ postfix_expression // Node*
 		$$ = nullptr;
 		for (auto& f : tmp->sym->functions) {
 			if (f.parameters.empty()) {
-				$$ = new FunctionCallNode(tmp->sym, &f);
+				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f);
 				((FunctionCallNode*)$$)->callParameters.clear();
 			}
 		}
@@ -1063,10 +1067,10 @@ postfix_expression // Node*
 		for (auto i : $3->children) {
 			paramTypes.push_back(i->etype);
 		}
-		bool match = true;
+		
 		for (auto& f : tmp->sym->functions) {
 			if (f.parameters == paramTypes) {
-				$$ = new FunctionCallNode(tmp->sym, &f);
+				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f);
 			}
 		}
 		if ($$ == nullptr) {
@@ -1079,8 +1083,8 @@ postfix_expression // Node*
 	}
 	| postfix_expression PERIOD identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
 	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
-	| postfix_expression INC_OP { $$ = new OperatorNode($1->etype, OperatorNode::OINCPOST, 1, $1); }
-	| postfix_expression DEC_OP { $$ = new OperatorNode($1->etype, OperatorNode::ODECPOST, 1, $1); }
+	| postfix_expression INC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OINCPOST, 1, $1); }
+	| postfix_expression DEC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::ODECPOST, 1, $1); }
 	;
 
 primary_expression // Node*
@@ -1091,24 +1095,24 @@ primary_expression // Node*
 	;
 
 argument_expression_list // Node*
-	: assignment_expression { $$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
+	: assignment_expression { $$ = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1); }
 	| argument_expression_list COMMA assignment_expression { $$ = $1; $$->children.push_back($3); }
 	;
 
 constant
-	: INTEGER_CONSTANT { $$ = new ConstantNode(EINT, yylval.ival); }
-	| CHARACTER_CONSTANT { $$ = new ConstantNode(ECHAR, (long int)(yylval.cval)); }
-	| FLOATING_CONSTANT { $$ = new ConstantNode(EFLOAT, yylval.fval); }
+	: INTEGER_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, EINT, yylval.ival); }
+	| CHARACTER_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, ECHAR, (long int)(yylval.cval)); }
+	| FLOATING_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, EFLOAT, yylval.fval); }
 	| ENUMERATION_CONSTANT { /* TODO(Rowan) -- Fix later. */ $$ = nullptr; }
 	;
 
 string
-	: STRING_LITERAL { $$ = new ConstantNode(ECHAR | EPOINTER, yylval.strval); }
+	: STRING_LITERAL { $$ = new ConstantNode({lineno, currentLine}, ECHAR | EPOINTER, yylval.strval); }
 	;
 
 identifier
 	: IDENTIFIER {
-		$$ = new IdentifierNode(yylval.sval);
+		$$ = new IdentifierNode({lineno, currentLine}, yylval.sval);
 		if(parseDLevel) {
 			std::cout << "Found new identifier node: " << yylval.sval->name << std::endl;
 		}
