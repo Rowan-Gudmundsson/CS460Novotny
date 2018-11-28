@@ -609,18 +609,44 @@ unsigned SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& t
 		}
 	}
 
+	unsigned returnVal = -1;
+
 	switch(type) {
 		case DECLARE_AND_INIT:
 			// TODO - the actual assignment part
 			instructions.emplace_back();
 			instructions.back().op = "ASSIGN";
+			instructions.back().op1 = std::string("(") + (children[1]->etype & EINT || children[1]->etype & ECHAR
+				? "ITemp"
+				: "FTemp") + " " + std::to_string(children[1]->gen3AC(instructions, tempTicker)) + ")";
 			instructions.back().dest = "(Local " + std::to_string(((IdentifierNode*) children[0])->sym->offset) + ")";
 			break;
+		case ACCESS: {
+			instructions.emplace_back();
+			instructions.back().op = "ASSIGN";
+			std::string type = children[0]->etype & EINT || children[0]->etype & ECHAR
+				? "ITemp"
+				: "FTemp";
+			unsigned offset = ((IdentifierNode*) children[0])->sym->offset;
+			unsigned accessPosition = children[0]->gen3AC(instructions, tempTicker);
+			instructions.back().op = "ADD";
+			instructions.back().dest = "(ITemp " + std::to_string(tempTicker) + ")";
+			instructions.back().op1 = "(ITemp " + std::to_string(offset) + ")";
+			instructions.back().op2 = "(ITemp " + std::to_string(accessPosition) + ")";
+
+			instructions.emplace_back();
+			instructions.back().op = "ASSIGN";
+			instructions.back().op1 = "(ITemp " + std::to_string(tempTicker) + ")";
+			tempTicker++;
+			instructions.back().dest = "(" + type + " " + std::to_string(tempTicker) + ")";
+			returnVal = tempTicker;
+			tempTicker++;
+		}
 		default:
 			break;
 	}
 
-	return 0;
+	return returnVal;
 }
 
 unsigned OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
@@ -796,7 +822,7 @@ unsigned OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned&
 			break;
 		}
 	}
-	return 0;
+	return tmp;
 }
 
 unsigned IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
