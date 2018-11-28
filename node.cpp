@@ -579,17 +579,28 @@ unsigned SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& t
 			instructions.back().source = source;
 			break;
 		case ACCESS: {
-			instructions.emplace_back();
-			instructions.back().op = "ASSIGN";
+			// TODO - what is happening here
+			// instructions.emplace_back();
+			// instructions.back().op = "ASSIGN";
 			std::string type = children[0]->etype & EINT || children[0]->etype & ECHAR
 				? "ITemp"
 				: "FTemp";
 			unsigned offset = ((IdentifierNode*) children[0])->sym->offset;
 			unsigned accessPosition = children[0]->gen3AC(instructions, tempTicker);
+
+			instructions.emplace_back();
+			instructions.back().op = "MULT";
+			instructions.back().dest = "(ITemp " + std::to_string(tempTicker) + ")";
+			instructions.back().op1 = "(CONS " + std::to_string(accessPosition) + ")";
+			instructions.back().op2 = "(CONS " + std::to_string(size(((IdentifierNode*) children[0])->sym->etype)) + ")";
+			instructions.back().source = source;
+			tempTicker++;
+
+			instructions.emplace_back();
 			instructions.back().op = "ADD";
 			instructions.back().dest = "(ITemp " + std::to_string(tempTicker) + ")";
-			instructions.back().op1 = "(ITemp " + std::to_string(offset) + ")";
-			instructions.back().op2 = "(ITemp " + std::to_string(accessPosition) + ")";
+			instructions.back().op1 = "(CONS " + std::to_string(offset) + ")";
+			instructions.back().op2 = "(ITemp " + std::to_string(tempTicker - 1) + ")";
 			instructions.back().source = source;
 
 			instructions.emplace_back();

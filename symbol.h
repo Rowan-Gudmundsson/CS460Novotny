@@ -71,6 +71,8 @@ inline unsigned size(EvalType a) {
 	if(a & EFLOAT) return 4;
 	if(a & EDOUBLE) return 8;
 	if(a & EPOINTER) return 4;
+
+	return -2;
 }
 
 class Symbol {
