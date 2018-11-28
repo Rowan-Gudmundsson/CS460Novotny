@@ -609,7 +609,6 @@ unsigned SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& t
 }
 
 unsigned OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
-	instructions.emplace_back();
 	unsigned rhs, lhs = -1;
 	// Get tmp register location of rhs
 	rhs = children[0]->gen3AC(instructions, tempTicker);
@@ -617,6 +616,8 @@ unsigned OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned&
 	if (children.size() > 1) {
 		lhs = children[0]->gen3AC(instructions, tempTicker);
 	}
+
+	instructions.emplace_back();
 
 	// We only need one type since we already coerce
 	std::string rhsType = (children[0]->etype & EINT) | (children[0]->etype & ECHAR) | (children[0]->etype & EPOINTER)
