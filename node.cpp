@@ -619,7 +619,7 @@ unsigned OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned&
 	}
 
 	// We only need one type since we already coerce
-	std::string rhsType = children[0]->etype & EINT | children[0]->etype & ECHAR | children[0]->etype & EPOINTER
+	std::string rhsType = (children[0]->etype & EINT) | (children[0]->etype & ECHAR) | (children[0]->etype & EPOINTER)
 		? "ITemp"
 		: "FTemp";
 
