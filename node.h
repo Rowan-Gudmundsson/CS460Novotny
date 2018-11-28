@@ -91,9 +91,6 @@ class ConstantNode : public SyntaxNode {
 		friend ConstantNode* evalConst(SyntaxNode*);
 };
 
-class StringLiteralNode : public SyntaxNode {
-};
-
 class OperatorNode : public SyntaxNode {
 	public:
 		const enum OpType {
@@ -131,12 +128,15 @@ class OperatorNode : public SyntaxNode {
 		} opType;
 		OperatorNode(const Source& s, EvalType _type, OpType _opType, unsigned numChildren...);
 		ConstantNode* evalNode();
+		unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 };
 
 class IdentifierNode : public SyntaxNode {
 	public:
 		Symbol::SymbolType* const sym;
 		IdentifierNode(const Source& s, Symbol::SymbolType* sPtr) : SyntaxNode(s, IDENTIFIER, sPtr->etype, 0), sym(sPtr) {}
+
+		unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 	private:
 		IdentifierNode(const Source& s, Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(s, FUNCTION, sPtr->etype, 1, child), sym(sPtr) {}
 		friend class FunctionNode;

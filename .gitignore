@@ -68,3 +68,5 @@ debug_parser\.txt
 *.fls
 
 *.fdb_latexmk
+
+spi-c.dSYM/

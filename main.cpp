@@ -199,7 +199,14 @@ void gen3AC(SyntaxNode* root) {
 
 	root->gen3AC(instructions, tempTicker);
 
+	std::string lastSource = "";
+
 	for(const ThreeAddress& i : instructions) {
-		std::cout << std::left << std::setw(16) << i.op << std::setw(16) << i.op1 << std::setw(16) << i.op2 << std::setw(16) << i.dest << "    " << i.source << std::endl; 
+		std::cout << std::left << std::setw(20) << i.op << std::setw(20) << i.op1 << std::setw(20) << i.op2 << std::setw(20) << i.dest;
+		if(i.source != lastSource) {
+			lastSource = i.source;
+			std::cout << "    " << i.source; 
+		}
+		std::cout << std::endl;
 	}
 }
