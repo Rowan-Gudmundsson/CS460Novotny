@@ -200,9 +200,11 @@ void gen3AC(SyntaxNode* root) {
 
 	std::string lastSource = "";
 
+	std::cout << std::left << std::setw(20) << "OPCODE" << std::setw(20) << "OPERAND 1" << std::setw(20) << "OPERAND 2" << std::setw(20) << "DESTINATION" << " ; " << "SOURCE CODE" << std::endl;
+	std::cout << std::setw(81) << std::setfill('-') << '-' << ";" << std::setw(20) << '-' << std::setfill(' ') << std::endl;
 	for(const ThreeAddress& i : instructions) {
 		std::cout << i << " ; ";
-		if(i.source != lastSource) {
+		if(i.source.size() > 0 && i.source != lastSource) {
 			lastSource = i.source;
 			std::cout << i.source; 
 		}

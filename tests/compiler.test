@@ -34,6 +34,10 @@ int main() {
 		x = 2;
 	}
 
+	if(x % y > q[y + z]) {
+		q[x * y] = 42;
+	}
+
 	for(;x < 2;) {
 		q[x] = y * x;
 	}
