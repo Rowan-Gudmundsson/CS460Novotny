@@ -588,8 +588,22 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 
 			return {"INDR", tempTicker - 1};
 		}
-		default:
+		case GENERIC: {
+			for(SyntaxNode* c : children) {
+				if(c != nullptr) {
+					c->gen3AC(instructions, tempTicker);
+				}
+			}
+			return {"", ""};
+		}
+		default: {
+			for(SyntaxNode* c : children) {
+				if(c != nullptr) {
+					c->gen3AC(instructions, tempTicker);
+				}
+			}
 			return {"ERR", "ERR"};
+		}
 	}
 }
 
@@ -754,13 +768,26 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 }
 
 std::ostream& operator<<(std::ostream& out, const ThreeAddress& ins) {
-	out << ins.op << "\t\t\t" << ins.op1 << "\t\t\t" << ins.op2 << "\t\t\t" << ins.dest;
+	out << std::left << std::setw(20) << ins.op << std::setw(20)  << ins.op1 << std::setw(20)  << ins.op2 << std::setw(20) << ins.dest;
 
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const Operand& op) {
-	out << '(' << op.type << ' ' << op.value << ')';
+	unsigned width = out.width();
+	unsigned spaces;
+	out.width(0);
+	if(op.type.size() > 0 || op.value.size() > 0) {
+		std::string o = '(' + op.type + ' ' + op.value + ')';
+		spaces = ((o.size() > width) ? 0 : width - o.size());
+		out << o;
+	} else {
+		spaces = width;
+	}
+
+	for(unsigned i = 0; i < spaces; i++) {
+		out << ' ';
+	}
 
 	return out;
 }

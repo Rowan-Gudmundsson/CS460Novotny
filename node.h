@@ -2,6 +2,7 @@
 
 #include <cstdarg>
 #include <iostream>
+#include <iomanip>
 #include "symbol.h"
 #include "errors.h"
 
