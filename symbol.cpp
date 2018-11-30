@@ -238,6 +238,16 @@ void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
 	}
 }
 
+BinaryTree<std::string, Symbol::SymbolType>& Symbol::getGlobals() {
+	Scope* tmp = head;
+	// Find the root
+	while(tmp->parent != nullptr) {
+		tmp = tmp->parent;
+	}
+
+	return *tmp->tree;
+}
+
 /**
  * Clear the table
  * @param None

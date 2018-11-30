@@ -165,14 +165,17 @@ declaration // Node*
 				IdentifierNode* tmp = (IdentifierNode*)i;
 				tmp->etype = tmp_type;
 				tmp->sym->etype = tmp_type;
+				tmp->sym->itype = Symbol::SymbolType::VARIABLE;
 			} else if (i->type == SyntaxNode::Type::DECLARE_AND_INIT) {
 				IdentifierNode* tmp = (IdentifierNode*)i->children[0];
 				tmp->etype = tmp_type;
 				tmp->sym->etype = tmp_type;
+				tmp->sym->itype = Symbol::SymbolType::VARIABLE;
 			} else if (i->type == SyntaxNode::Type::FUNCTION) {
 				FunctionNode* tmp = (FunctionNode*)i;
 				tmp->etype = tmp_type;
 				tmp->func->returnType = tmp_type;
+				tmp->sym->itype = Symbol::SymbolType::FUNCTION;
 			} else {
 				std::cout << "Found type: " << i->type << std::endl;
 				throw ParserError("001: Expected type IDENTIFIER, FUNCTION, or DECLARE_AND_INIT");

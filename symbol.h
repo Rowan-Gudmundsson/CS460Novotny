@@ -168,6 +168,9 @@ class Symbol {
 		// Calculate offsets - only to be used AFTER symbol table has been completely constructed
 		void calcOffsets();
 
+		// Get a container of global variables
+		BinaryTree<std::string, SymbolType>& getGlobals();
+
 		// Destructor
 		~Symbol();
 

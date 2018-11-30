@@ -195,6 +195,12 @@ void gen3AC(SyntaxNode* root) {
 	table.calcOffsets();
 	std::cout << std::endl;
 
+	for (const Symbol::SymbolType& s : table.getGlobals()) {
+		if(s.itype == Symbol::SymbolType::VARIABLE) {
+			instructions.emplace_back("", "GLOBAL", Operand{"GLOBAL", s.name}, Operand{"ICONS", size(s.etype)});
+		}
+	}
+
 	instructions.emplace_back("", "BR", Operand{"", ""}, Operand{"LABEL", "main1"});
 
 	root->gen3AC(instructions, tempTicker, labelTicker);

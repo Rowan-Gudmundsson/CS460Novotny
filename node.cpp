@@ -771,11 +771,11 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 }
 
 Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	std::string scope = sym->scopeLevel == 0
-		? "Global"
-		: "Local";
-
-	return {scope, sym->offset};
+	if(sym->scopeLevel != 0) {
+		return {"Local", sym->offset};
+	} else {
+		return {"Global", sym->name};
+	}
 }
 
 Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
