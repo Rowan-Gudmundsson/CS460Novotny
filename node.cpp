@@ -819,6 +819,18 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	return {"LABEL", func->label};
 }
 
+Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
+	instructions.emplace_back(source, "ARGS", Operand{"CONS", unsigned(callParameters.size())});
+	for (SyntaxNode* i : callParameters) {
+		Operand tmp = i->gen3AC(instructions, tempTicker, labelTicker);
+		instructions.emplace_back(source, "VALOUT", tmp);
+	}
+	instructions.emplace_back(source, "CALL", Operand{"LABEL", func->label});
+	unsigned returnVal = tempTicker;
+	tempTicker++;
+	return {((func->returnType & (EINT | ECHAR)) ? "ITemp" : "FTemp"), returnVal};
+}
+
 Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	// reserves 2 labels, its fine we have plenty even if they dont get used 😃
 	unsigned beginLabel = labelTicker, endLabel = labelTicker + 1;

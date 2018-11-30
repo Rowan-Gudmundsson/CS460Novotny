@@ -183,6 +183,7 @@ class FunctionCallNode : public SyntaxNode {
 		Symbol::FunctionType* const func;
 		Symbol::SymbolType* const sym;
 		std::vector<SyntaxNode*> callParameters;
+		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker);
 };
 
 class LoopNode : public SyntaxNode {
