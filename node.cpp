@@ -841,14 +841,14 @@ Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& temp
 		children[2]->gen3AC(instructions, tempTicker, labelTicker);
 	}
 	if (pre_check) {
-		instructions.emplace_back(source, "BR");
+		instructions.emplace_back("}", "BR");
 		instructions.back().dest = Operand{"LABEL", "LL" + fixedLength(beginLabel)};
 	}
 	if (pre_check) {
-		instructions.emplace_back(source, "LABEL", Operand{"LABEL", "LL" + fixedLength(endLabel)});
+		instructions.emplace_back("", "LABEL", Operand{"LABEL", "LL" + fixedLength(endLabel)});
 	}
 	if (!pre_check && children[1] != nullptr) {
-		instructions.emplace_back(source, "BRNE",
+		instructions.emplace_back("", "BRNE",
 			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker, labelTicker).value},
 			Operand{"CONS", 0},
 			Operand{"LABEL", "LL" + fixedLength(beginLabel)}

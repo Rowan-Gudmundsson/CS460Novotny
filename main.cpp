@@ -193,6 +193,7 @@ void gen3AC(SyntaxNode* root) {
 	unsigned labelTicker = 0;
 
 	table.calcOffsets();
+	std::cout << std::endl;
 
 	instructions.emplace_back("", "BR", Operand{"", ""}, Operand{"LABEL", "main1"});
 

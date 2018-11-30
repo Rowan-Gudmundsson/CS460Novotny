@@ -554,16 +554,16 @@ selection_statement // Node*
 	;
 
 iteration_statement // Node*
-	: WHILE LPAREN expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, $5); }
-	| DO statement WHILE LPAREN expression RPAREN SEMI { $$ = new LoopNode({lineno, currentLine}, $5, $2, false); }
+	: WHILE LPAREN expression RPAREN statement { $$ = new LoopNode({$3->line, $3->source}, $3, $5); }
+	| DO statement WHILE LPAREN expression RPAREN SEMI { $$ = new LoopNode({$2->line, $2->source}, $5, $2, false); }
 	| FOR LPAREN SEMI SEMI RPAREN statement { $$ = new LoopNode({lineno, currentLine}, nullptr, nullptr, nullptr, $6); }
-	| FOR LPAREN SEMI SEMI expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, nullptr, nullptr, $5, $7); }
-	| FOR LPAREN SEMI expression SEMI RPAREN statement { $$ = new LoopNode({lineno, currentLine}, nullptr, $4, nullptr, $7); }
-	| FOR LPAREN SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, nullptr, $4, $6, $8); }
-	| FOR LPAREN expression SEMI SEMI RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, nullptr, nullptr, $7); }
-	| FOR LPAREN expression SEMI SEMI expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, nullptr, $6, $8); }
-	| FOR LPAREN expression SEMI expression SEMI RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, $5, nullptr, $8); }
-	| FOR LPAREN expression SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode({lineno, currentLine}, $3, $5, $7, $9); }
+	| FOR LPAREN SEMI SEMI expression RPAREN statement { $$ = new LoopNode({$5->line, $5->source}, nullptr, nullptr, $5, $7); }
+	| FOR LPAREN SEMI expression SEMI RPAREN statement { $$ = new LoopNode({$4->line, $4->source}, nullptr, $4, nullptr, $7); }
+	| FOR LPAREN SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode({$4->line, $4->source}, nullptr, $4, $6, $8); }
+	| FOR LPAREN expression SEMI SEMI RPAREN statement { $$ = new LoopNode({$3->line, $3->source}, $3, nullptr, nullptr, $7); }
+	| FOR LPAREN expression SEMI SEMI expression RPAREN statement { $$ = new LoopNode({$3->line, $3->source}, $3, nullptr, $6, $8); }
+	| FOR LPAREN expression SEMI expression SEMI RPAREN statement { $$ = new LoopNode({$3->line, $3->source}, $3, $5, nullptr, $8); }
+	| FOR LPAREN expression SEMI expression SEMI expression RPAREN statement { $$ = new LoopNode({$3->line, $3->source}, $3, $5, $7, $9); }
 	;
 
 jump_statement // Node*
