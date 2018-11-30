@@ -64,7 +64,7 @@ inline std::ostream& operator<<(std::ostream& out, EvalType a) {
 inline unsigned size(EvalType a) {
 	if(a & EUNKNOWN) return -1;
 	if(a & EVOID) return 0;
-	if(a & ECHAR) return 1;
+	if(a & ECHAR) return 4;
 	if(a & ESHORT) return 4;
 	if(a & EINT) return 4;
 	if(a & ELONG) return 4;
