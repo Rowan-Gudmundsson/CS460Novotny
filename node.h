@@ -24,6 +24,7 @@ struct Operand {
 	Operand(const std::string& typ, const std::string& valu) : type(typ), value(valu) {}
 	Operand(const std::string& typ, int valu) : type(typ), value(std::to_string(valu)) {}
 	Operand(const std::string& typ, unsigned valu) : type(typ), value(std::to_string(valu)) {}
+	Operand(const std::string& typ, double valu) : type(typ), value(std::to_string(valu)) {}
 };
 
 struct ThreeAddress {
@@ -111,7 +112,8 @@ class ConstantNode : public SyntaxNode {
 			}
 			for(SyntaxNode* c : children){ delete c; }
 		}
-		friend ConstantNode* evalConst(SyntaxNode*);
+
+		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 };
 
 class OperatorNode : public SyntaxNode {

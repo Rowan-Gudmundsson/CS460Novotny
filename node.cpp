@@ -581,10 +581,10 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				: "FTemp";
 			unsigned offset = ((IdentifierNode*) children[0])->sym->offset;
 
-			instructions.emplace_back(source, "MULT", children[1]->gen3AC(instructions, tempTicker), Operand{"CONS", size(((IdentifierNode*) children[0])->sym->etype)}, Operand{"ITemp", tempTicker});
+			instructions.emplace_back(source, "MULT", children[1]->gen3AC(instructions, tempTicker), Operand{"ICONS", size(((IdentifierNode*) children[0])->sym->etype)}, Operand{"ITemp", tempTicker});
 			tempTicker++;
 
-			instructions.emplace_back(source, "ADD", Operand{"CONS", offset}, Operand{"ITemp", tempTicker - 1}, Operand{"ITemp", tempTicker});
+			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, Operand{"ITemp", tempTicker - 1}, Operand{"ITemp", tempTicker});
 			tempTicker++;
 
 			return {"INDR", tempTicker - 1};
@@ -676,12 +676,12 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 		}
 		case OINCPOST:
 		case OINC: {
-			instructions.emplace_back(source, "ADDI", lhs, Operand{"CONS", 1}, dest);
+			instructions.emplace_back(source, "ADDI", lhs, Operand{"ICONS", 1}, dest);
 			break;
 		}
 		case ODECPOST:
 		case ODEC: {
-			instructions.emplace_back(source, "SUBI", lhs, Operand{"CONS", 1}, dest);
+			instructions.emplace_back(source, "SUBI", lhs, Operand{"ICONS", 1}, dest);
 			break;
 		}
 		// Logic
@@ -784,6 +784,16 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	}
 
 	return {"LABEL", func->label};
+}
+
+Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+	if(etype & (EINT | ESHORT | ELONG | ECHAR)) {
+		return {"ICONS", (int) i};
+	} else if(etype & (EFLOAT | EDOUBLE)) {
+		return {"FCONS", f};
+	} else {
+		return {"String", *s};
+	}
 }
 
 std::ostream& operator<<(std::ostream& out, const ThreeAddress& ins) {
