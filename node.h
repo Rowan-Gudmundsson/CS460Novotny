@@ -149,7 +149,8 @@ class OperatorNode : public SyntaxNode {
 			ONEQ,
 			// Other
 			OSIZE,
-			OTERNARY
+			OTERNARY,
+			ODEREF
 		} opType;
 		OperatorNode(const Source& s, EvalType _type, OpType _opType, unsigned numChildren...);
 		ConstantNode* evalNode();

@@ -15,7 +15,6 @@ int main() {
 
 	#DUMP
 	something = 3;
-
 	/* test */
 	{
 		/* This
