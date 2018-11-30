@@ -9,6 +9,8 @@ int main() {
 	char z = 's';
 	short x = 0 , y = 2;
 	int q[50 + 2];
+	int m[2][5];
+	int n[3+2][3*2][4];
 
 	#DUMP
 	something = 3;
@@ -35,8 +37,12 @@ int main() {
 	}
 
 	if(x % y > q[y + z]) {
+		*q = 0;
 		q[x * y] = 42;
 	}
+
+	m[2][3] = 3;
+	n[x+y][2][z] = 4;
 
 	for(;x < 2;) {
 		q[x] = y * x;

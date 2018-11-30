@@ -1043,7 +1043,24 @@ unary_operator // OperatorNode::OpType
 
 postfix_expression // Node*
 	: primary_expression { $$ = $1; }
-	| postfix_expression LBRACKET expression RBRACKET { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, $1->etype, 2, $1, $3); }
+	| postfix_expression LBRACKET expression RBRACKET { 
+		if($1->type == SyntaxNode::ACCESS) {
+			if(((IdentifierNode*) $1->children[0])->sym->v.arrayDimensions.size() < $1->children.size()) {
+				throw ParserError("Array dimensions not large enough for level of dereference");
+			}
+
+			$1->children.push_back($3);
+			$$ = $1;
+		} else {
+			if($1->type != SyntaxNode::IDENTIFIER) {
+				throw ParserError("Expected identifier for array access");
+			} else if(((IdentifierNode*) $1)->sym->v.arrayDimensions.size() == 0) {
+				throw ParserError("Trying to dereference variable of non-pointer type");
+			}
+
+			$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, $1->etype, 2, $1, $3);
+		}
+	}
 	| postfix_expression LPAREN RPAREN {
 		if ($1->type != SyntaxNode::Type::IDENTIFIER) {
 			throw ParserError("002: Expected type IDENTIFIER.");

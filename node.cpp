@@ -587,12 +587,37 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			std::string type = children[0]->etype & EINT || children[0]->etype & ECHAR
 				? "ITemp"
 				: "FTemp";
-			unsigned offset = ((IdentifierNode*) children[0])->sym->offset;
+			Symbol::SymbolType& sym = *((IdentifierNode*) children[0])->sym;
+			unsigned offset = sym.offset;
+			unsigned blockSize;
+			Operand lastTemp;
+			Operand nextTemp;
 
-			instructions.emplace_back(source, "MULT", children[1]->gen3AC(instructions, tempTicker, labelTicker), Operand{"ICONS", size(((IdentifierNode*) children[0])->sym->etype)}, Operand{"ITemp", tempTicker});
-			tempTicker++;
+			for(unsigned i = 1; i < children.size(); i++) {
+				blockSize = 1;
+				for(unsigned j = i; j < sym.v.arrayDimensions.size(); j++) {
+					blockSize *= sym.v.arrayDimensions[j];
+				}
 
-			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, Operand{"ITemp", tempTicker - 1}, Operand{"ITemp", tempTicker});
+				nextTemp = Operand{"ITemp", tempTicker};
+				instructions.emplace_back(source,
+					"MULT",
+					children[i]->gen3AC(instructions, tempTicker, labelTicker),
+					Operand{"ICONS", blockSize * size(((IdentifierNode*) children[0])->sym->etype)},
+					nextTemp);
+
+				tempTicker++;
+
+				if(i > 1) {
+					instructions.emplace_back(source, "ADD", lastTemp, nextTemp, Operand{"ITemp", tempTicker});
+					nextTemp = Operand{"ITemp", tempTicker};
+					tempTicker++;
+				}
+
+				lastTemp = nextTemp;
+			}
+
+			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, lastTemp, Operand{"ITemp", tempTicker});
 			tempTicker++;
 
 			return {"INDR", tempTicker - 1};
@@ -614,7 +639,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 
 			children[1]->gen3AC(instructions, tempTicker, labelTicker);
 
-			instructions.emplace_back("}", "LABEL", Operand{"LABEL", nextLabel});
+			instructions.emplace_back("\t}", "LABEL", Operand{"LABEL", nextLabel});
 
 			if(children.size() > 2) {
 				// Jump to the end once we're don with the first body of the if
@@ -625,7 +650,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				// The else
 				children[2]->gen3AC(instructions, tempTicker, labelTicker);
 
-				instructions.emplace_back("}", "LABEL", Operand{"LABEL", nextLabel});
+				instructions.emplace_back("\t}", "LABEL", Operand{"LABEL", nextLabel});
 			}
 
 			return {"ERR", "ERR"};
@@ -844,7 +869,7 @@ Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& temp
 		children[2]->gen3AC(instructions, tempTicker, labelTicker);
 	}
 	if (pre_check) {
-		instructions.emplace_back("}", "BR");
+		instructions.emplace_back("\t}", "BR");
 		instructions.back().dest = Operand{"LABEL", "LL" + fixedLength(beginLabel)};
 	}
 	if (pre_check) {
