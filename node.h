@@ -14,13 +14,33 @@ struct PointerNode {
 	TypeQualifier qualifier;
 };
 
+struct Operand {
+	std::string type;
+	std::string value;
+
+	Operand() {}
+	Operand(const std::string& typ) : type(typ) {}
+	Operand(const std::string& typ, const std::string& valu) : type(typ), value(valu) {}
+	Operand(const std::string& typ, int valu) : type(typ), value(std::to_string(valu)) {}
+	Operand(const std::string& typ, unsigned valu) : type(typ), value(std::to_string(valu)) {}
+};
+
 struct ThreeAddress {
 	std::string op;
-	std::string op1;
-	std::string op2;
-	std::string dest;
+	Operand op1;
+	Operand op2;
+	Operand dest;
 	std::string source;
+
+	ThreeAddress(const std::string& src) : source(src) {}
+	ThreeAddress(const std::string& src, const std::string& o) : op(o), source(src) {}
+	ThreeAddress(const std::string& src, const std::string& o, const Operand& o1) : op(o), op1(o1), source(src) {}
+	ThreeAddress(const std::string& src, const std::string& o, const Operand& o1, const Operand& d) : op(o), op1(o1), dest(d), source(src) {}
+	ThreeAddress(const std::string& src, const std::string& o, const Operand& o1, const Operand& o2, const Operand& d) : op(o), op1(o1), op2(o2), dest(d), source(src) {}
 };
+
+std::ostream& operator<<(std::ostream& out, const ThreeAddress& ins);
+std::ostream& operator<<(std::ostream& out, const Operand& op);
 
 struct Source {
 	unsigned line;
@@ -59,7 +79,7 @@ class SyntaxNode {
 		// Semanticly check the node
 		// Make certain data types line up, smash unneeded nodes, etc.
 		virtual void semanticCheck();
-		virtual unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
+		virtual Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 
 		virtual void clear();
 
@@ -128,7 +148,7 @@ class OperatorNode : public SyntaxNode {
 		} opType;
 		OperatorNode(const Source& s, EvalType _type, OpType _opType, unsigned numChildren...);
 		ConstantNode* evalNode();
-		unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
+		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 };
 
 class IdentifierNode : public SyntaxNode {
@@ -136,7 +156,7 @@ class IdentifierNode : public SyntaxNode {
 		Symbol::SymbolType* const sym;
 		IdentifierNode(const Source& s, Symbol::SymbolType* sPtr) : SyntaxNode(s, IDENTIFIER, sPtr->etype, 0), sym(sPtr) {}
 
-		unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
+		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 	private:
 		IdentifierNode(const Source& s, Symbol::SymbolType* sPtr, SyntaxNode* child) : SyntaxNode(s, FUNCTION, sPtr->etype, 1, child), sym(sPtr) {}
 		friend class FunctionNode;
@@ -149,7 +169,7 @@ class FunctionNode : public IdentifierNode {
 		FunctionNode(const Source& s, IdentifierNode* id, Symbol::FunctionType* f) : IdentifierNode(s, id->sym, nullptr), func(f) {}
 		FunctionNode(const Source& s, FunctionNode* f, SyntaxNode* child) : IdentifierNode(s, f->sym, child), func(f->func) {}
 
-		unsigned gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
+		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 };
 
 class FunctionCallNode : public SyntaxNode {

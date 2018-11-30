@@ -193,16 +193,14 @@ void gen3AC(SyntaxNode* root) {
 
 	table.calcOffsets();
 
-	instructions.emplace_back();
-	instructions.back().op = "BR";
-	instructions.back().dest = "(LABEL main1)";
+	instructions.emplace_back("", "BR", Operand{"", ""}, Operand{"LABEL", "main1"});
 
 	root->gen3AC(instructions, tempTicker);
 
 	std::string lastSource = "";
 
 	for(const ThreeAddress& i : instructions) {
-		std::cout << std::left << std::setw(20) << i.op << std::setw(20) << i.op1 << std::setw(20) << i.op2 << std::setw(20) << i.dest << " ; ";
+		std::cout << i << " ; ";
 		if(i.source != lastSource) {
 			lastSource = i.source;
 			std::cout << i.source; 
