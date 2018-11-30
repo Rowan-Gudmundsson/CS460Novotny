@@ -767,6 +767,26 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	return {"LABEL", func->label};
 }
 
+Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned &tempTicker) {
+	if (children[0] != nullptr) {
+		children[0]->gen3AC(instructions, tempTicker);
+	}
+	if (pre_check && children[1] != nullptr) {
+		instructions.emplace_back(source, "BRNE",
+			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker)},
+			Operand{"CONS", 0},
+			Operand{"LABEL", }
+		);
+	}
+	if (children[3] != nullptr) {
+		children[3]->gen3AC(instructions, tempTicker);
+	}
+	if (children[2] != nullptr) {
+		children[2]->gen3AC(instructions, tempTicker);
+	}
+	if (!pre_check && children[1] != )
+}
+
 std::ostream& operator<<(std::ostream& out, const ThreeAddress& ins) {
 	out << std::left << std::setw(20) << ins.op << std::setw(20)  << ins.op1 << std::setw(20)  << ins.op2 << std::setw(20) << ins.dest;
 

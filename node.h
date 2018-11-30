@@ -189,6 +189,7 @@ class LoopNode : public SyntaxNode {
 		LoopNode(const Source& s, SyntaxNode* check, SyntaxNode* stmt, bool _pre_check = true)
 			: LoopNode(s, nullptr, check, nullptr, stmt, _pre_check) {}
 		bool pre_check;
+		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 };
 
 std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t);
