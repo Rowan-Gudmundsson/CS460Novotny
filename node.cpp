@@ -840,9 +840,7 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 		instructions.emplace_back(source, "VALOUT", tmp);
 	}
 	instructions.emplace_back(source, "CALL", Operand{"LABEL", func->label});
-	unsigned returnVal = tempTicker;
-	tempTicker++;
-	return {((func->returnType & (EINT | ECHAR)) ? "ITemp" : "FTemp"), returnVal};
+	return {"Local", -size(func->returnType)};
 }
 
 Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
@@ -856,7 +854,7 @@ Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& temp
 	if (pre_check && children[1] != nullptr) {
 		instructions.emplace_back(source, "BREQ",
 			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker, labelTicker).value},
-			Operand{"CONS", 0},
+			Operand{"ICONS", 0},
 			Operand{"LABEL", "LL" + fixedLength(endLabel)}
 		);
 	}
@@ -876,7 +874,7 @@ Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& temp
 	if (!pre_check && children[1] != nullptr) {
 		instructions.emplace_back("", "BRNE",
 			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker, labelTicker).value},
-			Operand{"CONS", 0},
+			Operand{"ICONS", 0},
 			Operand{"LABEL", "LL" + fixedLength(beginLabel)}
 		);
 	}
@@ -895,7 +893,10 @@ Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 }
 
 std::ostream& operator<<(std::ostream& out, const ThreeAddress& ins) {
-	out << std::left << std::setw(20) << ins.op << std::setw(20)  << ins.op1 << std::setw(20)  << ins.op2 << std::setw(20) << ins.dest;
+	out << std::left << std::setw(20) << ins.op
+	    << std::setw(20) << ins.op1
+			<< std::setw(20)  << ins.op2
+			<< std::setw(20) << ins.dest;
 
 	return out;
 }

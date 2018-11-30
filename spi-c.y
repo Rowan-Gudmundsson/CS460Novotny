@@ -257,6 +257,7 @@ struct_declaration_list
 
 init_declarator_list // Node*
 	: init_declarator {
+		table.mode = Symbol::Mode::WRITE;
 		$$ = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EUNKNOWN, 1, $1);
 		if(parseDLevel){
 			std::cout << "init_declarator_list\n"
@@ -323,7 +324,7 @@ enumerator
 	;
 
 declarator // Node*
-	: direct_declarator { $$ = $1; }
+	: direct_declarator { $$ = $1; table.mode = Symbol::Mode::READ; }
 	| pointer direct_declarator {
 		$$ = $2;
 		if ($$->type == SyntaxNode::IDENTIFIER) {
@@ -332,6 +333,7 @@ declarator // Node*
 		} else {
 			throw "Error pointer";
 		}
+		table.mode = Symbol::Mode::READ;
 	}
 	;
 
@@ -438,7 +440,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 	}
 	;
 
-pointer // PointerNode
+pointer // Identifier node
 	: MULT { $$ = new PointerNode(); $$->level++; }
 	| MULT type_qualifier_list { $$ = new PointerNode(); $$->level++; $$->qualifier = $2; }
 	| MULT pointer { $$ = $2; $$->level++; }
@@ -1009,7 +1011,8 @@ unary_expression // Node*
 			case OperatorNode::OBAND:
 				_type = EINT;
 				break;
-			case OperatorNode::OMULT:
+			case OperatorNode::ODEREF:
+				throw ParserError("Not handling pointer dereferencing.");
 				_type = $2->etype & ~EPOINTER;
 				break;
 			case OperatorNode::OADD:
@@ -1034,7 +1037,7 @@ unary_expression // Node*
 
 unary_operator // OperatorNode::OpType
 	: BAND { $$ = OperatorNode::OBAND; }
-	| MULT { $$ = OperatorNode::OMULT; }
+	| MULT { $$ = OperatorNode::ODEREF; }
 	| ADD { /* https://docs.microsoft.com/en-us/cpp/c-language/unary-arithmetic-operators?view=vs-2017 */ $$ = OperatorNode::OADD; }
 	| SUB { $$ = OperatorNode::OSUB; }
 	| BNOT { $$ = OperatorNode::OBNOT; }
@@ -1070,7 +1073,7 @@ postfix_expression // Node*
 		for (auto i : $3->children) {
 			paramTypes.push_back(i->etype);
 		}
-		
+
 		for (auto& f : tmp->sym->functions) {
 			if (f.parameters == paramTypes) {
 				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f);

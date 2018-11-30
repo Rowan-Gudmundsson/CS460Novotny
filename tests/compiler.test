@@ -8,11 +8,11 @@ int main() {
 	// This is a test
 	char z = 's';
 	short x = 0 , y = 2;
-	int q[50 + 2];
+	int q = x;
+	// int q[50 + 2];
 
 	#DUMP
 	something = 3;
-
 	/* test */
 	{
 		/* This
