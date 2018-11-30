@@ -809,12 +809,15 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	}
 
 	instructions.emplace_back(source, "LABEL", Operand{"LABEL", func->label});
+	instructions.emplace_back(source, "PROCENTRY");
 
 	for(SyntaxNode* c : children) {
 		if(c != nullptr) {
 			c->gen3AC(instructions, tempTicker, labelTicker);
 		}
 	}
+
+	instructions.emplace_back("}", "RETURN");
 
 	return {"LABEL", func->label};
 }

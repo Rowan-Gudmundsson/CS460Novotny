@@ -201,7 +201,7 @@ void gen3AC(SyntaxNode* root) {
 		}
 	}
 
-	instructions.emplace_back("", "BR", Operand{"", ""}, Operand{"LABEL", "main1"});
+	instructions.emplace_back("", "CALL", Operand{"", ""}, Operand{"LABEL", "main1"});
 
 	root->gen3AC(instructions, tempTicker, labelTicker);
 
