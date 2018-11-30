@@ -566,6 +566,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 	// }
 
 	switch(type) {
+		case ASSIGN:
 		case DECLARE_AND_INIT: {
 			Operand dest = children[0]->gen3AC(instructions, tempTicker);
 			instructions.emplace_back(source, "ASSIGN", children[1]->gen3AC(instructions, tempTicker), dest);
@@ -613,10 +614,10 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	// TODO - The below code is definitely broken, but I'm working on something else right now
 
 	// Get tmp register location of rhs
-	rhs = children[0]->gen3AC(instructions, tempTicker);
-	// If lhs exists get register location of it
+	lhs = children[0]->gen3AC(instructions, tempTicker);
+	// If rhs exists get register location of it
 	if (children.size() > 1) {
-		lhs = children[0]->gen3AC(instructions, tempTicker);
+		rhs = children[1]->gen3AC(instructions, tempTicker);
 	}
 
 	// We only need one type since we already coerce
@@ -641,7 +642,7 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			break;
 		}
 		case OBNOT: {
-			instructions.emplace_back(source, "NOT", rhs, dest);
+			instructions.emplace_back(source, "NOT", lhs, dest);
 			break;
 		}
 		case OLSHIFT: {
@@ -675,17 +676,17 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 		}
 		case OINCPOST:
 		case OINC: {
-			instructions.emplace_back(source, "ADDI", rhs, Operand{"CONS", 1}, dest);
+			instructions.emplace_back(source, "ADDI", lhs, Operand{"CONS", 1}, dest);
 			break;
 		}
 		case ODECPOST:
 		case ODEC: {
-			instructions.emplace_back(source, "SUBI", rhs, Operand{"CONS", 1}, dest);
+			instructions.emplace_back(source, "SUBI", lhs, Operand{"CONS", 1}, dest);
 			break;
 		}
 		// Logic
 		case OLNOT: {
-			instructions.emplace_back(source, "NOT", rhs, dest);
+			instructions.emplace_back(source, "NOT", lhs, dest);
 			break;
 		}
 		case OLAND: {
@@ -742,6 +743,24 @@ Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned
 		: "Local";
 
 	return {scope, sym->offset};
+}
+
+Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+	if((from & (EINT | ESHORT | ELONG | ECHAR) && to & (EINT | ESHORT | ELONG | ECHAR)) || (from & (EFLOAT | EDOUBLE) && to & (EFLOAT | EDOUBLE))) {
+		// If we're converting between similar types, just pass up
+		// TODO - maybe in the future actully do something here
+		return children[0]->gen3AC(instructions, tempTicker);
+	}
+
+	std::string toType = (to & (EFLOAT | EDOUBLE)) ?
+		"FTemp" :
+		"ITemp";
+
+	Operand dest(toType, tempTicker);
+	tempTicker++;
+	instructions.emplace_back(source, "ASSIGN", children[0]->gen3AC(instructions, tempTicker), dest);
+
+	return dest;
 }
 
 Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {

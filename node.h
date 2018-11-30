@@ -91,6 +91,8 @@ class CoercionNode : public SyntaxNode {
 	public:
 		CoercionNode(const Source& s, EvalType _from, EvalType _to, SyntaxNode* child) : SyntaxNode(s, COERCION, _to, 1, child), from(_from), to(_to) {}
 		EvalType from, to;
+
+		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker);
 };
 
 class ConstantNode : public SyntaxNode {
