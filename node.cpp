@@ -424,10 +424,10 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 			out << '>';
 			break;
 		case OperatorNode::OpType::OLEQ:
-			out << "\\leq";
+			out << "$\\leq$";
 			break;
 		case OperatorNode::OpType::OGEQ:
-			out << "\\geq";
+			out << "$\\geq$";
 			break;
 		case OperatorNode::OpType::OEQUAL:
 			out << "==";
@@ -559,12 +559,6 @@ void SyntaxNode::clear() {
 }
 
 Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	// for(SyntaxNode* c : children) {
-	// 	if(c != nullptr) {
-	// 		c->gen3AC(instructions, tempTicker);
-	// 	}
-	// }
-
 	switch(type) {
 		case ASSIGN:
 		case DECLARE_AND_INIT: {
@@ -573,9 +567,6 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			return dest;
 		}
 		case ACCESS: {
-			// TODO - what is happening here
-			// instructions.emplace_back();
-			// instructions.back().op = "ASSIGN";
 			std::string type = children[0]->etype & EINT || children[0]->etype & ECHAR
 				? "ITemp"
 				: "FTemp";
@@ -596,6 +587,31 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				}
 			}
 			return {"", ""};
+		}
+		case CONDITIONAL: {
+			Operand cond = children[0]->gen3AC(instructions, tempTicker, labelTicker);
+			std::string nextLabel = "if" + std::to_string(labelTicker);
+			labelTicker++;
+
+			instructions.emplace_back(source, "BREQ", cond, Operand{"ICONS", 0}, Operand{"LABEL", nextLabel});
+
+			children[1]->gen3AC(instructions, tempTicker, labelTicker);
+
+			instructions.emplace_back("", "LABEL", Operand{"LABEL", nextLabel});
+
+			if(children.size() > 2) {
+				// Jump to the end once we're don with the first body of the if
+				nextLabel = "if" + std::to_string(labelTicker);
+				instructions.emplace_back("", "BR", Operand{"", ""}, Operand{"LABEL", nextLabel});
+				labelTicker++;
+
+				// The else
+				children[2]->gen3AC(instructions, tempTicker, labelTicker);
+
+				instructions.emplace_back("", "LABEL", Operand{"LABEL", nextLabel});
+			}
+
+			return {"ERR", "ERR"};
 		}
 		default: {
 			for(SyntaxNode* c : children) {

@@ -548,8 +548,8 @@ statement_list // Node*
 	;
 
 selection_statement // Node*
-	: IF LPAREN expression RPAREN statement { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::CONDITIONAL, EVOID, 2, $3, $5); }
-	| IF LPAREN expression RPAREN statement ELSE statement { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::CONDITIONAL, EVOID, 3, $3, $5, $7); }
+	: IF LPAREN expression RPAREN statement { $$ = new SyntaxNode({$3->line, $3->source}, SyntaxNode::Type::CONDITIONAL, EVOID, 2, $3, $5); }
+	| IF LPAREN expression RPAREN statement ELSE statement { $$ = new SyntaxNode({$3->line, $3->source}, SyntaxNode::Type::CONDITIONAL, EVOID, 3, $3, $5, $7); }
 	| SWITCH LPAREN expression RPAREN statement { $$ = nullptr; /* TODO: Switch Statements */ }
 	;
 

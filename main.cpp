@@ -202,7 +202,7 @@ void gen3AC(SyntaxNode* root) {
 
 	for(const ThreeAddress& i : instructions) {
 		std::cout << i << " ; ";
-		if(i.source != lastSource) {
+		if(i.source.size() > 0 && i.source != lastSource) {
 			lastSource = i.source;
 			std::cout << i.source; 
 		}
