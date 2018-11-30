@@ -771,11 +771,11 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 }
 
 Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	std::string scope = sym->scopeLevel == 0
-		? "Global"
-		: "Local";
-
-	return {scope, sym->offset};
+	if(sym->scopeLevel != 0) {
+		return {"Local", sym->offset};
+	} else {
+		return {"Global", sym->name};
+	}
 }
 
 Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
@@ -809,12 +809,15 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	}
 
 	instructions.emplace_back(source, "LABEL", Operand{"LABEL", func->label});
+	instructions.emplace_back(source, "PROCENTRY");
 
 	for(SyntaxNode* c : children) {
 		if(c != nullptr) {
 			c->gen3AC(instructions, tempTicker, labelTicker);
 		}
 	}
+
+	instructions.emplace_back("}", "RETURN");
 
 	return {"LABEL", func->label};
 }
@@ -853,14 +856,14 @@ Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& temp
 		children[2]->gen3AC(instructions, tempTicker, labelTicker);
 	}
 	if (pre_check) {
-		instructions.emplace_back(source, "BR");
+		instructions.emplace_back("}", "BR");
 		instructions.back().dest = Operand{"LABEL", "LL" + fixedLength(beginLabel)};
 	}
 	if (pre_check) {
-		instructions.emplace_back(source, "LABEL", Operand{"LABEL", "LL" + fixedLength(endLabel)});
+		instructions.emplace_back("", "LABEL", Operand{"LABEL", "LL" + fixedLength(endLabel)});
 	}
 	if (!pre_check && children[1] != nullptr) {
-		instructions.emplace_back(source, "BRNE",
+		instructions.emplace_back("", "BRNE",
 			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker, labelTicker).value},
 			Operand{"CONS", 0},
 			Operand{"LABEL", "LL" + fixedLength(beginLabel)}
