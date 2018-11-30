@@ -823,6 +823,17 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 }
 
 Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
+	if(func->label == "") {
+		unsigned i = 1;
+		for(const auto& f : sym->functions) {
+			if(&f == func) {
+				func->label = sym->name + std::to_string(i);
+				break;
+			}
+			i++;
+		}
+	}
+
 	instructions.emplace_back(source, "ARGS", Operand{"CONS", unsigned(callParameters.size())});
 	for (SyntaxNode* i : callParameters) {
 		Operand tmp = i->gen3AC(instructions, tempTicker, labelTicker);
