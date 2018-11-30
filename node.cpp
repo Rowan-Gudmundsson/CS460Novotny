@@ -1,5 +1,22 @@
 #include "node.h"
 
+std::string fixedLength(int value, int digits = 5) {
+    unsigned int uvalue = value;
+    if (value < 0) {
+        uvalue = -uvalue;
+    }
+    std::string result;
+    while (digits-- > 0) {
+        result += ('0' + uvalue % 10);
+        uvalue /= 10;
+    }
+    if (value < 0) {
+        result += '-';
+    }
+    std::reverse(result.begin(), result.end());
+    return result;
+}
+
 ConstantNode* evalConst(SyntaxNode* node) {
 	if (!node->isConst) {
 		throw ParserError("Cannot evaluate non-constant expression.");
@@ -558,7 +575,7 @@ void SyntaxNode::clear() {
 	children.clear();
 }
 
-Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	// for(SyntaxNode* c : children) {
 	// 	if(c != nullptr) {
 	// 		c->gen3AC(instructions, tempTicker);
@@ -566,9 +583,10 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 	// }
 
 	switch(type) {
+		case ASSIGN:
 		case DECLARE_AND_INIT: {
-			Operand dest = children[0]->gen3AC(instructions, tempTicker);
-			instructions.emplace_back(source, "ASSIGN", children[1]->gen3AC(instructions, tempTicker), dest);
+			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker);
+			instructions.emplace_back(source, "ASSIGN", children[1]->gen3AC(instructions, tempTicker, labelTicker), dest);
 			return dest;
 		}
 		case ACCESS: {
@@ -580,10 +598,10 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				: "FTemp";
 			unsigned offset = ((IdentifierNode*) children[0])->sym->offset;
 
-			instructions.emplace_back(source, "MULT", children[1]->gen3AC(instructions, tempTicker), Operand{"CONS", size(((IdentifierNode*) children[0])->sym->etype)}, Operand{"ITemp", tempTicker});
+			instructions.emplace_back(source, "MULT", children[1]->gen3AC(instructions, tempTicker, labelTicker), Operand{"ICONS", size(((IdentifierNode*) children[0])->sym->etype)}, Operand{"ITemp", tempTicker});
 			tempTicker++;
 
-			instructions.emplace_back(source, "ADD", Operand{"CONS", offset}, Operand{"ITemp", tempTicker - 1}, Operand{"ITemp", tempTicker});
+			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, Operand{"ITemp", tempTicker - 1}, Operand{"ITemp", tempTicker});
 			tempTicker++;
 
 			return {"INDR", tempTicker - 1};
@@ -591,7 +609,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		case GENERIC: {
 			for(SyntaxNode* c : children) {
 				if(c != nullptr) {
-					c->gen3AC(instructions, tempTicker);
+					c->gen3AC(instructions, tempTicker, labelTicker);
 				}
 			}
 			return {"", ""};
@@ -599,7 +617,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		default: {
 			for(SyntaxNode* c : children) {
 				if(c != nullptr) {
-					c->gen3AC(instructions, tempTicker);
+					c->gen3AC(instructions, tempTicker, labelTicker);
 				}
 			}
 			return {"ERR", "ERR"};
@@ -607,16 +625,16 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 	}
 }
 
-Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	Operand rhs, lhs;
 
 	// TODO - The below code is definitely broken, but I'm working on something else right now
 
 	// Get tmp register location of rhs
-	rhs = children[0]->gen3AC(instructions, tempTicker);
-	// If lhs exists get register location of it
+	lhs = children[0]->gen3AC(instructions, tempTicker, labelTicker);
+	// If rhs exists get register location of it
 	if (children.size() > 1) {
-		lhs = children[0]->gen3AC(instructions, tempTicker);
+		rhs = children[1]->gen3AC(instructions, tempTicker, labelTicker);
 	}
 
 	// We only need one type since we already coerce
@@ -641,7 +659,7 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			break;
 		}
 		case OBNOT: {
-			instructions.emplace_back(source, "NOT", rhs, dest);
+			instructions.emplace_back(source, "NOT", lhs, dest);
 			break;
 		}
 		case OLSHIFT: {
@@ -675,17 +693,17 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 		}
 		case OINCPOST:
 		case OINC: {
-			instructions.emplace_back(source, "ADDI", rhs, Operand{"CONS", 1}, dest);
+			instructions.emplace_back(source, "ADDI", lhs, Operand{"ICONS", 1}, dest);
 			break;
 		}
 		case ODECPOST:
 		case ODEC: {
-			instructions.emplace_back(source, "SUBI", rhs, Operand{"CONS", 1}, dest);
+			instructions.emplace_back(source, "SUBI", lhs, Operand{"ICONS", 1}, dest);
 			break;
 		}
 		// Logic
 		case OLNOT: {
-			instructions.emplace_back(source, "NOT", rhs, dest);
+			instructions.emplace_back(source, "NOT", lhs, dest);
 			break;
 		}
 		case OLAND: {
@@ -736,7 +754,7 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	return dest;
 }
 
-Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	std::string scope = sym->scopeLevel == 0
 		? "Global"
 		: "Local";
@@ -744,7 +762,25 @@ Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned
 	return {scope, sym->offset};
 }
 
-Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
+	if((from & (EINT | ESHORT | ELONG | ECHAR) && to & (EINT | ESHORT | ELONG | ECHAR)) || (from & (EFLOAT | EDOUBLE) && to & (EFLOAT | EDOUBLE))) {
+		// If we're converting between similar types, just pass up
+		// TODO - maybe in the future actully do something here
+		return children[0]->gen3AC(instructions, tempTicker, labelTicker);
+	}
+
+	std::string toType = (to & (EFLOAT | EDOUBLE)) ?
+		"FTemp" :
+		"ITemp";
+
+	Operand dest(toType, tempTicker);
+	tempTicker++;
+	instructions.emplace_back(source, "ASSIGN", children[0]->gen3AC(instructions, tempTicker, labelTicker), dest);
+
+	return dest;
+}
+
+Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	if(func->label == "") {
 		unsigned i = 1;
 		for(const auto& f : sym->functions) {
@@ -760,31 +796,60 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 	for(SyntaxNode* c : children) {
 		if(c != nullptr) {
-			c->gen3AC(instructions, tempTicker);
+			c->gen3AC(instructions, tempTicker, labelTicker);
 		}
 	}
 
 	return {"LABEL", func->label};
 }
 
-Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned &tempTicker) {
+Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
+	// reserves 2 labels, its fine we have plenty even if they dont get used 😃
+	unsigned beginLabel = labelTicker, endLabel = labelTicker + 1;
+	labelTicker += 2;
 	if (children[0] != nullptr) {
-		children[0]->gen3AC(instructions, tempTicker);
+		children[0]->gen3AC(instructions, tempTicker, labelTicker);
 	}
+	instructions.emplace_back(source, "LABEL", Operand{"LABEL", "LL" + fixedLength(beginLabel)});
 	if (pre_check && children[1] != nullptr) {
-		instructions.emplace_back(source, "BRNE",
-			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker)},
+		instructions.emplace_back(source, "BREQ",
+			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker, labelTicker).value},
 			Operand{"CONS", 0},
-			Operand{"LABEL", }
+			Operand{"LABEL", "LL" + fixedLength(endLabel)}
 		);
 	}
 	if (children[3] != nullptr) {
-		children[3]->gen3AC(instructions, tempTicker);
+		children[3]->gen3AC(instructions, tempTicker, labelTicker);
 	}
 	if (children[2] != nullptr) {
-		children[2]->gen3AC(instructions, tempTicker);
+		children[2]->gen3AC(instructions, tempTicker, labelTicker);
 	}
-	if (!pre_check && children[1] != )
+	if (pre_check) {
+		instructions.emplace_back(source, "BR");
+		instructions.back().dest = Operand{"LABEL", "LL" + fixedLength(beginLabel)};
+	}
+	if (pre_check) {
+		instructions.emplace_back(source, "LABEL", Operand{"LABEL", "LL" + fixedLength(endLabel)});
+	}
+	if (!pre_check && children[1] != nullptr) {
+		instructions.emplace_back(source, "BRNE",
+			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker, labelTicker).value},
+			Operand{"CONS", 0},
+			Operand{"LABEL", "LL" + fixedLength(beginLabel)}
+		);
+	}
+
+	return {"", ""};
+}
+
+Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
+	if(etype & (EINT | ESHORT | ELONG | ECHAR)) {
+		return {"ICONS", (int) i};
+	} else if(etype & (EFLOAT | EDOUBLE)) {
+		return {"FCONS", f};
+	} else {
+		return {"String", *s};
+	}
 }
 
 std::ostream& operator<<(std::ostream& out, const ThreeAddress& ins) {

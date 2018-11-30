@@ -190,12 +190,13 @@ void gen3AC(SyntaxNode* root) {
 	instructions.reserve(100);
 
 	unsigned tempTicker = 0;
+	unsigned labelTicker = 0;
 
 	table.calcOffsets();
 
 	instructions.emplace_back("", "BR", Operand{"", ""}, Operand{"LABEL", "main1"});
 
-	root->gen3AC(instructions, tempTicker);
+	root->gen3AC(instructions, tempTicker, labelTicker);
 
 	std::string lastSource = "";
 

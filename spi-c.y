@@ -1040,7 +1040,7 @@ unary_operator // OperatorNode::OpType
 
 postfix_expression // Node*
 	: primary_expression { $$ = $1; }
-	| postfix_expression LBRACKET expression RBRACKET { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, EUNKNOWN, 2, $1, $3); }
+	| postfix_expression LBRACKET expression RBRACKET { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, $1->etype, 2, $1, $3); }
 	| postfix_expression LPAREN RPAREN {
 		if ($1->type != SyntaxNode::Type::IDENTIFIER) {
 			throw ParserError("002: Expected type IDENTIFIER.");

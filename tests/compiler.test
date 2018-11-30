@@ -31,7 +31,7 @@ int main() {
 	} else if (1) {
 		y = 3;
 	} else {
-		x;
+		x = 2;
 	}
 
 	for(;x < 2;) {
