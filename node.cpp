@@ -597,7 +597,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 
 			children[1]->gen3AC(instructions, tempTicker, labelTicker);
 
-			instructions.emplace_back("", "LABEL", Operand{"LABEL", nextLabel});
+			instructions.emplace_back("}", "LABEL", Operand{"LABEL", nextLabel});
 
 			if(children.size() > 2) {
 				// Jump to the end once we're don with the first body of the if
@@ -608,7 +608,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				// The else
 				children[2]->gen3AC(instructions, tempTicker, labelTicker);
 
-				instructions.emplace_back("", "LABEL", Operand{"LABEL", nextLabel});
+				instructions.emplace_back("}", "LABEL", Operand{"LABEL", nextLabel});
 			}
 
 			return {"ERR", "ERR"};
