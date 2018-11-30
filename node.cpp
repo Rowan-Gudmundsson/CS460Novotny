@@ -558,7 +558,7 @@ void SyntaxNode::clear() {
 	children.clear();
 }
 
-Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	// for(SyntaxNode* c : children) {
 	// 	if(c != nullptr) {
 	// 		c->gen3AC(instructions, tempTicker);
@@ -568,8 +568,8 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 	switch(type) {
 		case ASSIGN:
 		case DECLARE_AND_INIT: {
-			Operand dest = children[0]->gen3AC(instructions, tempTicker);
-			instructions.emplace_back(source, "ASSIGN", children[1]->gen3AC(instructions, tempTicker), dest);
+			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker);
+			instructions.emplace_back(source, "ASSIGN", children[1]->gen3AC(instructions, tempTicker, labelTicker), dest);
 			return dest;
 		}
 		case ACCESS: {
@@ -581,7 +581,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				: "FTemp";
 			unsigned offset = ((IdentifierNode*) children[0])->sym->offset;
 
-			instructions.emplace_back(source, "MULT", children[1]->gen3AC(instructions, tempTicker), Operand{"ICONS", size(((IdentifierNode*) children[0])->sym->etype)}, Operand{"ITemp", tempTicker});
+			instructions.emplace_back(source, "MULT", children[1]->gen3AC(instructions, tempTicker, labelTicker), Operand{"ICONS", size(((IdentifierNode*) children[0])->sym->etype)}, Operand{"ITemp", tempTicker});
 			tempTicker++;
 
 			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, Operand{"ITemp", tempTicker - 1}, Operand{"ITemp", tempTicker});
@@ -592,7 +592,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		case GENERIC: {
 			for(SyntaxNode* c : children) {
 				if(c != nullptr) {
-					c->gen3AC(instructions, tempTicker);
+					c->gen3AC(instructions, tempTicker, labelTicker);
 				}
 			}
 			return {"", ""};
@@ -600,7 +600,7 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		default: {
 			for(SyntaxNode* c : children) {
 				if(c != nullptr) {
-					c->gen3AC(instructions, tempTicker);
+					c->gen3AC(instructions, tempTicker, labelTicker);
 				}
 			}
 			return {"ERR", "ERR"};
@@ -608,16 +608,16 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 	}
 }
 
-Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	Operand rhs, lhs;
 
 	// TODO - The below code is definitely broken, but I'm working on something else right now
 
 	// Get tmp register location of rhs
-	lhs = children[0]->gen3AC(instructions, tempTicker);
+	lhs = children[0]->gen3AC(instructions, tempTicker, labelTicker);
 	// If rhs exists get register location of it
 	if (children.size() > 1) {
-		rhs = children[1]->gen3AC(instructions, tempTicker);
+		rhs = children[1]->gen3AC(instructions, tempTicker, labelTicker);
 	}
 
 	// We only need one type since we already coerce
@@ -737,7 +737,7 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	return dest;
 }
 
-Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	std::string scope = sym->scopeLevel == 0
 		? "Global"
 		: "Local";
@@ -745,11 +745,11 @@ Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned
 	return {scope, sym->offset};
 }
 
-Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	if((from & (EINT | ESHORT | ELONG | ECHAR) && to & (EINT | ESHORT | ELONG | ECHAR)) || (from & (EFLOAT | EDOUBLE) && to & (EFLOAT | EDOUBLE))) {
 		// If we're converting between similar types, just pass up
 		// TODO - maybe in the future actully do something here
-		return children[0]->gen3AC(instructions, tempTicker);
+		return children[0]->gen3AC(instructions, tempTicker, labelTicker);
 	}
 
 	std::string toType = (to & (EFLOAT | EDOUBLE)) ?
@@ -758,12 +758,12 @@ Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 	Operand dest(toType, tempTicker);
 	tempTicker++;
-	instructions.emplace_back(source, "ASSIGN", children[0]->gen3AC(instructions, tempTicker), dest);
+	instructions.emplace_back(source, "ASSIGN", children[0]->gen3AC(instructions, tempTicker, labelTicker), dest);
 
 	return dest;
 }
 
-Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	if(func->label == "") {
 		unsigned i = 1;
 		for(const auto& f : sym->functions) {
@@ -779,14 +779,14 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 	for(SyntaxNode* c : children) {
 		if(c != nullptr) {
-			c->gen3AC(instructions, tempTicker);
+			c->gen3AC(instructions, tempTicker, labelTicker);
 		}
 	}
 
 	return {"LABEL", func->label};
 }
 
-Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker) {
+Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	if(etype & (EINT | ESHORT | ELONG | ECHAR)) {
 		return {"ICONS", (int) i};
 	} else if(etype & (EFLOAT | EDOUBLE)) {
