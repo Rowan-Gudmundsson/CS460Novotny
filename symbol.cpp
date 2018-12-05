@@ -7,6 +7,83 @@ extern int yyparse;
 #endif
 
 
+const EvalType EvalType::EUNKNOWN = EvalType(CUNKNOWN);
+const EvalType EvalType::EVOID = EvalType(CVOID);
+const EvalType EvalType::ECHAR = EvalType(CCHAR);
+const EvalType EvalType::ESTRING = EvalType(CSTRING);
+const EvalType EvalType::EUNSIGNED = EvalType(CUNSIGNED);
+const EvalType EvalType::EINT = EvalType(CINT);
+const EvalType EvalType::ELONG = EvalType(CLONG);
+const EvalType EvalType::ESHORT = EvalType(CSHORT);
+const EvalType EvalType::EFLOAT = EvalType(CFLOAT);
+const EvalType EvalType::EDOUBLE = EvalType(CDOUBLE);
+
+std::ostream& operator<<(std::ostream& out, const EvalType& a) {
+	if(a.qualifiers[0].cons) out << "const ";
+	if(a.qualifiers[0].volatil) out << "volatile ";
+
+	switch(a.type) {
+		case EvalType::UNKNOWN:
+			out << "unknown";
+			return out;
+		case EvalType::VOID:
+			out << "void";
+			return out;
+		case EvalType::CHARACTER:
+			if(!a.sign) out << "unsigned ";
+			out << "char";
+			break;
+		case EvalType::INTEGER:
+			if(!a.sign) out << "unsigned ";
+			switch (a.length) {
+				case EvalType::SHORT:
+					out << "short ";
+					break;
+				case EvalType::NORMAL:
+					break;
+				case EvalType::LONG:
+					out << "long ";
+					break;
+			}
+			out << "int";
+			break;
+		case EvalType::FLOATING:
+			switch(a.length) {
+				case EvalType::SHORT:
+					out << "float";
+					break;
+				case EvalType::NORMAL:
+					out << "double";
+					break;
+				case EvalType::LONG:
+					out << "long double";
+					break;
+			}
+			break;
+		case EvalType::OBJECT:
+			// TODO - Objects
+			out << "object";
+			break;
+	}
+
+	bool needSpace = true;
+	for(unsigned i = 1; i < a.qualifiers.size(); i++) {
+		if(needSpace) out << ' ';
+		out << '*';
+		needSpace = false;
+		if(a.qualifiers[i].cons) {
+			needSpace = true;
+			out << " const";
+		}
+		if(a.qualifiers[i].volatil) {
+			needSpace = true;
+			out << " volatile";
+		}
+	}
+
+	return out;
+}
+
 /**
  * Equality operator for SymbolType.
  * @param {const SymbolType&} rhs - The right hand side of the operator
@@ -48,9 +125,9 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 			out << "[" << i << "]";
 		}
 		out << ", line " << sym.lineNumber << ">";
-	} else if (sym.v.pointerLevel > 0) {
+	} else if (sym.etype.pointer() > 0) {
 		out << "<" << sym.name << "$^{";
-		for (unsigned i = 0; i < sym.v.pointerLevel; i++) {
+		for (unsigned i = 0; i < sym.etype.pointer(); i++) {
 			out << "*";
 		}
 		out << "}$, line " << sym.lineNumber << ">";
@@ -230,7 +307,7 @@ void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
 		for(unsigned i : s.v.arrayDimensions) {
 			mult *= i;
 		}
-		offset += mult * size(s.etype);
+		offset += mult * s.etype.size();
 	}
 
 	for(Scope* s : scope->children) {

@@ -7,72 +7,218 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <sstream>
 #include <vector>
 #include <map>
 
-enum EvalType : unsigned {
-	EUNSIGNED = 1 << 0,
-	EVOID =     1 << 1,
-	ECHAR =     1 << 2,
-	ESHORT =    1 << 3,
-	EINT =      1 << 4,
-	ELONG =     1 << 5,
-	EFLOAT =    1 << 6,
-	EDOUBLE =   1 << 7,
-	EPOINTER =  1 << 8,
-	EUNKNOWN =  1 << 30
+enum TypeQualifier {
+	TCONST,
+	TVOLATILE
 };
 
-inline EvalType operator|(EvalType a, EvalType b)
-{return static_cast<EvalType>(static_cast<unsigned>(a) | static_cast<unsigned>(b));}
-inline EvalType operator&(EvalType a, EvalType b)
-{return static_cast<EvalType>(static_cast<unsigned>(a) & static_cast<unsigned>(b));}
-inline EvalType operator~(EvalType a)
-{return static_cast<EvalType>(~static_cast<unsigned>(a));}
-inline bool operator < (EvalType a, EvalType b)
-{return unsigned(a) < unsigned(b);}
+struct EvalType {
+	public:
+		enum {
+			UNKNOWN,
+			VOID,
+			CHARACTER,
+			INTEGER,
+			FLOATING,
+			OBJECT
+		} type = UNKNOWN;
 
-const std::map<EvalType, unsigned> precedence({
-	{ECHAR, 0}, {EUNSIGNED | ECHAR, 1}, {ESHORT | EINT, 2}, {EUNSIGNED | ESHORT | EINT, 3},
-	{EINT, 4}, {EUNSIGNED | EINT, 5}, {ELONG | EINT, 6}, {EUNSIGNED | ELONG | EINT, 7},
-	{EFLOAT, 8}, {EDOUBLE, 9}
-});
-enum TypeQualifier : unsigned {
-	TNONE =     0,
-	TCONST =    1 << 0,
-	TVOLATILE = 1 << 1,
+		bool sign = true;
+
+		enum {
+			SHORT,
+			NORMAL,
+			LONG
+		} length = NORMAL;
+
+		struct Qualifier {
+			bool cons = false;
+			bool volatil = false;
+
+			bool operator==(const Qualifier& other) const { return (cons == other.cons) && (volatil == other.volatil); }
+
+			Qualifier(bool c = false, bool v = false) : cons(c), volatil(v) {}
+			Qualifier(TypeQualifier t) : cons(t == TCONST), volatil(t == TVOLATILE) {}
+			Qualifier(const Qualifier& q) : cons(q.cons), volatil(q.volatil) {}
+		};
+
+		// There need to be qualifiers for EACH level of indirection
+		// E.g. const int const * * const *
+		std::vector<Qualifier> qualifiers = std::vector<Qualifier>(1);
+
+		// Keep track of the level of indirection
+		unsigned pointer() const { return qualifiers.size() - 1; }
+		void pointer(unsigned p) { qualifiers.resize(p + 1); }
+		EvalType& operator++() {
+			qualifiers.emplace_back();
+			return *this;
+		}
+
+		EvalType& operator--() {
+			qualifiers.pop_back();
+			return *this;
+		}
+
+		friend std::ostream& operator<<(std::ostream& out, const EvalType& a);
+
+		EvalType operator|(const EvalType& other) const {
+			if(type != other.type) {
+				if(type != UNKNOWN && other.type != UNKNOWN) {
+					std::stringstream ss;
+					ss << "Types \"" << *this << "\" and \"" << other << "\" are incompatible";
+					throw std::runtime_error(ss.str());
+				}
+			} else if(length != other.length) {
+				if(length != NORMAL && other.length != NORMAL) {
+					std::stringstream ss;
+					ss << "Type \"" << *this << "\" and qualifier \"" << other << "\" are incompatible";
+					throw std::runtime_error(ss.str());
+				}
+			}
+
+			EvalType re;
+			re.type = (type == UNKNOWN) ? other.type : type;
+			re.sign = sign || other.sign;
+			re.length = (length == NORMAL) ? other.length : length;
+			re.qualifiers.assign(qualifiers.begin(), qualifiers.end());
+			re.qualifiers.insert(re.qualifiers.end(), other.qualifiers.begin() + 1, other.qualifiers.end());
+
+			return re;
+		}
+
+		bool operator==(const EvalType& other) const {
+			return !((type != other.type) || (sign != other.sign) || (length != other.length) || (qualifiers != other.qualifiers));
+		}
+
+		bool operator!=(const EvalType& other) const {
+			return (type != other.type) || (sign != other.sign) || (length != other.length) || (qualifiers != other.qualifiers);
+		}
+
+		bool operator>(const EvalType& other) const {
+			return (type == FLOATING && other.type != FLOATING) || (length == NORMAL && other.length == SHORT) || (length == LONG && (other.length == NORMAL || other.length == SHORT));
+		}
+
+		unsigned size() const {
+			if(pointer() > 0) {
+				// Pointer size
+				return 4;
+			}
+
+			switch(type) {
+				case EvalType::UNKNOWN:
+					return -1;
+				case EvalType::VOID:
+					return 0;
+				case EvalType::CHARACTER:
+					return 4;
+				case EvalType::INTEGER:
+					// TODO - actual different sizes
+					return 4;
+				case EvalType::FLOATING:
+					switch(length) {
+						case EvalType::SHORT:
+							return 4;
+						case EvalType::NORMAL:
+						case EvalType::LONG:
+							return 8;
+					}
+				case EvalType::OBJECT:
+					// TODO - objects
+					return -3;
+			}
+
+			return -2;
+		}
+
+		bool integral() const { return (type == INTEGER) || (type == CHARACTER); }
+		bool floating() const { return type == FLOATING; }
+
+		// Default constructor
+		EvalType() {}
+
+		EvalType(const EvalType& other) : type(other.type), sign(other.sign), length(other.length), qualifiers(other.qualifiers) {}
+
+	private:
+		// Certain common types
+		enum Common {
+			CUNKNOWN,
+			CVOID,
+			CCHAR,
+			CSTRING,
+			CUNSIGNED,
+			CINT,
+			CLONG,
+			CSHORT,
+			CFLOAT,
+			CDOUBLE
+		};
+
+		// Construct a common type
+		EvalType(Common c) {
+			switch(c) {
+				case CUNKNOWN:
+					break;
+				case CVOID:
+					type = VOID;
+					break;
+				case CCHAR:
+					type = CHARACTER;
+					break;
+				case CSTRING:
+					type = CHARACTER;
+					qualifiers.emplace_back();
+					qualifiers[0].cons = true;
+					break;
+				case CUNSIGNED:
+					type = INTEGER;
+					sign = false;
+					break;
+				case CINT:
+					type = INTEGER;
+					break;
+				case CLONG:
+					type = INTEGER;
+					length = LONG;
+					break;
+				case CSHORT:
+					type = INTEGER;
+					length = SHORT;
+					break;
+				case CFLOAT:
+					type = FLOATING;
+					length = SHORT;
+					break;
+				case CDOUBLE:
+					type = FLOATING;
+					break;
+			}
+		}
+
+	public:
+		static const EvalType EUNKNOWN;
+		static const EvalType EVOID;
+		static const EvalType ECHAR;
+		static const EvalType ESTRING;
+		static const EvalType EUNSIGNED;
+		static const EvalType EINT;
+		static const EvalType ELONG;
+		static const EvalType ESHORT;
+		static const EvalType EFLOAT;
+		static const EvalType EDOUBLE;
 };
 
-inline TypeQualifier operator|(TypeQualifier a, TypeQualifier b)
-{return static_cast<TypeQualifier>(static_cast<unsigned>(a) | static_cast<unsigned>(b));}
-
-inline std::ostream& operator<<(std::ostream& out, EvalType a) {
-	if(a & EUNSIGNED) out << "unsigned ";
-	if(a & EVOID) out << "void ";
-	if(a & ECHAR) out << "char ";
-	if(a & ESHORT) out << "short ";
-	if(a & EINT) out << "int ";
-	if(a & ELONG) out << "long ";
-	if(a & EFLOAT) out << "float ";
-	if(a & EDOUBLE) out << "double ";
-	if(a & EPOINTER) out << "* ";
-	if(a & EUNKNOWN) out << "UNKNOWN ";
-
-	return out;
-}
-
-inline unsigned size(EvalType a) {
-	if(a & EUNKNOWN) return -1;
-	if(a & EVOID) return 0;
-	if(a & ECHAR) return 4;
-	if(a & ESHORT) return 4;
-	if(a & EINT) return 4;
-	if(a & ELONG) return 4;
-	if(a & EFLOAT) return 4;
-	if(a & EDOUBLE) return 8;
-	if(a & EPOINTER) return 4;
-
-	return -2;
+inline EvalType::Qualifier operator|(TypeQualifier a, TypeQualifier b) {
+	if(a != b) {
+		return EvalType::Qualifier(true, true);
+	} else if(a == TCONST) {
+		return EvalType::Qualifier(true, false);
+	} else {
+		return EvalType::Qualifier(false, true);
+	}
 }
 
 class Symbol {
@@ -90,7 +236,6 @@ class Symbol {
 		struct VarType {
 			bool isArray = false;
 			std::vector<int> arrayDimensions;
-			unsigned pointerLevel = 0;
 		};
 
 		// Var type
@@ -108,12 +253,13 @@ class Symbol {
 				const std::string name;
 				const unsigned lineNumber;
 				const unsigned scopeLevel;
-				EvalType etype = EUNKNOWN;
+				EvalType etype;
 				enum {
 					UNKNOWN,
 					VARIABLE,
 					FUNCTION,
 					ENUMCONSTANT,
+					STRUCT,
 					TYPEDEF
 				} itype = UNKNOWN;
 

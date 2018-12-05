@@ -197,7 +197,7 @@ void gen3AC(SyntaxNode* root) {
 
 	for (const Symbol::SymbolType& s : table.getGlobals()) {
 		if(s.itype == Symbol::SymbolType::VARIABLE) {
-			instructions.emplace_back("", "GLOBAL", Operand{"GLOBAL", s.name}, Operand{"ICONS", size(s.etype)});
+			instructions.emplace_back("", "GLOBAL", Operand{"GLOBAL", s.name}, Operand{"ICONS", s.etype.size()});
 		}
 	}
 

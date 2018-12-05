@@ -4,6 +4,11 @@ void blah(char);
 
 int something = 2;
 
+/* struct T {
+	int x;
+	float y;
+}; */
+
 int main() {
 	// This is a test
 	char z = 's';
@@ -13,7 +18,8 @@ int main() {
 	int n[3+2][3*2][4];
 	int o[2 * 1][2 / 1][2 << 0][2 >> 0][2];
 
-	#DUMP
+	// struct T t;
+
 	something = 3;
 	/* test */
 	{
@@ -37,7 +43,6 @@ int main() {
 	}
 
 	if(x % y > q[y + z]) {
-		*q = 0;
 		q[x * y] = 42;
 	}
 
@@ -51,16 +56,14 @@ int main() {
 
 	blah(4);
 	blah('4');
-
-	#DUMP
 	blah();
 }
 
 void blah(int y) {
 	int x = y * 2;
+	blah(x);
 }
 
 void blah(char y) {
 	char x = 0;
-	#DUMP
 }

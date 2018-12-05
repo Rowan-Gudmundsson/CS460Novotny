@@ -9,12 +9,6 @@
 extern unsigned lineno;
 extern unsigned column;
 
-struct PointerNode {
-	PointerNode() { level = 0; qualifier = TNONE; }
-	unsigned level;
-	TypeQualifier qualifier;
-};
-
 struct Operand {
 	std::string type;
 	std::string value;
@@ -107,7 +101,7 @@ class ConstantNode : public SyntaxNode {
 			std::string* s;
 		};
 		~ConstantNode() {
-			if (etype & EPOINTER && s != nullptr) {
+			if (etype.pointer() == 1 && s != nullptr) {
 				delete s;
 			}
 			for(SyntaxNode* c : children){ delete c; }
@@ -190,11 +184,13 @@ class FunctionCallNode : public SyntaxNode {
 class LoopNode : public SyntaxNode {
 	public:
 		LoopNode(const Source& s, SyntaxNode* pre, SyntaxNode* check, SyntaxNode* post, SyntaxNode* stmt, bool _pre_check = true)
-			: SyntaxNode(s, LOOP, EVOID, 4, pre, check, post, stmt),
+			: SyntaxNode(s, LOOP, EvalType::EVOID, 4, pre, check, post, stmt),
 			  pre_check(_pre_check) {}
 		LoopNode(const Source& s, SyntaxNode* check, SyntaxNode* stmt, bool _pre_check = true)
 			: LoopNode(s, nullptr, check, nullptr, stmt, _pre_check) {}
+
 		bool pre_check;
+
 		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker);
 };
 
