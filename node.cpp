@@ -110,42 +110,42 @@ ConstantNode* OperatorNode::evalNode() {
 	switch (opType) {
 		// Binary Operators
 		case OBAND: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i & rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"&\" on non-integral types.");
 			}
 		}
 		case OBOR: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i | rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"|\" on non-integral types.");
 			}
 		}
 		case OBXOR: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i ^ rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"^\" on non-integral types.");
 			}
 		}
 		case OBNOT: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, ~lhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"~\" on non-integral types.");
 			}
 		}
 		case OLSHIFT: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i << rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"<<\" on non-integral types.");
 			}
 		}
 		case ORSHIFT: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i >> rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \">>\" on non-integral types.");
@@ -153,35 +153,35 @@ ConstantNode* OperatorNode::evalNode() {
 		}
 		// Arithmetic
 		case OMOD: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i % rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"%\" on non-integral types.");
 			}
 		}
 		case ODIV: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i / rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"/\" on non-integral types.");
 			}
 		}
 		case OMULT: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i * rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"*\" on non-integral types.");
 			}
 		}
 		case OADD: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i + rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"+\" on non-integral types.");
 			}
 		}
 		case OSUB: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, lhs->i - rhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"-\" on non-integral types.");
@@ -189,7 +189,7 @@ ConstantNode* OperatorNode::evalNode() {
 		}
 		case OINCPOST:
 		case OINC: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, ++lhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"++\" on non-integral types.");
@@ -197,7 +197,7 @@ ConstantNode* OperatorNode::evalNode() {
 		}
 		case ODECPOST:
 		case ODEC: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, --lhs->i);
 			} else {
 				throw ParserError("Cannot perform operation of type \"%\" on non-integral types.");
@@ -205,21 +205,21 @@ ConstantNode* OperatorNode::evalNode() {
 		}
 		// Logic
 		case OLNOT: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(!lhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"!\" on non-integral types.");
 			}
 		}
 		case OLAND: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(lhs->i && rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"&&\" on non-integral types.");
 			}
 		}
 		case OLOR: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(lhs->i || rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"||\" on non-integral types.");
@@ -227,42 +227,42 @@ ConstantNode* OperatorNode::evalNode() {
 		}
 		// Comparison
 		case OLESS: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(lhs->i < rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"<\" on non-integral types.");
 			}
 		}
 		case OGREAT: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(lhs->i > rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \">\" on non-integral types.");
 			}
 		}
 		case OLEQ: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(lhs->i <= rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"<=\" on non-integral types.");
 			}
 		}
 		case OGEQ: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(lhs->i >= rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \">=\" on non-integral types.");
 			}
 		}
 		case OEQUAL: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(lhs->i == rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"==\" on non-integral types.");
 			}
 		}
 		case ONEQ: {
-			if (etype.type == EvalType::INTEGER || etype.type == EvalType::CHARACTER) {
+			if (etype.integral()) {
 				return new ConstantNode({line, source}, etype, (long int)(lhs->i != rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"!=\" on non-integral types.");
@@ -358,9 +358,9 @@ std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
 		out << '\'' << (char)(n.i) << '\'';
 	} else if(n.etype == EvalType::ESTRING) {
 		out << '\"' << *n.s << '\"';
-	} else if(n.etype.type == EvalType::INTEGER) {
+	} else if(n.etype.integral()) {
 		out << n.i;
-	} else if(n.etype.type == EvalType::FLOATING) {
+	} else if(n.etype.floating()) {
 		out << n.f;
 	}
 	out << "} ";
