@@ -55,12 +55,36 @@ int main(int argc, char** argv) {
 
 	if(treeFileName != "") {
 		std::ofstream treeFile(treeFileName);
-		treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}[sibling distance=20pt]\n\t\\tikzset{level 1/.style={level distance=36pt}}\n\t\\tikzset{level 2/.style={level distance=34pt}}\n\t\\tikzset{level 3+/.style={level distance=32pt}}\n\t\\Tree ";
+		treeFile << "\\documentclass[varwidth=\\maxdimen]{standalone}\n"
+		         << "\\usepackage{tikz}\n"
+		         << "\\usepackage{tikz-qtree}\n"
+		         << "\\usepackage{pgf-umlcd}\n"
+		         << "\\usepackage[T1]{fontenc}\n"
+		         << "\\begin{document}\n"
+		         << "% AST\n"
+		         << "\\[\n"
+		         << "\\begin{tikzpicture}[sibling distance=20pt]\n"
+		         << "\t\\tikzset{level 1/.style={level distance=36pt}}\n"
+		         << "\t\\tikzset{level 2/.style={level distance=34pt}}\n"
+		         << "\t\\tikzset{level 3+/.style={level distance=32pt}}\n"
+		         << "\t\\Tree ";
 		std::stringstream ss;
 		ss << root;
 		// Sanitize underscores
 		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
-		treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
+		treeFile << s << std::endl;
+		treeFile << "\n\\end{tikzpicture}\n"
+		         << "\\]\n"
+		         << "% Structs\n"
+		         << "\\[\n"
+		         << "\\begin{tikzpicture}\n";
+		ss.str("");
+		table.printStructs(ss);
+		s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+		treeFile << s << std::endl;
+		treeFile << "\\end{tikzpicture}\n"
+		         << "\\]\n"
+		         << "\\end{document}";
 
 		treeFile.close();
 	}
@@ -69,12 +93,36 @@ int main(int argc, char** argv) {
 
 	if(semTreeFileName != "") {
 		std::ofstream treeFile(semTreeFileName);
-		treeFile << "\\documentclass{standalone}\n\\usepackage{tikz}\n\\usepackage{tikz-qtree}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n\\begin{tikzpicture}[sibling distance=20pt]\n\t\\tikzset{level 1/.style={level distance=36pt}}\n\t\\tikzset{level 2/.style={level distance=34pt}}\n\t\\tikzset{level 3+/.style={level distance=32pt}}\n\t\\Tree ";
+		treeFile << "\\documentclass[varwidth=\\maxdimen]{standalone}\n"
+		         << "\\usepackage{tikz}\n"
+		         << "\\usepackage{tikz-qtree}\n"
+		         << "\\usepackage{pgf-umlcd}\n"
+		         << "\\usepackage[T1]{fontenc}\n"
+		         << "\\begin{document}\n"
+		         << "% AST\n"
+		         << "\\[\n"
+		         << "\\begin{tikzpicture}[sibling distance=20pt]\n"
+		         << "\t\\tikzset{level 1/.style={level distance=36pt}}\n"
+		         << "\t\\tikzset{level 2/.style={level distance=34pt}}\n"
+		         << "\t\\tikzset{level 3+/.style={level distance=32pt}}\n"
+		         << "\t\\Tree ";
 		std::stringstream ss;
 		ss << root;
 		// Sanitize underscores
 		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
-		treeFile << s << "\n\\end{tikzpicture}\n\\end{document}";
+		treeFile << s << std::endl;
+		treeFile << "\n\\end{tikzpicture}\n"
+		         << "\\]\n"
+		         << "% Structs\n"
+		         << "\\[\n"
+		         << "\\begin{tikzpicture}\n";
+		ss.str("");
+		table.printStructs(ss);
+		s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+		treeFile << s << std::endl;
+		treeFile << "\\end{tikzpicture}\n"
+		         << "\\]\n"
+		         << "\\end{document}";
 
 		treeFile.close();
 	}

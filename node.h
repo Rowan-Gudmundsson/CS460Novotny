@@ -175,9 +175,9 @@ class FunctionNode : public IdentifierNode {
 class FunctionCallNode : public SyntaxNode {
 	public:
 		FunctionCallNode(const Source& s, Symbol::SymbolType* sPtr, Symbol::FunctionType* fPtr) : SyntaxNode(s, FUNCTION_CALL, fPtr->returnType, 0), func(fPtr), sym(sPtr) {}
+		FunctionCallNode(const Source& s, Symbol::SymbolType* sPtr, Symbol::FunctionType* fPtr, SyntaxNode* c) : SyntaxNode(s, FUNCTION_CALL, fPtr->returnType, 1, c), func(fPtr), sym(sPtr) {}
 		Symbol::FunctionType* const func;
 		Symbol::SymbolType* const sym;
-		std::vector<SyntaxNode*> callParameters;
 		Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker);
 };
 

@@ -1,24 +1,42 @@
+#REDUCE
 void blah();
 void blah(int);
 void blah(char);
 
-int something = 2;
 
-/* struct T {
+int something = 2;
+#NOREDUCE
+
+
+struct T {
 	int x;
 	float y;
-}; */
+};
 
 int main() {
 	// This is a test
 	char z = 's';
 	short x = 0 , y = 2;
+	long a, b;
 	int q[50 + 2];
 	int m[2][5];
 	int n[3+2][3*2][4];
 	int o[2 * 1][2 / 1][2 << 0][2 >> 0][2];
 
-	// struct T t;
+	#DUMP
+
+	//struct T t;
+	//t.x = 2;
+
+	struct B {
+		int d;
+		char e;
+	};
+
+	struct G {
+		int d;
+		char e;
+	};
 
 	something = 3;
 	/* test */
@@ -54,8 +72,8 @@ int main() {
 		q[x] = y * x;
 	}
 
-	blah(4);
-	blah('4');
+	blah(q[2] + 3 * 4);
+	blah(z);
 	blah();
 }
 
@@ -65,5 +83,8 @@ void blah(int y) {
 }
 
 void blah(char y) {
+	struct F {
+		int* a;
+	};
 	char x = 0;
 }

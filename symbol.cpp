@@ -19,8 +19,8 @@ const EvalType EvalType::EFLOAT = EvalType(CFLOAT);
 const EvalType EvalType::EDOUBLE = EvalType(CDOUBLE);
 
 std::ostream& operator<<(std::ostream& out, const EvalType& a) {
-	if(a.qualifiers[0].cons) out << "const ";
-	if(a.qualifiers[0].volatil) out << "volatile ";
+	//if(a.qualifiers[0].cons) out << "const ";
+	//if(a.qualifiers[0].volatil) out << "volatile ";
 
 	switch(a.type) {
 		case EvalType::UNKNOWN:
@@ -66,20 +66,20 @@ std::ostream& operator<<(std::ostream& out, const EvalType& a) {
 			break;
 	}
 
-	bool needSpace = true;
-	for(unsigned i = 1; i < a.qualifiers.size(); i++) {
-		if(needSpace) out << ' ';
-		out << '*';
-		needSpace = false;
-		if(a.qualifiers[i].cons) {
-			needSpace = true;
-			out << " const";
-		}
-		if(a.qualifiers[i].volatil) {
-			needSpace = true;
-			out << " volatile";
-		}
-	}
+	// bool needSpace = true;
+	// for(unsigned i = 1; i < a.qualifiers.size(); i++) {
+	// 	if(needSpace) out << ' ';
+	// 	out << '*';
+	// 	needSpace = false;
+	// 	// if(a.qualifiers[i].cons) {
+	// 	// 	needSpace = true;
+	// 	// 	out << " const";
+	// 	// }
+	// 	// if(a.qualifiers[i].volatil) {
+	// 	// 	needSpace = true;
+	// 	// 	out << " volatile";
+	// 	// }
+	// }
 
 	return out;
 }
@@ -198,6 +198,12 @@ unsigned Symbol::pushScope() {
 	}
 
 	Scope* tmp = new Scope(new BinaryTree<std::string, SymbolType>(), head);
+
+	if(nextFunction != nullptr) {
+		tmp->func = nextFunction;
+		nextFunction = nullptr;
+	}
+
 	head->children.push_back(tmp);
 	head = tmp;
 	_scopeLevel++;
@@ -205,6 +211,17 @@ unsigned Symbol::pushScope() {
 	recentlyDeletedScope = true;
 
 	return _scopeLevel;
+}
+
+void Symbol::setLastScopeFunction(FunctionType* f) {
+	if(head->children.size() > 0)
+		head->children.back()->func = f;
+	else
+		head->func = f;
+}
+
+void Symbol::setNextScopeFunction(FunctionType* f) {
+	nextFunction = f;
 }
 
 /**
@@ -315,6 +332,40 @@ void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
 	}
 }
 
+void Symbol::printStructs(std::ostream& out) {
+	Scope* tmp = head;
+	// Find the root
+	while(tmp->parent != nullptr) {
+		tmp = tmp->parent;
+	}
+
+	int xoffset = 0;
+	printStructsFrom(tmp, out, xoffset, false);
+}
+
+void Symbol::printStructsFrom(Scope* s, std::ostream& out, int& xoffset, bool printedPackage) {
+	bool didPrintPackage = printedPackage;
+
+	for(const Symbol::SymbolType& sym : *s->tree) {
+		if(sym.itype == SymbolType::STRUCT) {
+			if(!didPrintPackage && s->func != nullptr) {
+				out << "\t\\begin{package}{" << s->func->name << "}\n";
+				didPrintPackage = true;
+			}
+			sym.obj->print(out, xoffset);
+			xoffset += 7;
+		}
+	}
+
+	for(Scope* sub : s->children) {
+		printStructsFrom(sub, out, xoffset, didPrintPackage);
+	}
+
+	if(!printedPackage && didPrintPackage) {
+		out << "\t\\end{package}\n";
+	}
+}
+
 BinaryTree<std::string, Symbol::SymbolType>& Symbol::getGlobals() {
 	Scope* tmp = head;
 	// Find the root
@@ -367,4 +418,15 @@ void Symbol::clearFrom(Scope* s) {
  */
 Symbol::~Symbol() {
 	clear();
+}
+
+std::ostream& Object::print(std::ostream& out, int xoffset) {
+	out << "\t\\begin{class}{" << sym->name << "}{" << xoffset << ", 0}\n";
+
+	for(const Symbol::SymbolType& s : *vars->tree) {
+		out << "\t\t\\attribute{" << s.name << " : " << s.etype << "}\n";
+	}
+	out <<"\t\\end{class}\n";
+
+	return out;
 }

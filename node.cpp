@@ -518,41 +518,19 @@ std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
 }
 
 std::ostream& operator<<(std::ostream& out, const FunctionCallNode& n) {
-	out << "CALL TO " << n.sym->name << "( ";
+	out << "CALL TO " << n.sym->name << "(";
 
-	for (unsigned i = 0; i < n.callParameters.size(); i++) {
-		SyntaxNode* tmp = n.callParameters.at(i);
-		switch (tmp->type) {
-			case SyntaxNode::Type::CONSTANT: {
-				ConstantNode* constant = (ConstantNode*)tmp;
-				if (constant->etype.integral()) {
-					out << constant->i;
-				} else if (constant->etype.floating()) {
-					out << constant->f;
-				} else if (constant->etype == EvalType::ESTRING ) {
-					out << *(constant->s);
-				}
-				break;
-			}
-			case SyntaxNode::Type::OPERATOR: {
-				OperatorNode* op = (OperatorNode*)tmp;
-				out << (*op);
-				break;
-			}
-			case SyntaxNode::Type::IDENTIFIER: {
-				IdentifierNode* id = (IdentifierNode*)tmp;
-				out << (*id);
-				break;
-			}
-			default:
-				throw ParserError("Cannot call function with this parameter.");
-		}
-		out << " " << tmp->etype;
-		if (i != n.callParameters.size() - 1) {
+	for (unsigned i = 0; i < n.func->parameters.size(); i++) {
+		out << n.func->parameters[i];
+		if (i < n.func->parameters.size() - 1) {
 			out << ", ";
 		}
 	}
 	out << ")} ";
+
+	for(unsigned i = 0; i < n.children.size(); i++) {
+		out << n.children[i];
+	}
 
 	return out;
 }
@@ -867,8 +845,8 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 		}
 	}
 
-	instructions.emplace_back(source, "ARGS", Operand{"CONS", unsigned(callParameters.size())});
-	for (SyntaxNode* i : callParameters) {
+	instructions.emplace_back(source, "ARGS", Operand{"CONS", unsigned(children.size())});
+	for (SyntaxNode* i : children) {
 		Operand tmp = i->gen3AC(instructions, tempTicker, labelTicker);
 		instructions.emplace_back(source, "VALOUT", tmp);
 	}

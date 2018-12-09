@@ -16,6 +16,8 @@ enum TypeQualifier {
 	TVOLATILE
 };
 
+struct Object;
+
 struct EvalType {
 	public:
 		enum {
@@ -228,6 +230,7 @@ class Symbol {
 			unsigned functionDefLine;
 			unsigned functionDefCol;
 
+			std::string name;
 			std::vector<EvalType> parameters;
 			EvalType returnType;
 			std::string label = "";
@@ -273,6 +276,8 @@ class Symbol {
 					// Function stuff
 					std::list<FunctionType> functions;
 
+					Object* obj;
+
 					// TODO - ENUM?
 					// TODO - TYPEDEF?
 				//};
@@ -300,6 +305,8 @@ class Symbol {
 
 		// Member functions
 		unsigned pushScope();
+		void setLastScopeFunction(FunctionType* f);
+		void setNextScopeFunction(FunctionType* f);
 		SymbolType* insert(const std::string& name, unsigned line);
 		bool clear();
 		void dumpSymbolTable();
@@ -317,21 +324,26 @@ class Symbol {
 		// Get a container of global variables
 		BinaryTree<std::string, SymbolType>& getGlobals();
 
+		void printStructs(std::ostream& out);
+
 		// Destructor
 		~Symbol();
 
 	friend std::ostream& operator<< (std::ostream& stream, const Symbol& symbol);
 
 	private:
+		friend Object;
 		struct Scope {
 			// Scope() {}
-			Scope(BinaryTree<std::string, SymbolType>* val, Scope* _parent): tree(val), parent(_parent) {}
+			Scope(BinaryTree<std::string, SymbolType>* val, Scope* _parent): tree(val), parent(_parent), func((_parent != nullptr) ? _parent->func : nullptr) {}
 			BinaryTree<std::string, SymbolType>* tree;
 			std::vector<Scope*> children;
 			Scope * const parent;
+			FunctionType* func;
 		};
 
 		void calcOffsetsFrom(Scope* s, unsigned offset);
+		void printStructsFrom(Scope* s, std::ostream& out, int& xoffset, bool printedPackage);
 		void clearFrom(Scope* s);
 
 		Scope* head;
@@ -340,4 +352,30 @@ class Symbol {
 		// For when we pop a scope and it's empty so we delete it
 		// If we then try to unpop it - don't do anything
 		bool recentlyDeletedScope = false;
+
+		FunctionType* nextFunction = nullptr;
+
+		Scope* getLastScope() {
+			if(head == nullptr) return nullptr;
+			return head->children.back();
+		}
 };
+
+struct Object {
+	enum Type {
+		STRUCT,
+		UNION
+	} type = STRUCT;
+
+	Symbol::Scope* vars;
+	// The symbol Associated with this object
+	Symbol::SymbolType* sym;
+
+	Object(Symbol& table, Symbol::SymbolType* s) : vars(table.getLastScope()), sym(s) { s->obj = this; s->itype = Symbol::SymbolType::STRUCT; }
+	Object(Symbol& table, Symbol::SymbolType* s, Type t) : type(t), vars(table.getLastScope()), sym(s) { s->obj = this; s->itype = Symbol::SymbolType::STRUCT; }
+	Object(const Object& other) : type(other.type), vars(other.vars), sym(other.sym) {}
+
+	std::ostream& print(std::ostream& out, int xoffset);
+};
+
+std::ostream& operator<<(std::ostream& out, const Object& obj);

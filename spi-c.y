@@ -34,6 +34,7 @@
 	OperatorNode::OpType oval;
 	std::vector<EvalType>* eList;
 	TypeQualifier tval;
+	Object::Type suval;
 }
 
 %token DEBUG_SYMBOL_TABLE
@@ -70,16 +71,17 @@
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
-%type <eval> type_specifier declaration_specifiers storage_class_specifier specifier_qualifier_list type_name parameter_declaration pointer
+%type <eval> type_specifier declaration_specifiers storage_class_specifier specifier_qualifier_list type_name parameter_declaration pointer struct_or_union_specifier
 %type <oval> unary_operator assignment_operator
-%type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression
+%type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression struct_declarator struct_declarator_list
 %type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression
-%type <nval> direct_declarator constant primary_expression string expression identifier declaration declaration_list
-%type <nval> postfix_expression unary_expression cast_expression initializer init_declarator init_declarator_list
+%type <nval> direct_declarator constant primary_expression string expression identifier declaration declaration_list struct_declaration
+%type <nval> postfix_expression unary_expression cast_expression initializer init_declarator init_declarator_list struct_declaration_list
 %type <nval> compound_statement function_definition external_declaration translation_unit constant_expression expression_statement
 %type <nval> statement statement_list labeled_statement selection_statement iteration_statement jump_statement argument_expression_list
 %type <eList> parameter_list parameter_type_list
 %type <tval> type_qualifier
+%type <suval> struct_or_union
 
 %parse-param {SyntaxNode*& root}
 
@@ -107,6 +109,7 @@ external_declaration // Node*
 		// Actually there shouldn't be any code generated for a declaration
 		$$ = nullptr;
 		if($1 != nullptr) delete $1;
+		table.popBackToGlobal();
 	}
 	;
 
@@ -231,20 +234,24 @@ type_qualifier // TypeQualifier
 	| VOLATILE { $$ = TVOLATILE; }
 	;
 
-struct_or_union_specifier
-	: struct_or_union identifier LBRACE struct_declaration_list RBRACE
-	| struct_or_union LBRACE struct_declaration_list RBRACE
-	| struct_or_union identifier
+struct_or_union_specifier // EvalType
+	: struct_or_union identifier LBRACE struct_declaration_list RBRACE {
+		Object* obj = new Object(table, ((IdentifierNode*) $2)->sym);
+	}
+	| struct_or_union LBRACE struct_declaration_list RBRACE { /* TODO: Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+	| struct_or_union identifier {
+
+	}
 	;
 
-struct_or_union
-	: STRUCT
-	| UNION
+struct_or_union // Object::Type
+	: STRUCT { $$ = Object::STRUCT; table.mode = Symbol::Mode::WRITE; }
+	| UNION { $$ = Object::UNION; table.mode = Symbol::Mode::WRITE; }
 	;
 
-struct_declaration_list
-	: struct_declaration
-	| struct_declaration_list struct_declaration
+struct_declaration_list // Node*
+	: struct_declaration { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::GENERIC, EvalType::EUNKNOWN, 1, $1); }
+	| struct_declaration_list struct_declaration { $$ = $1; $$->children.push_back($2); }
 	;
 
 init_declarator_list // Node*
@@ -277,26 +284,38 @@ init_declarator // Node*
 	}
 	;
 
-struct_declaration
-	: specifier_qualifier_list struct_declarator_list SEMI
+struct_declaration // Node*
+	: specifier_qualifier_list struct_declarator_list SEMI {
+		$$ = $2;
+
+		// Apply eval types to all variables
+		for(SyntaxNode* s : $2->children) {
+			if(s->type != SyntaxNode::IDENTIFIER) {
+				throw std::logic_error("Struct identifier not found where it should be");
+			}
+
+			((IdentifierNode*) s)->sym->etype = *$1;
+			delete $1;
+		}
+	}
 	;
 
-specifier_qualifier_list
-	: type_specifier
-	| type_specifier specifier_qualifier_list
-	| type_qualifier
-	| type_qualifier specifier_qualifier_list
+specifier_qualifier_list // EvalType
+	: type_specifier { $$ = $1; }
+	| type_specifier specifier_qualifier_list { $$ = new EvalType(*$1 | *$2); delete $1; delete $2; }
+	| type_qualifier { throw ParserError("Please don't use const or volatile"); }
+	| type_qualifier specifier_qualifier_list { throw ParserError("Please don't use const or volatile"); }
 	;
 
-struct_declarator_list
-	: struct_declarator
-	| struct_declarator_list COMMA struct_declarator
+struct_declarator_list // Node*
+	: struct_declarator { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::GENERIC, EvalType::EUNKNOWN, 1, $1); }
+	| struct_declarator_list COMMA struct_declarator { $$ = $1; $$->children.push_back($3); }
 	;
 
-struct_declarator
-	: declarator
-	| COLON constant_expression
-	| declarator COLON constant_expression
+struct_declarator // Node*
+	: declarator { $$ = $1; }
+	| COLON constant_expression { throw "WE WILL NEVER DO THIS GO BACK TO HELL YOU DEMON"; }
+	| declarator COLON constant_expression { throw "WE WILL NEVER DO THIS GO BACK TO HELL YOU DEMON"; }
 	;
 
 enum_specifier
@@ -367,7 +386,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 		}
 	}
 	| direct_declarator LPAREN RPAREN {
-		if($$->type == SyntaxNode::Type::IDENTIFIER) {
+		if($1->type == SyntaxNode::Type::IDENTIFIER) {
 			IdentifierNode* inode = (IdentifierNode*) $1;
 			inode->sym->itype = Symbol::SymbolType::FUNCTION;
 
@@ -377,6 +396,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			for(auto& f : inode->sym->functions) {
 				if(f.parameters.empty()) {
 					fnode = new FunctionNode({lineno, currentLine}, inode, &f);
+					table.setNextScopeFunction(&f);
 					break;
 				}
 			}
@@ -384,8 +404,10 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			if(fnode == nullptr) {
 				// Found a new function
 				Symbol::FunctionType f;
+				f.name = ((IdentifierNode*) $1)->sym->name;
 				inode->sym->functions.push_back(f);
 				fnode = new FunctionNode({lineno, currentLine}, inode, &inode->sym->functions.back());
+				table.setNextScopeFunction(&inode->sym->functions.back());
 			}
 
 			$$ = fnode;
@@ -397,8 +419,8 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 	// Passing up a FunctionNode* here, but since it inherits from IdentifierNode, we're good
 	// Probably
 	| direct_declarator LPAREN parameter_type_list RPAREN {
-		if($$->type == SyntaxNode::Type::IDENTIFIER) {
-			table.unPopScope();
+		if($1->type == SyntaxNode::Type::IDENTIFIER) {
+			int level = table.unPopScope();
 			IdentifierNode* inode = (IdentifierNode*) $1;
 			inode->sym->itype = Symbol::SymbolType::FUNCTION;
 
@@ -408,6 +430,10 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			for(auto& f : inode->sym->functions) {
 				if(f.parameters == *$3) {
 					fnode = new FunctionNode({lineno, currentLine}, inode, &f);
+					if(level != 0)
+						table.setLastScopeFunction(&f);
+					else
+						table.setNextScopeFunction(&f);
 					break;
 				}
 			}
@@ -415,9 +441,14 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			if(fnode == nullptr) {
 				// Found a new function
 				Symbol::FunctionType f;
+				f.name = ((IdentifierNode*) $1)->sym->name;
 				f.parameters = *$3;
 				inode->sym->functions.push_back(f);
 				fnode = new FunctionNode({lineno, currentLine}, inode, &inode->sym->functions.back());
+				if(level != 0)
+					table.setLastScopeFunction(&inode->sym->functions.back());
+				else
+					table.setNextScopeFunction(&inode->sym->functions.back());
 			}
 
 			$$ = fnode;
@@ -1033,7 +1064,6 @@ postfix_expression // Node*
 		for (auto& f : tmp->sym->functions) {
 			if (f.parameters.empty()) {
 				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f);
-				((FunctionCallNode*)$$)->callParameters.clear();
 			}
 		}
 		if ($$ == nullptr) {
@@ -1053,15 +1083,11 @@ postfix_expression // Node*
 
 		for (auto& f : tmp->sym->functions) {
 			if (f.parameters == paramTypes) {
-				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f);
+				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f, $3);
 			}
 		}
 		if ($$ == nullptr) {
 			throw ParserError("No matching function to call.");
-		}
-		FunctionCallNode* function = (FunctionCallNode*)$$;
-		for (auto i : $3->children) {
-			function->callParameters.push_back(i);
 		}
 	}
 	| postfix_expression PERIOD identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
