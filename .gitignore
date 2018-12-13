@@ -70,3 +70,5 @@ debug_parser\.txt
 *.fdb_latexmk
 
 spi-c.dSYM/
+
+.vscode/

@@ -561,7 +561,17 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		case ASSIGN:
 		case DECLARE_AND_INIT: {
 			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker);
-			instructions.emplace_back(source, "ASSIGN", children[1]->gen3AC(instructions, tempTicker, labelTicker), dest);
+			Operand op1 = children[1]->gen3AC(instructions, tempTicker, labelTicker);
+			if (op1.type == "ICONS") {
+				instructions.emplace_back(source, "ASSIGN", op1, Operand{"ITemp", tempTicker});
+				op1 = Operand{"ITemp", tempTicker};
+				tempTicker++;
+			} else if (op1.type == "FCONS") {
+				instructions.emplace_back(source, "ASSIGN", op1, Operand{"FTemp", tempTicker});
+				op1 = Operand{"FTemp", tempTicker};
+				tempTicker++;
+			}
+			instructions.emplace_back(source, "ASSIGN", op1, dest);
 			return dest;
 		}
 		case ACCESS: {

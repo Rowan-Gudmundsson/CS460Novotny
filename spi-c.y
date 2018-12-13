@@ -1128,7 +1128,7 @@ postfix_expression // Node*
 		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $4->etype, 2, $1, $4);
 		table.setCurrentObject(nullptr);
 	}
-	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; throw ParserError("Not handling the '->' operator.")}
+	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; throw ParserError("Not handling the '->' operator."); }
 	| postfix_expression INC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OINCPOST, 1, $1); }
 	| postfix_expression DEC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::ODECPOST, 1, $1); }
 	;
@@ -1146,7 +1146,7 @@ argument_expression_list // Node*
 	;
 
 constant
-	: INTEGER_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, EvalType::EINT, yylval.ival); }
+	: INTEGER_CONSTANT { std::cout << "IVAL: " << yylval.ival << std::endl; $$ = new ConstantNode({lineno, currentLine}, EvalType::EINT, yylval.ival); }
 	| CHARACTER_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, EvalType::ECHAR, (long int)(yylval.cval)); }
 	| FLOATING_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, EvalType::EFLOAT, yylval.fval); }
 	| ENUMERATION_CONSTANT { /* TODO(Rowan) -- Fix later. */ $$ = nullptr; }

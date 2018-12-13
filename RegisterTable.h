@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+// Going off of these specs
+// http://www.cs.uwm.edu/classes/cs315/Bacon/Lecture/HTML/ch05s03.html
+
 class RegisterTable
 {
 	public:
@@ -24,10 +27,11 @@ class RegisterTable
 			RegisterEntry(const std::string& n, bool temp, Type t) : name(n), temporary(temp), type(t) {}
 		};
 
-		int get_Register(std::string&); 		
-		void free_register(std::string&);
+		std::string get_register(const std::string& reg_name, bool is_float);
 
-		void addRegister(const RegisterEntry& r) { registers.push_back(r); }
+		void free_register(const std::string& reg_name);
+
+		void add_register(const RegisterEntry& r) { registers.push_back(r); }
 
 		static RegisterTable getMIPSRegisters();
 
@@ -37,4 +41,4 @@ class RegisterTable
 		std::vector<RegisterEntry> registers;
 }; 
 
-std::ostream& operator<< (std::ostream&, const RegisterEntry&); 
+std::ostream& operator<< (std::ostream&, const RegisterTable::RegisterEntry&); 

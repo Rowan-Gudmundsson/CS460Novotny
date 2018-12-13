@@ -3,6 +3,7 @@ void blah(int);
 void blah(char);
 
 int something = 2;
+#DUMP
 
 struct T {
 	int s;

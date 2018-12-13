@@ -257,12 +257,13 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 	// DATA section (for global/static variables)
 	out << "\t.data\n";
 	for(const ThreeAddress& instruct : instructions) {
-		if(instruct.op != "GLOBAL") break;
-		out << instruct.op1.value << ": ";
+		if(instruct.op == "GLOBAL")
+			out << instruct.op1.value << ": ";
 		if(instruct.dest.type == "ICONS")
 			out << ".word ";
 		else if(instruct.dest.type == "FCONS")
 			out << ".float ";
+		else break;
 		out << instruct.dest.value << '\n';
 	}
 
@@ -272,7 +273,19 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 		if(instruct.op == "LABEL") {
 			out << instruct.op1.value << ':';
 		} else if(instruct.op == "ASSIGN") {
-
+			if (instruct.dest.type == "Local") {
+				out << "li\t" << "$t0, " << instruct.dest.value << std::endl;
+				out << "add\t$t0, $t0, $sp" << std::endl;
+				out << "sw\t"
+						<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F') << ", "
+						<< "$t0";
+			} else {
+				out << "move\t"
+						<< registers.get_register(instruct.dest.value, instruct.dest.type[0] == 'F') << ", "
+						<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F');
+			}
+		}	else if (instruct.op != "GLOBAL") {
+			out << "NOT HANDLING " << instruct.op << std::endl;
 		}
 
 		out << '\n';
