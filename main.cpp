@@ -89,6 +89,7 @@ int main(int argc, char** argv) {
 		treeFile.close();
 	}
 
+	table.calcStructOffsets();
 	root->semanticCheck();
 
 	if(semTreeFileName != "") {

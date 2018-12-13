@@ -298,6 +298,7 @@ std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
 			PROCESS_VAL(ACCESS);
 			PROCESS_VAL(COERCION);
 			PROCESS_VAL(FUNCTION_CALL);
+			PROCESS_VAL(STRUCT_ACCESS);
 		}
 	#undef PROCESS_VAL
 
@@ -567,23 +568,31 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			std::string type = children[0]->etype.integral()
 				? "ITemp"
 				: "FTemp";
-			Symbol::SymbolType& sym = *((IdentifierNode*) children[0])->sym;
-			unsigned offset = sym.offset;
+			Symbol::SymbolType* sym;
+			unsigned offset;
+
+			if(children[0]->type == IDENTIFIER) {
+				sym = ((IdentifierNode*) children[0])->sym;
+				offset = sym->offset;
+			} else if(children[0]->type == STRUCT_ACCESS) {
+				sym = ((IdentifierNode*) children[0]->children[1])->sym;
+				offset = sym->offset + ((IdentifierNode*) children[0]->children[0])->sym->offset;
+			}
 			unsigned blockSize;
 			Operand lastTemp;
 			Operand nextTemp;
 
 			for(unsigned i = 1; i < children.size(); i++) {
 				blockSize = 1;
-				for(unsigned j = i; j < sym.v.arrayDimensions.size(); j++) {
-					blockSize *= sym.v.arrayDimensions[j];
+				for(unsigned j = i; j < sym->v.arrayDimensions.size(); j++) {
+					blockSize *= sym->v.arrayDimensions[j];
 				}
 
 				nextTemp = Operand{"ITemp", tempTicker};
 				instructions.emplace_back(source,
 					"MULT",
 					children[i]->gen3AC(instructions, tempTicker, labelTicker),
-					Operand{"ICONS", blockSize * ((IdentifierNode*) children[0])->sym->etype.size()},
+					Operand{"ICONS", blockSize * sym->etype.size()},
 					nextTemp);
 
 				tempTicker++;
@@ -634,6 +643,9 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			}
 
 			return {"ERR", "ERR"};
+		}
+		case STRUCT_ACCESS: {
+			return {"Local", ((IdentifierNode*) children[0])->sym->offset + ((IdentifierNode*) children[1])->sym->offset};
 		}
 		default: {
 			for(SyntaxNode* c : children) {

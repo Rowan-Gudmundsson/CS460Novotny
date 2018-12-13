@@ -209,6 +209,8 @@ SCOMMENT \/\/.*\n
 			} else {
 				throw ScannerError("Variable redeclaration");
 			}
+		} else if(shadowIdPtr != nullptr && shadowIdPtr->itype == Symbol::SymbolType::STRUCT) {
+			idPtr = shadowIdPtr;
 		} else {
 			if (shadowIdPtr != nullptr) {
 				throwWarning("Variable \""s + varName + "\" shadows variable declared on line "s + std::to_string(shadowIdPtr->lineNumber));

@@ -19,8 +19,8 @@ const EvalType EvalType::EFLOAT = EvalType(CFLOAT);
 const EvalType EvalType::EDOUBLE = EvalType(CDOUBLE);
 
 std::ostream& operator<<(std::ostream& out, const EvalType& a) {
-	//if(a.qualifiers[0].cons) out << "const ";
-	//if(a.qualifiers[0].volatil) out << "volatile ";
+	if(a.qualifiers[0].cons) out << "const ";
+	if(a.qualifiers[0].volatil) out << "volatile ";
 
 	switch(a.type) {
 		case EvalType::UNKNOWN:
@@ -61,27 +61,57 @@ std::ostream& operator<<(std::ostream& out, const EvalType& a) {
 			}
 			break;
 		case EvalType::OBJECT:
-			// TODO - Objects
-			out << "object";
+			out << "Object " << a.obj->sym->name;
 			break;
 	}
 
-	// bool needSpace = true;
-	// for(unsigned i = 1; i < a.qualifiers.size(); i++) {
-	// 	if(needSpace) out << ' ';
-	// 	out << '*';
-	// 	needSpace = false;
-	// 	// if(a.qualifiers[i].cons) {
-	// 	// 	needSpace = true;
-	// 	// 	out << " const";
-	// 	// }
-	// 	// if(a.qualifiers[i].volatil) {
-	// 	// 	needSpace = true;
-	// 	// 	out << " volatile";
-	// 	// }
-	// }
+	bool needSpace = true;
+	for(unsigned i = 1; i < a.qualifiers.size(); i++) {
+		if(needSpace) out << ' ';
+		out << '*';
+		needSpace = false;
+		if(a.qualifiers[i].cons) {
+			needSpace = true;
+			out << " const";
+		}
+		if(a.qualifiers[i].volatil) {
+			needSpace = true;
+			out << " volatile";
+		}
+	}
 
 	return out;
+}
+
+unsigned EvalType::size() const {
+	if(pointer() > 0) {
+		// Pointer size
+		return 4;
+	}
+
+	switch(type) {
+		case EvalType::UNKNOWN:
+			return -1;
+		case EvalType::VOID:
+			return 0;
+		case EvalType::CHARACTER:
+			return 4;
+		case EvalType::INTEGER:
+			// TODO - actual different sizes
+			return 4;
+		case EvalType::FLOATING:
+			switch(length) {
+				case EvalType::SHORT:
+					return 4;
+				case EvalType::NORMAL:
+				case EvalType::LONG:
+					return 8;
+			}
+		case EvalType::OBJECT:
+			return obj->size;
+	}
+
+	return -2;
 }
 
 /**
@@ -119,6 +149,8 @@ std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
 		//} else {
 			out << "<" << sym.name << "()>";
 		//}
+	} else if(sym.itype == Symbol::SymbolType::STRUCT) {
+		out << "{Struct " << sym.name << "}";
 	} else if (sym.v.isArray) {
 		out << "<" << sym.name;
 		for (auto i : sym.v.arrayDimensions) {
@@ -240,6 +272,10 @@ Symbol::SymbolType* Symbol::insert(const std::string& name, unsigned line) {
  * @return {T*} - The address of the tree found, nullptr if nothing.
  */
 Symbol::SymbolType* Symbol::find(std::string key) {
+	if(structScope != nullptr) {
+		return structScope->tree->find(key);
+	}
+
 	Scope* conductor = head;
 	SymbolType* result;
 	while(conductor != nullptr) {
@@ -258,7 +294,8 @@ Symbol::SymbolType* Symbol::find(std::string key) {
  * @return {SymbolType*} - A pointer to the variable or nullptr if it doesnt exist.
  */
 Symbol::SymbolType* Symbol::findInCurrentScope(std::string name) {
-	return head->tree->find(name);
+	if(structScope != nullptr) return structScope->tree->find(name);
+	else return head->tree->find(name);
 }
 
 /**
@@ -304,6 +341,49 @@ void Symbol::popBackToGlobal() {
 	}
 }
 
+void Symbol::setCurrentObject(Object* obj) {
+	if(obj == nullptr) structScope = nullptr;
+	else structScope = obj->vars;
+}
+
+void Symbol::calcStructOffsets() {
+	Scope* tmp = head;
+	// Find the root
+	while(tmp->parent != nullptr) {
+		tmp = tmp->parent;
+	}
+
+	calcStructOffsetsFrom(tmp);
+}
+
+void Symbol::calcStructOffsetsFrom(Scope* scope) {
+	if(scope->isStruct) return;
+
+	unsigned offset;
+	unsigned mult;
+
+	for(Symbol::SymbolType& s : *scope->tree) {
+		if(s.itype == Symbol::SymbolType::STRUCT) {
+			offset = 0;
+			for(Symbol::SymbolType& structSym : *s.obj->vars->tree) {
+				if(structSym.itype != Symbol::SymbolType::STRUCT) {
+					structSym._offset = offset;
+					mult = 1;
+					for(unsigned i : structSym.v.arrayDimensions) {
+						mult *= i;
+					}
+					offset += mult * structSym.etype.size();
+				}
+			}
+			s.obj->size = offset;
+		}
+	}
+
+	for(Scope* s : scope->children) {
+		calcStructOffsetsFrom(s);
+	}
+}
+
 void Symbol::calcOffsets() {
 	Scope* tmp = head;
 	// Find the root
@@ -317,14 +397,18 @@ void Symbol::calcOffsets() {
 }
 
 void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
+	if(scope->isStruct) return;
+
 	for(Symbol::SymbolType& s : *scope->tree) {
-		s._offset = offset;
-		std::cout << "Offset of " << s << ": " << offset << std::endl;
-		unsigned mult = 1;
-		for(unsigned i : s.v.arrayDimensions) {
-			mult *= i;
+		if(s.itype != Symbol::SymbolType::STRUCT) {
+			s._offset = offset;
+			std::cout << "Offset of " << s << ": " << offset << std::endl;
+			unsigned mult = 1;
+			for(unsigned i : s.v.arrayDimensions) {
+				mult *= i;
+			}
+			offset += mult * s.etype.size();
 		}
-		offset += mult * s.etype.size();
 	}
 
 	for(Scope* s : scope->children) {
@@ -423,8 +507,9 @@ Symbol::~Symbol() {
 std::ostream& Object::print(std::ostream& out, int xoffset) {
 	out << "\t\\begin{class}{" << sym->name << "}{" << xoffset << ", 0}\n";
 
+	out << "\t\t\\attribute{size = " << size << "}\n";
 	for(const Symbol::SymbolType& s : *vars->tree) {
-		out << "\t\t\\attribute{" << s.name << " : " << s.etype << "}\n";
+		out << "\t\t\\attribute{" << s.name << " : " << s.etype << " (" << s.offset << ")}\n";
 	}
 	out <<"\t\\end{class}\n";
 

@@ -37,6 +37,8 @@ struct EvalType {
 			LONG
 		} length = NORMAL;
 
+		Object* obj = nullptr;
+
 		struct Qualifier {
 			bool cons = false;
 			bool volatil = false;
@@ -48,6 +50,7 @@ struct EvalType {
 			Qualifier(const Qualifier& q) : cons(q.cons), volatil(q.volatil) {}
 		};
 
+
 		// There need to be qualifiers for EACH level of indirection
 		// E.g. const int const * * const *
 		std::vector<Qualifier> qualifiers = std::vector<Qualifier>(1);
@@ -57,6 +60,7 @@ struct EvalType {
 		void pointer(unsigned p) { qualifiers.resize(p + 1); }
 		EvalType& operator++() {
 			qualifiers.emplace_back();
+			std::cout << "Did the ++ thing on EvalType" << std::endl;
 			return *this;
 		}
 
@@ -93,48 +97,18 @@ struct EvalType {
 		}
 
 		bool operator==(const EvalType& other) const {
-			return !((type != other.type) || (sign != other.sign) || (length != other.length) || (qualifiers != other.qualifiers));
+			return (type == other.type) && (sign == other.sign) && (length == other.length) && (qualifiers == other.qualifiers) && (obj == other.obj);
 		}
 
 		bool operator!=(const EvalType& other) const {
-			return (type != other.type) || (sign != other.sign) || (length != other.length) || (qualifiers != other.qualifiers);
+			return (type != other.type) || (sign != other.sign) || (length != other.length) || (qualifiers != other.qualifiers) || (obj != other.obj);
 		}
 
 		bool operator>(const EvalType& other) const {
 			return (type == FLOATING && other.type != FLOATING) || (length == NORMAL && other.length == SHORT) || (length == LONG && (other.length == NORMAL || other.length == SHORT));
 		}
 
-		unsigned size() const {
-			if(pointer() > 0) {
-				// Pointer size
-				return 4;
-			}
-
-			switch(type) {
-				case EvalType::UNKNOWN:
-					return -1;
-				case EvalType::VOID:
-					return 0;
-				case EvalType::CHARACTER:
-					return 4;
-				case EvalType::INTEGER:
-					// TODO - actual different sizes
-					return 4;
-				case EvalType::FLOATING:
-					switch(length) {
-						case EvalType::SHORT:
-							return 4;
-						case EvalType::NORMAL:
-						case EvalType::LONG:
-							return 8;
-					}
-				case EvalType::OBJECT:
-					// TODO - objects
-					return -3;
-			}
-
-			return -2;
-		}
+		unsigned size() const;
 
 		bool integral() const { return (type == INTEGER) || (type == CHARACTER); }
 		bool floating() const { return type == FLOATING; }
@@ -142,7 +116,7 @@ struct EvalType {
 		// Default constructor
 		EvalType() {}
 
-		EvalType(const EvalType& other) : type(other.type), sign(other.sign), length(other.length), qualifiers(other.qualifiers) {}
+		EvalType(const EvalType& other) : type(other.type), sign(other.sign), length(other.length), obj(other.obj), qualifiers(other.qualifiers) {}
 
 	private:
 		// Certain common types
@@ -311,13 +285,16 @@ class Symbol {
 		bool clear();
 		void dumpSymbolTable();
 
-
 		SymbolType* find(std::string name);
 		SymbolType* findInCurrentScope(std::string name);
 		unsigned popScope();
 		unsigned unPopScope();
 		void popBackToGlobal();
 
+		void setCurrentObject(Object* obj);
+
+		// Calculate Struct sizes and offsets
+		void calcStructOffsets();
 		// Calculate offsets - only to be used AFTER symbol table has been completely constructed
 		void calcOffsets();
 
@@ -340,13 +317,16 @@ class Symbol {
 			std::vector<Scope*> children;
 			Scope * const parent;
 			FunctionType* func;
+			bool isStruct = false;
 		};
 
+		void calcStructOffsetsFrom(Scope* s);
 		void calcOffsetsFrom(Scope* s, unsigned offset);
 		void printStructsFrom(Scope* s, std::ostream& out, int& xoffset, bool printedPackage);
 		void clearFrom(Scope* s);
 
 		Scope* head;
+		Scope* structScope = nullptr;
 		unsigned _scopeLevel;
 
 		// For when we pop a scope and it's empty so we delete it
@@ -371,8 +351,10 @@ struct Object {
 	// The symbol Associated with this object
 	Symbol::SymbolType* sym;
 
-	Object(Symbol& table, Symbol::SymbolType* s) : vars(table.getLastScope()), sym(s) { s->obj = this; s->itype = Symbol::SymbolType::STRUCT; }
-	Object(Symbol& table, Symbol::SymbolType* s, Type t) : type(t), vars(table.getLastScope()), sym(s) { s->obj = this; s->itype = Symbol::SymbolType::STRUCT; }
+	unsigned size = -1;
+
+	Object(Symbol& table, Symbol::SymbolType* s) : vars(table.getLastScope()), sym(s) { s->obj = this; s->itype = Symbol::SymbolType::STRUCT; vars->isStruct = true; }
+	Object(Symbol& table, Symbol::SymbolType* s, Type t) : type(t), vars(table.getLastScope()), sym(s) { s->obj = this; s->itype = Symbol::SymbolType::STRUCT; vars->isStruct = true; }
 	Object(const Object& other) : type(other.type), vars(other.vars), sym(other.sym) {}
 
 	std::ostream& print(std::ostream& out, int xoffset);

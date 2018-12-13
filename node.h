@@ -60,7 +60,8 @@ class SyntaxNode {
 			ARRAY,
 			ACCESS,
 			LOOP,
-			COERCION
+			COERCION,
+			STRUCT_ACCESS
 		} type;
 		EvalType etype;
 		const unsigned line;

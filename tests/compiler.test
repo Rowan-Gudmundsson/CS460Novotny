@@ -1,16 +1,12 @@
-#REDUCE
 void blah();
 void blah(int);
 void blah(char);
 
-
 int something = 2;
-#NOREDUCE
-
 
 struct T {
-	int x;
-	float y;
+	int s;
+	float y[4];
 };
 
 int main() {
@@ -22,12 +18,8 @@ int main() {
 	int m[2][5];
 	int n[3+2][3*2][4];
 	int o[2 * 1][2 / 1][2 << 0][2 >> 0][2];
-
-	#DUMP
-
-	//struct T t;
-	//t.x = 2;
-
+	struct T t;
+	
 	struct B {
 		int d;
 		char e;
@@ -36,7 +28,10 @@ int main() {
 	struct G {
 		int d;
 		char e;
-	};
+	} g;
+
+	t.s = 2;
+	t.s = t.y[1] + g.d;
 
 	something = 3;
 	/* test */

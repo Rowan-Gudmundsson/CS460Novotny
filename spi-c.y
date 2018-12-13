@@ -155,6 +155,7 @@ declaration // Node*
 		  This should be fairly easy, we just need to traverse the tree until we find identifiers
 		*/
 		EvalType tmp_type = *$1;
+
 		for (auto i : $2->children) {
 			if (i->type == SyntaxNode::Type::IDENTIFIER) {
 				IdentifierNode* tmp = (IdentifierNode*)i;
@@ -206,15 +207,15 @@ declaration_specifiers // EvalType
 	| type_qualifier declaration_specifiers { throw new ParserError("Please don't use const or volatile"); $$ = new EvalType(EvalType::EUNKNOWN); }
 	;
 
-storage_class_specifier // EvalType
-	: AUTO
-	| REGISTER
-	| STATIC
-	| EXTERN
-	| TYPEDEF
+storage_class_specifier // EvalType*
+	: AUTO { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+	| REGISTER { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+	| STATIC { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+	| EXTERN { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+	| TYPEDEF { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
 	;
 
-type_specifier // EvalType
+type_specifier // EvalType*
 	: VOID { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EVOID); }
 	| CHAR { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::ECHAR); }
 	| SHORT { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::ESHORT); }
@@ -224,7 +225,7 @@ type_specifier // EvalType
 	| DOUBLE { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EDOUBLE); }
 	| SIGNED { table.mode = Symbol::Mode::WRITE; throw ParserError("Please doesn't used signed."); }
 	| UNSIGNED { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EUNSIGNED); }
-	| struct_or_union_specifier { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+	| struct_or_union_specifier { $$ = $1; }
 	| enum_specifier { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
 	| TYPEDEF_NAME { table.mode = Symbol::Mode::WRITE; /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
 	;
@@ -234,13 +235,32 @@ type_qualifier // TypeQualifier
 	| VOLATILE { $$ = TVOLATILE; }
 	;
 
-struct_or_union_specifier // EvalType
+struct_or_union_specifier // EvalType*
 	: struct_or_union identifier LBRACE struct_declaration_list RBRACE {
-		Object* obj = new Object(table, ((IdentifierNode*) $2)->sym);
+		$$ = new EvalType();
+		$$->type = EvalType::OBJECT;
+		$$->obj = new Object(table, ((IdentifierNode*) $2)->sym);
+		delete $2;
+		delete $4;
+		table.mode = Symbol::Mode::WRITE;
 	}
-	| struct_or_union LBRACE struct_declaration_list RBRACE { /* TODO: Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+	| struct_or_union LBRACE struct_declaration_list RBRACE {
+		/* TODO: Actually do this */
+		$$ = new EvalType(EvalType::EVOID);
+		throw ParserError("Please do not use unnamed structs");
+		table.mode = Symbol::Mode::WRITE;
+	}
 	| struct_or_union identifier {
+		if(((IdentifierNode*) $2)->sym->itype == Symbol::SymbolType::STRUCT) {
+			$$ = new EvalType();
+			$$->type = EvalType::OBJECT;
+			$$->obj = ((IdentifierNode*) $2)->sym->obj;
 
+			delete $2;
+			table.mode = Symbol::Mode::WRITE;
+		} else {
+			throw ParserError("Struct \"" + ((IdentifierNode*) $2)->sym->name + "\" has not been defined.");
+		}
 	}
 	;
 
@@ -358,6 +378,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
 			node->sym->v.isArray = true;
 			node->sym->v.arrayDimensions.push_back(-1);
+			++node->sym->etype;
 
 			// TODO Figure this shit out
 			// node->children.push_back(new ArrayNode({lineno, currentLine}, EvalType::EUNKNOWN, $1));
@@ -373,11 +394,14 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			IdentifierNode* node = (IdentifierNode*) $$;
 			node->sym->itype = Symbol::SymbolType::VARIABLE;
 			node->sym->v.isArray = true;
+
 			try {
 				node->sym->v.arrayDimensions.push_back(evalConst($3)->i);
 			} catch(ParserError e) {
 				std::cout << "Error in constant evaluation: " << e.what() << std::endl;
 			}
+
+			++node->sym->etype;	
 
 			// TODO Figure this shit out
 			// node->children.push_back(new ArrayNode({lineno, currentLine}, EvalType::EUNKNOWN, $3));
@@ -1045,14 +1069,19 @@ postfix_expression // Node*
 
 			$1->children.push_back($3);
 			$$ = $1;
-		} else {
-			if($1->type != SyntaxNode::IDENTIFIER) {
-				throw ParserError("Expected identifier for array access");
-			} else if(((IdentifierNode*) $1)->sym->v.arrayDimensions.size() == 0) {
+		} else if($1->type == SyntaxNode::IDENTIFIER) {
+			if(((IdentifierNode*) $1)->sym->v.arrayDimensions.size() == 0) {
 				throw ParserError("Trying to dereference variable of non-pointer type");
 			}
 
 			$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, $1->etype, 2, $1, $3);
+		} else if($1->type == SyntaxNode::STRUCT_ACCESS) {
+			if(((IdentifierNode*) $1->children[1])->sym->v.arrayDimensions.size() == 0) {
+				throw ParserError("Trying to dereference variable of non-pointer type");
+			}
+			$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, $1->etype, 2, $1, $3);
+		} else {
+			throw ParserError("Expected identifier for array access");
 		}
 	}
 	| postfix_expression LPAREN RPAREN {
@@ -1090,8 +1119,16 @@ postfix_expression // Node*
 			throw ParserError("No matching function to call.");
 		}
 	}
-	| postfix_expression PERIOD identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
-	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; }
+	| postfix_expression PERIOD {
+		if($1->etype.type != EvalType::OBJECT) {
+			throw ParserError("Attempted to use '.' operator on non-object type.");
+		}
+		table.setCurrentObject($1->etype.obj);
+	} identifier { 
+		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $4->etype, 2, $1, $4);
+		table.setCurrentObject(nullptr);
+	}
+	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; throw ParserError("Not handling the '->' operator.")}
 	| postfix_expression INC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OINCPOST, 1, $1); }
 	| postfix_expression DEC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::ODECPOST, 1, $1); }
 	;
