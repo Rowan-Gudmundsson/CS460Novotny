@@ -50,12 +50,14 @@ std::string RegisterTable::get_register(const std::string& reg_name, bool is_flo
 			break;
 		}
 	}
-	for (auto& i : registers) {
-		if (!i.inUse && (is_float 
-				? (i.type == RegisterEntry::Type::FLOAT) 
-				: (i.type == RegisterEntry::Type::INT))) {
-			available = &i; // Check if any registers are free
-			break;
+	if (available == nullptr) {
+		for (auto& i : registers) {
+			if (!i.inUse && (is_float 
+					? (i.type == RegisterEntry::Type::FLOAT) 
+					: (i.type == RegisterEntry::Type::INT))) {
+				available = &i; // Check if any registers are free
+				break;
+			}
 		}
 	}
 	if (available == nullptr) { // No register is not being used, spilling

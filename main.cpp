@@ -222,6 +222,7 @@ void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned&
 
 	for (const Symbol::SymbolType& s : table.getGlobals()) {
 		if(s.itype == Symbol::SymbolType::VARIABLE) {
+			// This should do a lot more logic like check if array, load the actual data in not the size etc..
 			instructions.emplace_back("", "GLOBAL", Operand{"GLOBAL", s.name}, Operand{"ICONS", s.etype.size()});
 		}
 	}
@@ -267,12 +268,32 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 		out << instruct.dest.value << '\n';
 	}
 
+	std::string prev_source;
 	// TEXT section (for actual code)
 	out << "\t.text\n";
 	for(const ThreeAddress& instruct : instructions) {
-		if(instruct.op == "LABEL") {
+		if (instruct.source != prev_source) {
+			out << "% ----------------------------\n"
+					<< "% | Original source          |\n"
+					<< "% ----------------------------\n"
+					<< instruct.source << std::endl;
+			
+			out << "% ----------------------------\n"
+					<< "% | 3 Address Code           |\n"
+					<< "% ----------------------------\n"
+					<< "% | op                op1               op2               dest\n"
+					<< "% | ----------------- ----------------- ----------------- ------------------\n" << std::flush;
+			prev_source = instruct.source;
+		}
+
+		out << "% * " << std::left << std::setw(18) << instruct.op
+				<< std::setw(18) << instruct.op1
+				<< std::setw(18) << instruct.op2
+				<< std::setw(18) << instruct.dest << std::endl;
+
+		if (instruct.op == "LABEL") {
 			out << instruct.op1.value << ':';
-		} else if(instruct.op == "ASSIGN") {
+		} else if (instruct.op == "ASSIGN") {
 			if (instruct.dest.type == "Local") {
 				out << "li\t" << "$t0, " << instruct.dest.value << std::endl;
 				out << "add\t$t0, $t0, $sp" << std::endl;
@@ -280,10 +301,19 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 						<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F') << ", "
 						<< "$t0";
 			} else {
-				out << "move\t"
-						<< registers.get_register(instruct.dest.value, instruct.dest.type[0] == 'F') << ", "
-						<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F');
+				if (instruct.op1.type.substr(1) == "CONS") {
+					out << "li\t"
+							<< registers.get_register(instruct.dest.value, instruct.dest.type[0] == 'F') << ", "
+							<< instruct.op1.value;
+				} else {
+					out << "move\t"
+							<< registers.get_register(instruct.dest.value, instruct.dest.type[0] == 'F') << ", "
+							<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F');
+				}
 			}
+		} else if (instruct.op == "ADD") {
+			// MIPS has 2 different floating point types ".s" and ".d" (assuming single and double precision?)
+			// At this point we have no access to how this variable should be treated so idk
 		}	else if (instruct.op != "GLOBAL") {
 			out << "NOT HANDLING " << instruct.op << std::endl;
 		}
