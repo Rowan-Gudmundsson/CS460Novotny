@@ -245,6 +245,7 @@ void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned&
 	}
 }
 
+
 void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& filename, unsigned& tempTicker, unsigned& labelTicker) {
 	std::ofstream out(filename);
 	RegisterTable registers = RegisterTable::getMIPSRegisters();
@@ -276,7 +277,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			out << "% ----------------------------\n"
 					<< "% | Original source          |\n"
 					<< "% ----------------------------\n"
-					<< instruct.source << std::endl;
+					<< "% * " << instruct.source << std::endl;
 			
 			out << "% ----------------------------\n"
 					<< "% | 3 Address Code           |\n"
@@ -295,11 +296,9 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			out << instruct.op1.value << ':';
 		} else if (instruct.op == "ASSIGN") {
 			if (instruct.dest.type == "Local") {
-				out << "li\t" << "$t0, " << instruct.dest.value << std::endl;
-				out << "add\t$t0, $t0, $sp" << std::endl;
 				out << "sw\t"
 						<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F') << ", "
-						<< "$t0";
+						<< instruct.dest.value << "($sp)";
 			} else {
 				if (instruct.op1.type.substr(1) == "CONS") {
 					out << "li\t"
@@ -314,6 +313,59 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 		} else if (instruct.op == "ADD") {
 			// MIPS has 2 different floating point types ".s" and ".d" (assuming single and double precision?)
 			// At this point we have no access to how this variable should be treated so idk
+			if (instruct.dest.type == "Local") {
+				std::string op1;
+				std::string op2;
+				if (instruct.op1.type == "Local") {
+					// out << "lw\t"
+					// 		<< registers.get_register("tmp", false)
+				} else {
+					
+				}
+				if (instruct.op2.type == "Local") {
+
+				} else {
+
+				}
+				if (instruct.op1.type[0] == 'F') {
+					out << "add.s\t"
+							<< registers.get_register(instruct.op1.value, true) << ", "
+							<< registers.get_register(instruct.op1.value, true) << ", "
+							<< registers.get_register(instruct.op2.value, true) << std::endl;
+				} else {
+					out << "add\t"
+							<< registers.get_register(instruct.op1.value, false) << ", "
+							<< registers.get_register(instruct.op1.value, false) << ", "
+							<< registers.get_register(instruct.op2.value, false) << std::endl;
+				}
+				out << "sw\t"
+						<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F') << ", "
+						<< instruct.dest.value << "($sp)";
+			} else {
+				std::string op1;
+				std::string op2;
+				if (instruct.op1.type == "Local") {
+					
+				} else {
+					
+				}
+				if (instruct.op2.type == "Local") {
+
+				} else {
+
+				}
+				if (instruct.op1.type[0] == 'F') {
+					out << "add.s\t"
+							<< registers.get_register(instruct.dest.value, true) << ", "
+							<< registers.get_register(instruct.op1.value, true) << ", "
+							<< registers.get_register(instruct.op2.value, true);
+				} else {
+					out << "add\t"
+							<< registers.get_register(instruct.dest.value, false) << ", "
+							<< registers.get_register(instruct.op1.value, false) << ", "
+							<< registers.get_register(instruct.op2.value, false);
+				}
+			}
 		}	else if (instruct.op != "GLOBAL") {
 			out << "NOT HANDLING " << instruct.op << std::endl;
 		}

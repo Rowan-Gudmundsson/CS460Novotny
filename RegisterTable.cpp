@@ -19,8 +19,7 @@ RegisterTable RegisterTable::getMIPSRegisters() {
 	RegisterTable re;
 
 	// Integer temporaries
-	// Starting from 1 since we are using 0 to calculate local offsets
-	for(int i = 1; i < 10; i++) {
+	for(int i = 0; i < 10; i++) {
 		re.add_register({"$t" + std::to_string(i), true, RegisterEntry::Type::INT});
 	}
 
