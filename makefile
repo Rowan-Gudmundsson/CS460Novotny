@@ -1,4 +1,4 @@
-OBS = parser.o scanner.o main.o symbol.o node.o
+OBS = parser.o scanner.o main.o symbol.o node.o RegisterTable.o
 
 CC = g++
 CFLAGS = -g -Wall -std=c++14 -DYYDEBUG=1
@@ -22,10 +22,10 @@ lex.yy.c: spi-c.lex
 parser.o: spi-c.tab.c
 	$(CC) $(CFLAGS) -c spi-c.tab.c -o parser.o
 
-spi-c.tab.c: spi-c.y node.h
+spi-c.tab.c: spi-c.y node.h symbol.h
 	bison -d -v spi-c.y
 
-main.o: main.cpp main.h spi-c.tab.h
+main.o: main.cpp main.h spi-c.tab.h symbol.h node.h errors.h RegisterTable.h
 	$(CC) $(CFLAGS) -c main.cpp -o main.o
 
 symbol.o: symbol.cpp symbol.h
@@ -33,6 +33,9 @@ symbol.o: symbol.cpp symbol.h
 
 node.o: node.h node.cpp
 	$(CC) $(CFLAGS) -c node.cpp -o node.o
+
+RegisterTable.o: RegisterTable.h RegisterTable.cpp
+	$(CC) $(CFLAGS) -c RegisterTable.cpp -o RegisterTable.o
 
 scanner.o parser.o main.o : spi-c.tab.h
 

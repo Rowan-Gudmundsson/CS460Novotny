@@ -2,26 +2,39 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
-struct RegisterEntry
-{
-	std::string name; 
-	bool reserved; 
-	bool temporary; 
-	bool inUse; 
-	std::string* currentEntry; 
-	//more to be added as needed 
-
-}; 
 class RegisterTable
 {
 	public:
-		RegisterTable();
-		~RegisterTable(); 
-		int get_Register(std::string&); 		
-		void free_register(std::string&); 
+		struct RegisterEntry
+		{
+			std::string name; 
+			bool temporary = false; 
+			bool inUse = false;
+			enum Type {
+				INT,
+				FLOAT
+			} type = INT;
+			std::string currentEntry; 
+			//more to be added as needed 
 
-	friend std::ostream& operator<< (std::ostream&, const RegisterTable&); 
+			RegisterEntry(const std::string& n) : name(n) {}
+			RegisterEntry(const std::string& n, bool temp) : name(n), temporary(temp) {}
+			RegisterEntry(const std::string& n, bool temp, Type t) : name(n), temporary(temp), type(t) {}
+		};
+
+		int get_Register(std::string&); 		
+		void free_register(std::string&);
+
+		void addRegister(const RegisterEntry& r) { registers.push_back(r); }
+
+		static RegisterTable getMIPSRegisters();
+
+		friend std::ostream& operator<< (std::ostream&, const RegisterTable&); 
+
 	private: 
-		RegisterEntry registers[32]; //MIPS has 32 registers to work with
+		std::vector<RegisterEntry> registers;
 }; 
+
+std::ostream& operator<< (std::ostream&, const RegisterEntry&); 

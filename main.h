@@ -12,6 +12,7 @@
 #include "node.h"
 #include "spi-c.tab.h"
 #include "errors.h"
+#include "RegisterTable.h"
 
 // https://regex101.com/r/SizYZH/8
 //                                  v group 1     v group 2     v group 3           v group 4                                     v group 5                                    v group 6           v group 7                                            v group 8                                     v group 9
@@ -50,7 +51,9 @@ void throwWarning(const std::string& warning);
 void doArrowErrThing();
 void replaceInString(std::string& str, char init, char replace);
 void helpMenu();
-void gen3AC(SyntaxNode* root);
+void outputTreeToFile(SyntaxNode* root, Symbol& table, const std::string& filename);
+void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker);
+void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& filename, unsigned& tempTicker, unsigned& labelTicker);
 
 extern int yyparse(SyntaxNode*& root);
 extern unsigned lineno;

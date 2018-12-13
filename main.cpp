@@ -49,86 +49,26 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 	} else {
-		std::cerr << "Input file not found!" << std::endl;
+		std::cout << "Input file \"" << inputFile << "\" could not be opened." << std::endl;
 		return 1;
 	}
 
 	if(treeFileName != "") {
-		std::ofstream treeFile(treeFileName);
-		treeFile << "\\documentclass[varwidth=\\maxdimen]{standalone}\n"
-		         << "\\usepackage{tikz}\n"
-		         << "\\usepackage{tikz-qtree}\n"
-		         << "\\usepackage{pgf-umlcd}\n"
-		         << "\\usepackage[T1]{fontenc}\n"
-		         << "\\begin{document}\n"
-		         << "% AST\n"
-		         << "\\[\n"
-		         << "\\begin{tikzpicture}[sibling distance=20pt]\n"
-		         << "\t\\tikzset{level 1/.style={level distance=36pt}}\n"
-		         << "\t\\tikzset{level 2/.style={level distance=34pt}}\n"
-		         << "\t\\tikzset{level 3+/.style={level distance=32pt}}\n"
-		         << "\t\\Tree ";
-		std::stringstream ss;
-		ss << root;
-		// Sanitize underscores
-		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
-		treeFile << s << std::endl;
-		treeFile << "\n\\end{tikzpicture}\n"
-		         << "\\]\n"
-		         << "% Structs\n"
-		         << "\\[\n"
-		         << "\\begin{tikzpicture}\n";
-		ss.str("");
-		table.printStructs(ss);
-		s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
-		treeFile << s << std::endl;
-		treeFile << "\\end{tikzpicture}\n"
-		         << "\\]\n"
-		         << "\\end{document}";
-
-		treeFile.close();
+		outputTreeToFile(root, table, treeFileName);
 	}
 
 	table.calcStructOffsets();
 	root->semanticCheck();
 
 	if(semTreeFileName != "") {
-		std::ofstream treeFile(semTreeFileName);
-		treeFile << "\\documentclass[varwidth=\\maxdimen]{standalone}\n"
-		         << "\\usepackage{tikz}\n"
-		         << "\\usepackage{tikz-qtree}\n"
-		         << "\\usepackage{pgf-umlcd}\n"
-		         << "\\usepackage[T1]{fontenc}\n"
-		         << "\\begin{document}\n"
-		         << "% AST\n"
-		         << "\\[\n"
-		         << "\\begin{tikzpicture}[sibling distance=20pt]\n"
-		         << "\t\\tikzset{level 1/.style={level distance=36pt}}\n"
-		         << "\t\\tikzset{level 2/.style={level distance=34pt}}\n"
-		         << "\t\\tikzset{level 3+/.style={level distance=32pt}}\n"
-		         << "\t\\Tree ";
-		std::stringstream ss;
-		ss << root;
-		// Sanitize underscores
-		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
-		treeFile << s << std::endl;
-		treeFile << "\n\\end{tikzpicture}\n"
-		         << "\\]\n"
-		         << "% Structs\n"
-		         << "\\[\n"
-		         << "\\begin{tikzpicture}\n";
-		ss.str("");
-		table.printStructs(ss);
-		s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
-		treeFile << s << std::endl;
-		treeFile << "\\end{tikzpicture}\n"
-		         << "\\]\n"
-		         << "\\end{document}";
-
-		treeFile.close();
+		outputTreeToFile(root, table, semTreeFileName);
 	}
 
-	gen3AC(root);
+	std::vector<ThreeAddress> instructions;
+	unsigned tempTicker = 0, labelTicker = 0;
+	gen3AC(root, instructions, tempTicker, labelTicker);
+	outputAssembly(instructions, outputFile, tempTicker, labelTicker);
+
 
 	if(root != nullptr) {
 		root->clear();
@@ -234,12 +174,48 @@ void helpMenu() {
               << "                     (examples: \"-dl\", \"-dl1s4\", \"-dlps\")" << std::endl;
 }
 
-void gen3AC(SyntaxNode* root) {
-	std::vector<ThreeAddress> instructions;
-	instructions.reserve(100);
+void outputTreeToFile(SyntaxNode* root, Symbol& table, const std::string& filename) {
+	std::ofstream treeFile(filename);
+	if(treeFile.is_open()) {
+		treeFile << "\\documentclass[varwidth=\\maxdimen]{standalone}\n"
+		         << "\\usepackage{tikz}\n"
+		         << "\\usepackage{tikz-qtree}\n"
+		         << "\\usepackage{pgf-umlcd}\n"
+		         << "\\usepackage[T1]{fontenc}\n"
+		         << "\\begin{document}\n"
+		         << "% AST\n"
+		         << "\\[\n"
+		         << "\\begin{tikzpicture}[sibling distance=20pt]\n"
+		         << "\t\\tikzset{level 1/.style={level distance=36pt}}\n"
+		         << "\t\\tikzset{level 2/.style={level distance=34pt}}\n"
+		         << "\t\\tikzset{level 3+/.style={level distance=32pt}}\n"
+		         << "\t\\Tree ";
+		std::stringstream ss;
+		ss << root;
+		// Sanitize underscores
+		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+		treeFile << s << std::endl;
+		treeFile << "\n\\end{tikzpicture}\n"
+		         << "\\]\n"
+		         << "% Structs\n"
+		         << "\\[\n"
+		         << "\\begin{tikzpicture}\n";
+		ss.str("");
+		table.printStructs(ss);
+		s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+		treeFile << s << std::endl;
+		treeFile << "\\end{tikzpicture}\n"
+		         << "\\]\n"
+		         << "\\end{document}";
 
-	unsigned tempTicker = 0;
-	unsigned labelTicker = 0;
+		treeFile.close();
+	} else {
+		std::cout << "Could not open tree file \"" << filename << "\"." << std::endl;
+	}
+}
+
+void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
+	instructions.reserve(100);
 
 	table.calcOffsets();
 	std::cout << std::endl;
@@ -265,5 +241,40 @@ void gen3AC(SyntaxNode* root) {
 			std::cout << i.source; 
 		}
 		std::cout << std::endl;
+	}
+}
+
+void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& filename, unsigned& tempTicker, unsigned& labelTicker) {
+	std::ofstream out(filename);
+	RegisterTable registers = RegisterTable::getMIPSRegisters();
+
+	if(!out.is_open()) {
+		std::cout << "Could not open output file \"" << filename << "\"." << std::endl;
+		return;
+	}
+
+
+	// DATA section (for global/static variables)
+	out << "\t.data\n";
+	for(const ThreeAddress& instruct : instructions) {
+		if(instruct.op != "GLOBAL") break;
+		out << instruct.op1.value << ": ";
+		if(instruct.dest.type == "ICONS")
+			out << ".word ";
+		else if(instruct.dest.type == "FCONS")
+			out << ".float ";
+		out << instruct.dest.value << '\n';
+	}
+
+	// TEXT section (for actual code)
+	out << "\t.text\n";
+	for(const ThreeAddress& instruct : instructions) {
+		if(instruct.op == "LABEL") {
+			out << instruct.op1.value << ':';
+		} else if(instruct.op == "ASSIGN") {
+
+		}
+
+		out << '\n';
 	}
 }
