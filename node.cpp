@@ -562,15 +562,6 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		case DECLARE_AND_INIT: {
 			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker);
 			Operand op1 = children[1]->gen3AC(instructions, tempTicker, labelTicker);
-			if (op1.type == "ICONS") {
-				instructions.emplace_back(source, "ASSIGN", op1, Operand{"ITemp", tempTicker});
-				op1 = Operand{"ITemp", tempTicker};
-				tempTicker++;
-			} else if (op1.type == "FCONS") {
-				instructions.emplace_back(source, "ASSIGN", op1, Operand{"FTemp", tempTicker});
-				op1 = Operand{"FTemp", tempTicker};
-				tempTicker++;
-			}
 			instructions.emplace_back(source, "ASSIGN", op1, dest);
 			return dest;
 		}
@@ -619,7 +610,10 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, lastTemp, Operand{"ITemp", tempTicker});
 			tempTicker++;
 
-			return {"INDR", tempTicker - 1};
+			if(children[0]->etype.floating())
+				return {"FINDR", tempTicker - 1};
+			else 
+				return {"IINDR", tempTicker - 1};
 		}
 		case GENERIC: {
 			for(SyntaxNode* c : children) {

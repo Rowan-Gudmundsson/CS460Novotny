@@ -21,10 +21,11 @@ struct Operand {
 	Operand(const std::string& typ, double valu) : type(typ), value(std::to_string(valu)) {}
 
 	std::string name() const { return type + ' ' + value; }
-	bool isFloat() const { return type[0] == 'F'; }
-	bool isTemp() const { return type.compare(1, std::string::npos, "TEMP"); }
-	bool isConst() const { return type.compare(1, std::string::npos, "CONS"); }
-	bool isLocal() const { return type.compare(1, std::string::npos, "Local"); }
+	bool isFloat() const { return !type.empty() && type[0] == 'F'; }
+	bool isTemp()  const { return !type.empty() && !type.compare(1, std::string::npos, "Temp"); }
+	bool isConst() const { return !type.empty() && !type.compare(1, std::string::npos, "CONS"); }
+	bool isLocal() const { return !type.empty() && !type.compare(1, std::string::npos, "Local"); }
+	bool isIndr()  const { return !type.empty() && !type.compare(1, std::string::npos, "INDR"); }
 
 	bool operator == (const Operand& other) {
 		return type == other.type && value == other.value;

@@ -255,99 +255,128 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 	std::ofstream out(filename);
 	RegisterTable registers = RegisterTable::getMIPSRegisters();
 
-	if(!out.is_open()) {
-		std::cout << "Could not open output file \"" << filename << "\"." << std::endl;
-		return;
-	}
-
-
-	// DATA section (for global/static variables)
-	out << "\t.data\n";
-	for(const ThreeAddress& instruct : instructions) {
-		if(instruct.op == "GLOBAL")
-			out << instruct.op1.value << ": ";
-		if(instruct.dest.type == "ICONS")
-			out << ".word ";
-		else if(instruct.dest.type == "FCONS")
-			out << ".float ";
-		else break;
-		out << instruct.dest.value << '\n';
-	}
-
-	std::string prev_source;
-	// TEXT section (for actual code)
-	out << "\t.text\n";
-	for(const ThreeAddress& instruct : instructions) {
-		if (instruct.source != prev_source) {
-			out << "% ----------------------------\n"
-			    << "% | Original source          |\n"
-			    << "% ----------------------------\n"
-			    << "% * " << instruct.source << std::endl;
-			
-			out << "% ----------------------------\n"
-			    << "% | 3 Address Code           |\n"
-			    << "% ----------------------------\n"
-			    << "% | op                op1               op2               dest\n"
-			    << "% | ----------------- ----------------- ----------------- ------------------\n" << std::flush;
-			prev_source = instruct.source;
+	try {
+		if(!out.is_open()) {
+			std::cout << "Could not open output file \"" << filename << "\"." << std::endl;
+			return;
 		}
 
-		out << "% * " << std::left << std::setw(18) << instruct.op
-		    << std::setw(18) << instruct.op1
-		    << std::setw(18) << instruct.op2
-		    << std::setw(18) << instruct.dest << std::endl;
 
-		RegisterTable::RegisterEntry* op1Reg = findRegister(instruct.op1, registers, out);
-		RegisterTable::RegisterEntry* op2Reg = findRegister(instruct.op2, registers, out);
-		RegisterTable::RegisterEntry* destReg = findRegister(instruct.dest, registers, out);
-
-		if (instruct.op == "LABEL") {
-			out << instruct.op1.value << ':';
-		} else if (instruct.op == "ASSIGN") {
-			out << "move\t"
-			    << *destReg << ", "
-			    << *op1Reg;
-		} else if (instruct.op == "ADD") {
-			if (instruct.op1.isFloat()) out << "add.s\t";
-			else out << "add\t";
-			
-			out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
-		} else if (instruct.op == "MULT") {
-			if (instruct.op1.isFloat()) out << "mult.s\t";
-			else out << "mult\t";
-
-			out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
-		} else if (instruct.op != "GLOBAL") {
-			out << "% NOT HANDLING " << instruct.op << std::endl;
+		// DATA section (for global/static variables)
+		out << "\t.data\n";
+		for(const ThreeAddress& instruct : instructions) {
+			if(instruct.op == "GLOBAL")
+				out << instruct.op1.value << ": ";
+			if(instruct.dest.type == "ICONS")
+				out << ".word ";
+			else if(instruct.dest.type == "FCONS")
+				out << ".float ";
+			else break;
+			out << instruct.dest.value << '\n';
 		}
 
-		if(instruct.dest.isLocal()) {
-			out << "sw\t"
-			    << *destReg << ", "
-			    << instruct.dest.value << "($sp)";
+		std::string prev_source;
+		// TEXT section (for actual code)
+		out << "\t.text\n";
+		for(const ThreeAddress& instruct : instructions) {
+			if(instruct.op == "GLOBAL") continue;
 
-			destReg->inUse = false;
+			if (instruct.source != prev_source) {
+				out << "# ----------------------------\n"
+				    << "# | Original source          |\n"
+				    << "# ----------------------------\n"
+				    << "# * " << instruct.source << std::endl;
+				
+				out << "# ----------------------------\n"
+				    << "# | 3 Address Code           |\n"
+				    << "# ----------------------------\n"
+				    << "# | op                op1               op2               dest\n"
+				    << "# | ----------------- ----------------- ----------------- ------------------\n" << std::flush;
+				prev_source = instruct.source;
+			}
+
+			out << "# * " << std::left << std::setw(18) << instruct.op
+			    << std::setw(18) << instruct.op1
+			    << std::setw(18) << instruct.op2
+			    << std::setw(18) << instruct.dest << std::endl;
+
+			RegisterTable::RegisterEntry* op1Reg = findRegister(instruct.op1, registers, out);
+			RegisterTable::RegisterEntry* op2Reg = findRegister(instruct.op2, registers, out);
+
+			if(op1Reg != nullptr && op1Reg->usedAsTemp) op1Reg->inUse = false;
+			if(op2Reg != nullptr && op2Reg->usedAsTemp) op2Reg->inUse = false;
+
+			RegisterTable::RegisterEntry* destReg = findRegister(instruct.dest, registers, out, false);
+
+			if (instruct.op == "LABEL") {
+				out << instruct.op1.value << ':';
+			} else if (instruct.op == "ASSIGN") {
+				if(!instruct.dest.isLocal()) {
+					if(instruct.dest.isFloat() == instruct.op1.isFloat()) {
+						out << "move\t"
+						    << *destReg << ", "
+						    << *op1Reg;
+					} else if(instruct.dest.isFloat()) {
+						out << "mtc1\t"
+						    << *op1Reg << ", "
+						    << *destReg;
+					} else {
+						out << "mfc1\t"
+						    << *destReg << ", "
+						    << *op1Reg;
+					}
+				} else {
+					destReg->inUse = false;
+					destReg = op1Reg;
+					destReg->inUse = false;
+				}
+			} else if (instruct.op == "ADD") {
+				if (instruct.op1.isFloat()) out << "add.s\t";
+				else out << "add\t";
+				
+				out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "MULT") {
+				if (instruct.op1.isFloat()) out << "mul.s\t";
+				else out << "mul\t";
+
+				out << *destReg << ", " << *op1Reg << ", " << *op2Reg; 
+			} else if (instruct.op != "GLOBAL") {
+				out << "# NOT HANDLING " << instruct.op << std::endl;
+			}
+
+			out << std::endl;
+
+			if(!instruct.dest.type.empty() && instruct.dest.isLocal()) {
+				out << "sw\t"
+				    << *destReg << ", "
+				    << instruct.dest.value << "($sp)\n";
+
+				destReg->inUse = false;
+			}
 		}
-
-		out << '\n';
+	} catch (const std::exception& e) {
+		std::cout << e.what() << std::endl
+		          << registers << std::endl;
 	}
 }
 
-RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers, std::ostream& out) {
+RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers, std::ostream& out, bool loadFromMem) {
 	if(op.type.empty()) return nullptr;
 
 	RegisterTable::RegisterEntry* opReg = registers.findLocation(op);
 	if(opReg == nullptr) {
 		opReg = registers.getUnusedRegister(op);
-		if(op.isLocal()) {
+		if(opReg == nullptr) return nullptr;
+
+		if(op.isLocal() && loadFromMem) {
 			out << "lw\t"
 			    << *opReg << ", "
-			    << op.value << "($sp)";
+			    << op.value << "($sp)\n";
 		} else if(op.isConst()) {
 			if(op.isFloat()) out << "li.s\t";
 			else out << "li\t";
 			out << *opReg << ", "
-			    << op.value;
+			    << op.value << '\n';
 		}
 	}
 

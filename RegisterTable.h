@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <exception>
 #include <vector>
 #include "node.h"
 
@@ -19,6 +20,7 @@ class RegisterTable
 				INT,
 				FLOAT
 			} type = INT;
+			const RegisterEntry* const indirect = nullptr;
 
 			bool inUse = false;
 			bool usedAsTemp;
@@ -27,6 +29,12 @@ class RegisterTable
 			RegisterEntry(const std::string& n) : name(n) {}
 			RegisterEntry(const std::string& n, bool temp) : name(n), temporary(temp) {}
 			RegisterEntry(const std::string& n, bool temp, Type t) : name(n), temporary(temp), type(t) {}
+
+			friend RegisterTable;
+		
+			private:
+
+			RegisterEntry(Type t, RegisterEntry* indr) : name('(' + indr->name + ')'), type(t), indirect(indr) {}
 		};
 
 		RegisterEntry* getUnusedRegister(const Operand& contents);
@@ -40,6 +48,7 @@ class RegisterTable
 
 	private: 
 		std::vector<RegisterEntry> registers;
+		std::vector<RegisterEntry> indirects;
 }; 
 
 std::ostream& operator<< (std::ostream&, const RegisterTable::RegisterEntry&);
