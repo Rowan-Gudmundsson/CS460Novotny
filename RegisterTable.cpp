@@ -1,7 +1,9 @@
 #include "RegisterTable.h"
 
+RegisterTable::RegisterEntry RegisterTable::IN_MEMORY("memory", false);
+
 std::ostream& operator<< (std::ostream& os, const RegisterTable::RegisterEntry& reg) {
-	os << reg.name << (reg.inUse ? "(using)" : "(not using)") << reg.currentEntry;
+	os << reg.name;
 
 	return os;
 }
@@ -9,7 +11,7 @@ std::ostream& operator<< (std::ostream& os, const RegisterTable::RegisterEntry& 
 std::ostream& operator<< (std::ostream& os, const RegisterTable& rt)
 {
 	for(const RegisterTable::RegisterEntry& reg : rt.registers) {
-		os << reg << '\n';
+		os << reg << (reg.inUse ? "(using)     : " : "(not using) : ") << reg.currentEntry<< '\n';
 	}
 
 	return os;
@@ -41,35 +43,27 @@ RegisterTable RegisterTable::getMIPSRegisters() {
 	return re;
 }
 
-std::string RegisterTable::get_register(const std::string& reg_name, bool is_float) {
-	RegisterEntry* available = nullptr;
-	for (auto& i : registers) {
-		if (i.currentEntry == reg_name) {
-			available = &i;
-			break;
+RegisterTable::RegisterEntry& RegisterTable::getUnusedRegister(const std::string& contents, bool temporary, bool floating) {
+	RegisterEntry::Type t = (floating ? RegisterEntry::FLOAT : RegisterEntry::INT);
+	for(RegisterEntry& reg : registers) {
+		if(reg.temporary == temporary && !reg.inUse && reg.type == t) {
+			reg.inUse = true;
+			reg.currentEntry = contents;
+			return reg;
 		}
-	}
-	if (available == nullptr) {
-		for (auto& i : registers) {
-			if (!i.inUse && (is_float 
-					? (i.type == RegisterEntry::Type::FLOAT) 
-					: (i.type == RegisterEntry::Type::INT))) {
-				available = &i; // Check if any registers are free
-				break;
-			}
-		}
-	}
-	if (available == nullptr) { // No register is not being used, spilling
-		return "invalid_register";
-	} else {
-		available->inUse = true;
-		available->currentEntry = reg_name;
-		return available->name;
 	}
 }
 
-void RegisterTable::free_register(const std::string& reg_name) {
-	for (auto i : registers) {
-		if (i.currentEntry == reg_name) i.inUse = false;
+RegisterTable::RegisterEntry& RegisterTable::findLocation(const std::string& contents) {
+	for(RegisterEntry& reg : registers) {
+		if(reg.currentEntry == contents) {
+			if(reg.temporary) {
+				reg.inUse = false;
+			}
+
+			return reg;
+		}
 	}
+
+	return IN_MEMORY;
 }

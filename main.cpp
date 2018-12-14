@@ -296,18 +296,18 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			out << instruct.op1.value << ':';
 		} else if (instruct.op == "ASSIGN") {
 			if (instruct.dest.type == "Local") {
-				out << "sw\t"
-						<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F') << ", "
-						<< instruct.dest.value << "($sp)";
+				//out << "sw\t"
+				//		<< registers.getUnusedRegister(instruct.op1.value, false, instruct.op1.type[0] == 'F') << ", "
+				//		<< instruct.dest.value << "($sp)";
 			} else {
 				if (instruct.op1.type.substr(1) == "CONS") {
 					out << "li\t"
-							<< registers.get_register(instruct.dest.value, instruct.dest.type[0] == 'F') << ", "
+							<< registers.getUnusedRegister(instruct.dest.value, true, instruct.dest.type[0] == 'F') << ", "
 							<< instruct.op1.value;
 				} else {
 					out << "move\t"
-							<< registers.get_register(instruct.dest.value, instruct.dest.type[0] == 'F') << ", "
-							<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F');
+							<< registers.getUnusedRegister(instruct.dest.value, instruct.dest.type.compare(1, std::string::npos, "TEMP"), instruct.dest.type[0] == 'F') << ", "
+							<< registers.getUnusedRegister(instruct.op1.value, instruct.op1.type.compare(1, std::string::npos, "TEMP"), instruct.op1.type[0] == 'F');
 				}
 			}
 		} else if (instruct.op == "ADD") {
@@ -318,7 +318,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				std::string op2;
 				if (instruct.op1.type == "Local") {
 					// out << "lw\t"
-					// 		<< registers.get_register("tmp", false)
+					// 		<< registers.getUnusedRegister("tmp", false)
 				} else {
 					
 				}
@@ -329,17 +329,17 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				}
 				if (instruct.op1.type[0] == 'F') {
 					out << "add.s\t"
-							<< registers.get_register(instruct.op1.value, true) << ", "
-							<< registers.get_register(instruct.op1.value, true) << ", "
-							<< registers.get_register(instruct.op2.value, true) << std::endl;
+							<< registers.getUnusedRegister(instruct.op1.value, true) << ", "
+							<< registers.getUnusedRegister(instruct.op1.value, true) << ", "
+							<< registers.getUnusedRegister(instruct.op2.value, true) << std::endl;
 				} else {
 					out << "add\t"
-							<< registers.get_register(instruct.op1.value, false) << ", "
-							<< registers.get_register(instruct.op1.value, false) << ", "
-							<< registers.get_register(instruct.op2.value, false) << std::endl;
+							<< registers.getUnusedRegister(instruct.op1.value, false) << ", "
+							<< registers.getUnusedRegister(instruct.op1.value, false) << ", "
+							<< registers.getUnusedRegister(instruct.op2.value, false) << std::endl;
 				}
 				out << "sw\t"
-						<< registers.get_register(instruct.op1.value, instruct.op1.type[0] == 'F') << ", "
+						<< registers.getUnusedRegister(instruct.op1.value, instruct.op1.type[0] == 'F') << ", "
 						<< instruct.dest.value << "($sp)";
 			} else {
 				std::string op1;
@@ -356,14 +356,14 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				}
 				if (instruct.op1.type[0] == 'F') {
 					out << "add.s\t"
-							<< registers.get_register(instruct.dest.value, true) << ", "
-							<< registers.get_register(instruct.op1.value, true) << ", "
-							<< registers.get_register(instruct.op2.value, true);
+							<< registers.getUnusedRegister(instruct.dest.value, true) << ", "
+							<< registers.getUnusedRegister(instruct.op1.value, true) << ", "
+							<< registers.getUnusedRegister(instruct.op2.value, true);
 				} else {
 					out << "add\t"
-							<< registers.get_register(instruct.dest.value, false) << ", "
-							<< registers.get_register(instruct.op1.value, false) << ", "
-							<< registers.get_register(instruct.op2.value, false);
+							<< registers.getUnusedRegister(instruct.dest.value, false) << ", "
+							<< registers.getUnusedRegister(instruct.op1.value, false) << ", "
+							<< registers.getUnusedRegister(instruct.op2.value, false);
 				}
 			}
 		}	else if (instruct.op != "GLOBAL") {

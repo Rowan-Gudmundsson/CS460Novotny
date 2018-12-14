@@ -60,7 +60,6 @@ struct EvalType {
 		void pointer(unsigned p) { qualifiers.resize(p + 1); }
 		EvalType& operator++() {
 			qualifiers.emplace_back();
-			std::cout << "Did the ++ thing on EvalType" << std::endl;
 			return *this;
 		}
 

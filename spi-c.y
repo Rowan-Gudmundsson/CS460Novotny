@@ -1146,7 +1146,7 @@ argument_expression_list // Node*
 	;
 
 constant
-	: INTEGER_CONSTANT { std::cout << "IVAL: " << yylval.ival << std::endl; $$ = new ConstantNode({lineno, currentLine}, EvalType::EINT, yylval.ival); }
+	: INTEGER_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, EvalType::EINT, yylval.ival); }
 	| CHARACTER_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, EvalType::ECHAR, (long int)(yylval.cval)); }
 	| FLOATING_CONSTANT { $$ = new ConstantNode({lineno, currentLine}, EvalType::EFLOAT, yylval.fval); }
 	| ENUMERATION_CONSTANT { /* TODO(Rowan) -- Fix later. */ $$ = nullptr; }

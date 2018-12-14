@@ -12,24 +12,25 @@ class RegisterTable
 	public:
 		struct RegisterEntry
 		{
-			std::string name; 
-			bool temporary = false; 
-			bool inUse = false;
-			enum Type {
+			const std::string name; 
+			const bool temporary = false; 
+			const enum Type {
 				INT,
 				FLOAT
 			} type = INT;
+
+			bool inUse = false;
 			std::string currentEntry; 
-			//more to be added as needed 
 
 			RegisterEntry(const std::string& n) : name(n) {}
 			RegisterEntry(const std::string& n, bool temp) : name(n), temporary(temp) {}
 			RegisterEntry(const std::string& n, bool temp, Type t) : name(n), temporary(temp), type(t) {}
 		};
 
-		std::string get_register(const std::string& reg_name, bool is_float);
+		static RegisterEntry IN_MEMORY;
 
-		void free_register(const std::string& reg_name);
+		RegisterEntry& getUnusedRegister(const std::string& contents, bool temporary = true, bool floating = false);
+		RegisterEntry& findLocation(const std::string& contents);
 
 		void add_register(const RegisterEntry& r) { registers.push_back(r); }
 
@@ -41,4 +42,4 @@ class RegisterTable
 		std::vector<RegisterEntry> registers;
 }; 
 
-std::ostream& operator<< (std::ostream&, const RegisterTable::RegisterEntry&); 
+std::ostream& operator<< (std::ostream&, const RegisterTable::RegisterEntry&);
