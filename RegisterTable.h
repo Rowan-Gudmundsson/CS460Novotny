@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "node.h"
 
 // Going off of these specs
 // http://www.cs.uwm.edu/classes/cs315/Bacon/Lecture/HTML/ch05s03.html
@@ -20,17 +21,16 @@ class RegisterTable
 			} type = INT;
 
 			bool inUse = false;
-			std::string currentEntry; 
+			bool usedAsTemp;
+			Operand currentEntry; 
 
 			RegisterEntry(const std::string& n) : name(n) {}
 			RegisterEntry(const std::string& n, bool temp) : name(n), temporary(temp) {}
 			RegisterEntry(const std::string& n, bool temp, Type t) : name(n), temporary(temp), type(t) {}
 		};
 
-		static RegisterEntry IN_MEMORY;
-
-		RegisterEntry& getUnusedRegister(const std::string& contents, bool temporary = true, bool floating = false);
-		RegisterEntry& findLocation(const std::string& contents);
+		RegisterEntry* getUnusedRegister(const Operand& contents);
+		RegisterEntry* findLocation(const Operand& contents);
 
 		void add_register(const RegisterEntry& r) { registers.push_back(r); }
 

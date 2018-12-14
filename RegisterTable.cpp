@@ -1,7 +1,5 @@
 #include "RegisterTable.h"
 
-RegisterTable::RegisterEntry RegisterTable::IN_MEMORY("memory", false);
-
 std::ostream& operator<< (std::ostream& os, const RegisterTable::RegisterEntry& reg) {
 	os << reg.name;
 
@@ -43,21 +41,37 @@ RegisterTable RegisterTable::getMIPSRegisters() {
 	return re;
 }
 
-RegisterTable::RegisterEntry& RegisterTable::getUnusedRegister(const std::string& contents, bool temporary, bool floating) {
-	RegisterEntry::Type t = (floating ? RegisterEntry::FLOAT : RegisterEntry::INT);
+RegisterTable::RegisterEntry* RegisterTable::getUnusedRegister(const Operand& contents) {
+	RegisterEntry::Type t = (contents.isFloat() ? RegisterEntry::FLOAT : RegisterEntry::INT);
+
+	// First search for a register matching the temporary-ness
 	for(RegisterEntry& reg : registers) {
 		if(reg.temporary == temporary && !reg.inUse && reg.type == t) {
 			reg.inUse = true;
 			reg.currentEntry = contents;
-			return reg;
+			reg.usedAsTemp = temporary;
+			return &reg;
 		}
 	}
+
+	// Then if we can't find one of those - just choose an empty one
+	for(RegisterEntry& reg : registers) {
+		if(!reg.inUse && reg.type == t) {
+			reg.inUse = true;
+			reg.currentEntry = contents;
+			reg.usedAsTemp = temporary;
+			return &reg;
+		}
+	}
+
+	// TODO - Register spilling
+	return nullptr;
 }
 
-RegisterTable::RegisterEntry& RegisterTable::findLocation(const std::string& contents) {
+RegisterTable::RegisterEntry* RegisterTable::findLocation(const Operand& contents) {
 	for(RegisterEntry& reg : registers) {
 		if(reg.currentEntry == contents) {
-			if(reg.temporary) {
+			if(reg.usedAsTemp) {
 				reg.inUse = false;
 			}
 
@@ -65,5 +79,5 @@ RegisterTable::RegisterEntry& RegisterTable::findLocation(const std::string& con
 		}
 	}
 
-	return IN_MEMORY;
+	return nullptr;
 }

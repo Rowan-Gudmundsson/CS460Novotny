@@ -655,7 +655,10 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			return {"ERR", "ERR"};
 		}
 		case STRUCT_ACCESS: {
-			return {"Local", ((IdentifierNode*) children[0])->sym->offset + ((IdentifierNode*) children[1])->sym->offset};
+			if(((IdentifierNode*) children[1])->sym->etype.floating())
+				return {"FLocal", ((IdentifierNode*) children[0])->sym->offset + ((IdentifierNode*) children[1])->sym->offset};
+			else
+				return {"ILocal", ((IdentifierNode*) children[0])->sym->offset + ((IdentifierNode*) children[1])->sym->offset};
 		}
 		default: {
 			for(SyntaxNode* c : children) {
@@ -804,7 +807,10 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
 	if(sym->scopeLevel != 0) {
-		return {"Local", sym->offset};
+		if(sym->etype.floating())
+			return {"FLocal", sym->offset};
+		else
+			return {"ILocal", sym->offset};
 	} else {
 		return {"Global", sym->name};
 	}
@@ -873,7 +879,10 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 		instructions.emplace_back(source, "VALOUT", tmp);
 	}
 	instructions.emplace_back(source, "CALL", Operand{"LABEL", func->label});
-	return {"Local", -func->returnType.size()};
+	if(func->returnType.floating())
+		return {"FLocal", -func->returnType.size()};
+	else
+		return {"ILocal", -func->returnType.size()};
 }
 
 Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {

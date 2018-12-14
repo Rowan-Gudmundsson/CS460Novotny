@@ -34,7 +34,7 @@ symbol.o: symbol.cpp symbol.h
 node.o: node.h node.cpp
 	$(CC) $(CFLAGS) -c node.cpp -o node.o
 
-RegisterTable.o: RegisterTable.h RegisterTable.cpp
+RegisterTable.o: RegisterTable.h RegisterTable.cpp node.h
 	$(CC) $(CFLAGS) -c RegisterTable.cpp -o RegisterTable.o
 
 scanner.o parser.o main.o : spi-c.tab.h
