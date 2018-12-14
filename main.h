@@ -54,7 +54,7 @@ void helpMenu();
 void outputTreeToFile(SyntaxNode* root, Symbol& table, const std::string& filename);
 void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker);
 void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& filename, unsigned& tempTicker, unsigned& labelTicker);
-RegisterEntry* findRegister(const Operand& op, RegisterTable& registers, std::ostream& out);
+RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers, std::ostream& out);
 
 extern int yyparse(SyntaxNode*& root);
 extern unsigned lineno;

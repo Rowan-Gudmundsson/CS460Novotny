@@ -20,11 +20,15 @@ struct Operand {
 	Operand(const std::string& typ, unsigned valu) : type(typ), value(std::to_string(valu)) {}
 	Operand(const std::string& typ, double valu) : type(typ), value(std::to_string(valu)) {}
 
-	std::string name() { return type + ' ' + value; }
-	bool isFloat() { return type[0] == 'F'; }
-	bool isTemp() { return type.compare(1, std::string::npos, "TEMP"); }
-	bool isConst() { return type.compare(1, std::string::npos, "CONS"); }
-	bool isLocal() { return type.compare(1, std::string::npos, "Local"); }
+	std::string name() const { return type + ' ' + value; }
+	bool isFloat() const { return type[0] == 'F'; }
+	bool isTemp() const { return type.compare(1, std::string::npos, "TEMP"); }
+	bool isConst() const { return type.compare(1, std::string::npos, "CONS"); }
+	bool isLocal() const { return type.compare(1, std::string::npos, "Local"); }
+
+	bool operator == (const Operand& other) {
+		return type == other.type && value == other.value;
+	}
 };
 
 struct ThreeAddress {

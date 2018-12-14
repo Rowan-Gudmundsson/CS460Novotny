@@ -306,11 +306,11 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			} else {
 				if (instruct.op1.type.substr(1) == "CONS") {
 					out << "li\t"
-					    << registers.getUnusedRegister(instruct.dest, true, instruct.dest.isFloat()) << ", "
+					    << registers.getUnusedRegister(instruct.dest) << ", "
 					    << instruct.op1.value;
 				} else {
 					out << "move\t"
-					    << registers.getUnusedRegister(instruct.dest, instruct.dest.isTemp(), instruct.dest.type[0] == 'F') << ", "
+					    << registers.getUnusedRegister(instruct.dest) << ", "
 					    << registers.findLocation(instruct.op1);
 				}
 			}
@@ -331,13 +331,13 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 
 				}
 				if (instruct.op1.type[0] == 'F') {
-					intermediate = &registers.getUnusedRegister(instruct.dest.value, true, true);
+					intermediate = registers.getUnusedRegister(instruct.dest.value);
 					out << "add.s\t"
 					    << *intermediate << ", "
 					    << registers.findLocation(instruct.op1.value) << ", "
 					    << registers.findLocation(instruct.op2.value) << std::endl;
 				} else {
-					intermediate = &registers.getUnusedRegister(instruct.dest.value, true, false);
+					intermediate = registers.getUnusedRegister(instruct.dest.value);
 					out << "add\t"
 					    << *intermediate << ", "
 					    << registers.findLocation(instruct.op1.value) << ", "
@@ -361,12 +361,12 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				}
 				if (instruct.op1.type[0] == 'F') {
 					out << "add.s\t"
-					    << registers.getUnusedRegister(instruct.dest.value, true) << ", "
+					    << registers.getUnusedRegister(instruct.dest.value) << ", "
 					    << registers.findLocation(instruct.op1.value) << ", "
 					    << registers.findLocation(instruct.op2.value);
 				} else {
 					out << "add\t"
-					    << registers.getUnusedRegister(instruct.dest.value, false) << ", "
+					    << registers.getUnusedRegister(instruct.dest.value) << ", "
 					    << registers.findLocation(instruct.op1.value) << ", "
 					    << registers.findLocation(instruct.op2.value);
 				}
@@ -379,23 +379,23 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 	}
 }
 
-RegisterEntry* findRegister(const Operand& op, RegisterTable& registers, std::ostream& out) {
+RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers, std::ostream& out) {
 	if(op.type.empty()) return nullptr;
 
-	RegisterEntry* op1Reg = registers.findLocation(op);
-	if(op1Reg == nullptr) {
-		op1Reg = getUnusedRegister(instruct.op1);
-		if(instruct.op1.isLocal()) {
+	RegisterTable::RegisterEntry* opReg = registers.findLocation(op);
+	if(opReg == nullptr) {
+		opReg = registers.getUnusedRegister(op);
+		if(op.isLocal()) {
 			out << "lw\t"
-			    << *op1Reg << ", "
-			    << instruct.op1.value << "($sp)";
-		} else if(instruct.op1.isConst()) {
-			if(instruct.op1.isFloat()) out << "li.s\t";
+			    << *opReg << ", "
+			    << op.value << "($sp)";
+		} else if(op.isConst()) {
+			if(op.isFloat()) out << "li.s\t";
 			else out << "li\t";
-			out << *op1reg << ", "
-			    << instruct.op1.value;
+			out << *opReg << ", "
+			    << op.value;
 		}
 	}
 
-	return op1Reg;
+	return opReg;
 }

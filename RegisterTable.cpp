@@ -43,7 +43,7 @@ RegisterTable RegisterTable::getMIPSRegisters() {
 
 RegisterTable::RegisterEntry* RegisterTable::getUnusedRegister(const Operand& contents) {
 	RegisterEntry::Type t = (contents.isFloat() ? RegisterEntry::FLOAT : RegisterEntry::INT);
-
+	bool temporary = contents.isTemp();
 	// First search for a register matching the temporary-ness
 	for(RegisterEntry& reg : registers) {
 		if(reg.temporary == temporary && !reg.inUse && reg.type == t) {
@@ -75,7 +75,7 @@ RegisterTable::RegisterEntry* RegisterTable::findLocation(const Operand& content
 				reg.inUse = false;
 			}
 
-			return reg;
+			return &reg;
 		}
 	}
 
