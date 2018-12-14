@@ -67,7 +67,12 @@ int main(int argc, char** argv) {
 	std::vector<ThreeAddress> instructions;
 	unsigned tempTicker = 0, labelTicker = 0;
 	gen3AC(root, instructions, tempTicker, labelTicker);
-	outputAssembly(instructions, outputFile, tempTicker, labelTicker);
+
+	try {
+		outputAssembly(instructions, outputFile, tempTicker, labelTicker);
+	} catch(const std::exception& e) {
+		std::cout << e.what() << std::endl;
+	}
 
 
 	if(root != nullptr) {
@@ -299,80 +304,29 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 		if (instruct.op == "LABEL") {
 			out << instruct.op1.value << ':';
 		} else if (instruct.op == "ASSIGN") {
-			if (instruct.dest.type == "Local") {
-				out << "sw\t"
-				    << registers.findLocation(instruct.op1) << ", "
-				    << instruct.dest.value << "($sp)";
-			} else {
-				if (instruct.op1.type.substr(1) == "CONS") {
-					out << "li\t"
-					    << registers.getUnusedRegister(instruct.dest) << ", "
-					    << instruct.op1.value;
-				} else {
-					out << "move\t"
-					    << registers.getUnusedRegister(instruct.dest) << ", "
-					    << registers.findLocation(instruct.op1);
-				}
-			}
+			out << "move\t"
+			    << *destReg << ", "
+			    << *op1Reg;
 		} else if (instruct.op == "ADD") {
-			// MIPS has 2 different floating point types ".s" and ".d" (assuming single and double precision?)
-			// At this point we have no access to how this variable should be treated so idk
-			if (instruct.dest.type == "Local") {
-				RegisterTable::RegisterEntry* intermediate;
-				if (instruct.op1.type == "Local") {
-					// out << "lw\t"
-					// 		<< registers.getUnusedRegister("tmp", false)
-				} else {
-					
-				}
-				if (instruct.op2.type == "Local") {
+			if (instruct.op1.isFloat()) out << "add.s\t";
+			else out << "add\t";
+			
+			out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+		} else if (instruct.op == "MULT") {
+			if (instruct.op1.isFloat()) out << "mult.s\t";
+			else out << "mult\t";
 
-				} else {
-
-				}
-				if (instruct.op1.type[0] == 'F') {
-					intermediate = registers.getUnusedRegister(instruct.dest.value);
-					out << "add.s\t"
-					    << *intermediate << ", "
-					    << registers.findLocation(instruct.op1.value) << ", "
-					    << registers.findLocation(instruct.op2.value) << std::endl;
-				} else {
-					intermediate = registers.getUnusedRegister(instruct.dest.value);
-					out << "add\t"
-					    << *intermediate << ", "
-					    << registers.findLocation(instruct.op1.value) << ", "
-					    << registers.findLocation(instruct.op2.value) << std::endl;
-				}
-				out << "sw\t"
-				    << registers.findLocation(instruct.op1.value) << ", "
-				    << *intermediate << "($sp)";
-			} else {
-				std::string op1;
-				std::string op2;
-				if (instruct.op1.type == "Local") {
-					
-				} else {
-					
-				}
-				if (instruct.op2.type == "Local") {
-
-				} else {
-
-				}
-				if (instruct.op1.type[0] == 'F') {
-					out << "add.s\t"
-					    << registers.getUnusedRegister(instruct.dest.value) << ", "
-					    << registers.findLocation(instruct.op1.value) << ", "
-					    << registers.findLocation(instruct.op2.value);
-				} else {
-					out << "add\t"
-					    << registers.getUnusedRegister(instruct.dest.value) << ", "
-					    << registers.findLocation(instruct.op1.value) << ", "
-					    << registers.findLocation(instruct.op2.value);
-				}
-			}
-		}	else if (instruct.op != "GLOBAL") {
+			out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+		} else if (instruct.op != "GLOBAL") {
 			out << "% NOT HANDLING " << instruct.op << std::endl;
+		}
+
+		if(instruct.dest.isLocal()) {
+			out << "sw\t"
+			    << *destReg << ", "
+			    << instruct.dest.value << "($sp)";
+
+			destReg->inUse = false;
 		}
 
 		out << '\n';
