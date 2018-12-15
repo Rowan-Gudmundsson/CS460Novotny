@@ -735,12 +735,14 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 		}
 		case OINCPOST:
 		case OINC: {
-			instructions.emplace_back(source, "ADD", lhs, Operand{"ICONS", 1}, dest);
+			instructions.emplace_back(source, "ADD", lhs, Operand{"ICONS", 1}, lhs);
+			tempTicker--;
 			break;
 		}
 		case ODECPOST:
 		case ODEC: {
-			instructions.emplace_back(source, "SUB", lhs, Operand{"ICONS", 1}, dest);
+			instructions.emplace_back(source, "SUB", lhs, Operand{"ICONS", 1}, lhs);
+			tempTicker--;
 			break;
 		}
 		// Logic
@@ -758,19 +760,19 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 		}
 		// Comparison
 		case OLESS: {
-			instructions.emplace_back(source, "LT", rhs, lhs, dest);
+			instructions.emplace_back(source, "LT", lhs, rhs, dest);
 			break;
 		}
 		case OGREAT: {
-			instructions.emplace_back(source, "GT", rhs, lhs, dest);
+			instructions.emplace_back(source, "GT", lhs, rhs, dest);
 			break;
 		}
 		case OLEQ: {
-			instructions.emplace_back(source, "LE", rhs, lhs, dest);
+			instructions.emplace_back(source, "LE", lhs, rhs, dest);
 			break;
 		}
 		case OGEQ: {
-			instructions.emplace_back(source, "GE", rhs, lhs, dest);
+			instructions.emplace_back(source, "GE", lhs, rhs, dest);
 			break;
 		}
 		case OEQUAL: {

@@ -48,7 +48,6 @@ symboTest
 *.DS_Store
 
 # Test c files
-*.c
 debug_tokens\.txt
 
 debug_symbol\.txt

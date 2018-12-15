@@ -385,6 +385,20 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				out << "and\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "NOT") {
 				out << "not\t" << *destReg << ", " << *op1Reg;
+			} else if (instruct.op == "BR") {
+				out << "b\t" << instruct.dest.value;
+			} else if (instruct.op == "BREQ") {
+				out << "beq\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+			} else if (instruct.op == "BRNE") {
+				out << "bne\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+			} else if (instruct.op == "BRLT") {
+				out << "blt\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+			} else if (instruct.op == "BRGT") {
+				out << "bgt\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+			} else if (instruct.op == "BRLE") {
+				out << "ble\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+			} else if (instruct.op == "BRGE") {
+				out << "bge\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
 			} else if (instruct.op != "GLOBAL") {
 				out << "# NOT HANDLING " << instruct.op << std::endl;
 			}

@@ -85,7 +85,7 @@ RegisterTable::RegisterEntry* RegisterTable::findLocation(const Operand& content
 	}
 
 	for(RegisterEntry& reg : registers) {
-		if(reg.currentEntry == contents) {
+		if(reg.inUse && reg.currentEntry == contents) {
 			return &reg;
 		}
 	}
