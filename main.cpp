@@ -300,6 +300,12 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			    << std::setw(18) << instruct.op2
 			    << std::setw(18) << instruct.dest << std::endl;
 
+			if (instruct.op == "PROCENTRY") {
+				out << "subi\t$sp, $sp, " << std::to_string(std::stoi(instruct.op1.value) + 4) << std::endl;
+				out << "sw\t$ra, " << instruct.op1.value << "($sp)\n";
+				continue;
+			}
+
 			RegisterTable::RegisterEntry* op1Reg = findRegister(instruct.op1, registers, out);
 			RegisterTable::RegisterEntry* op2Reg = findRegister(instruct.op2, registers, out);
 

@@ -844,7 +844,7 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 	instructions.emplace_back(source, "LABEL", Operand{"LABEL", func->label});
 	// TODO (Rowan) - Figure out stack frame size - add as destination
-	instructions.emplace_back(source, "PROCENTRY");
+	instructions.emplace_back(source, "PROCENTRY", Operand{"ICONS", func->size});
 
 	for(SyntaxNode* c : children) {
 		if(c != nullptr) {

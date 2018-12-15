@@ -207,6 +207,7 @@ class Symbol {
 			std::vector<EvalType> parameters;
 			EvalType returnType;
 			std::string label = "";
+			unsigned size = -1;
 		};
 
 		struct VarType {

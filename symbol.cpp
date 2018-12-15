@@ -414,6 +414,10 @@ void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
 	for(Scope* s : scope->children) {
 		calcOffsetsFrom(s, offset);
 	}
+
+	if (scope->func != nullptr) {
+		scope->func->size = offset;
+	}
 }
 
 void Symbol::printStructs(std::ostream& out) {
