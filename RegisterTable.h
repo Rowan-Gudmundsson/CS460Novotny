@@ -20,7 +20,7 @@ class RegisterTable
 				INT,
 				FLOAT
 			} type = INT;
-			const RegisterEntry* const indirect = nullptr;
+			RegisterEntry* const indirect = nullptr;
 
 			bool inUse = false;
 			bool usedAsTemp;

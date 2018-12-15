@@ -306,12 +306,25 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			if(op1Reg != nullptr && op1Reg->usedAsTemp) op1Reg->inUse = false;
 			if(op2Reg != nullptr && op2Reg->usedAsTemp) op2Reg->inUse = false;
 
-			RegisterTable::RegisterEntry* destReg = findRegister(instruct.dest, registers, out, false);
+			if(op1Reg != nullptr && op1Reg->indirect != nullptr) op1Reg->indirect->inUse = false;
+			if(op2Reg != nullptr && op2Reg->indirect != nullptr) op2Reg->indirect->inUse = false;
+
+			RegisterTable::RegisterEntry* destReg = findRegister(instruct.dest, registers, out, true);
 
 			if (instruct.op == "LABEL") {
 				out << instruct.op1.value << ':';
+				if(op1Reg != nullptr) op1Reg->inUse = false;
+			} else if(instruct.op == "OFFSET") {
+				out << "add\t" << *op1Reg << ", " << *op1Reg << ", $sp";
+				op1Reg->inUse = true;
 			} else if (instruct.op == "ASSIGN") {
-				if(!instruct.dest.isLocal()) {
+				if(instruct.dest.isLocal()) {
+					destReg->inUse = false;
+					destReg = op1Reg;
+					destReg->inUse = false;
+				} else if(instruct.dest.isIndr()) {
+					destReg->indirect->inUse = false;
+				} else {
 					if(instruct.dest.isFloat() == instruct.op1.isFloat()) {
 						out << "move\t"
 						    << *destReg << ", "
@@ -325,10 +338,6 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 						    << *destReg << ", "
 						    << *op1Reg;
 					}
-				} else {
-					destReg->inUse = false;
-					destReg = op1Reg;
-					destReg->inUse = false;
 				}
 			} else if (instruct.op == "ADD") {
 				if (instruct.op1.isFloat()) out << "add.s\t";
@@ -347,11 +356,19 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			out << std::endl;
 
 			if(!instruct.dest.type.empty() && instruct.dest.isLocal()) {
-				out << "sw\t"
-				    << *destReg << ", "
+				if(instruct.dest.isFloat()) out << "s.s\t";
+				else out << "sw\t";
+
+				out << *destReg << ", "
 				    << instruct.dest.value << "($sp)\n";
 
 				destReg->inUse = false;
+			} else if(!instruct.dest.type.empty() && instruct.dest.isIndr()) {
+				if(instruct.dest.isFloat()) out << "s.s\t";
+				else out << "sw\t";
+
+				out << *op1Reg << ", "
+				    << *destReg << '\n';
 			}
 		}
 	} catch (const std::exception& e) {
@@ -360,7 +377,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 	}
 }
 
-RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers, std::ostream& out, bool loadFromMem) {
+RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers, std::ostream& out, bool isDest) {
 	if(op.type.empty()) return nullptr;
 
 	RegisterTable::RegisterEntry* opReg = registers.findLocation(op);
@@ -368,9 +385,10 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 		opReg = registers.getUnusedRegister(op);
 		if(opReg == nullptr) return nullptr;
 
-		if(op.isLocal() && loadFromMem) {
-			out << "lw\t"
-			    << *opReg << ", "
+		if(op.isLocal() && !isDest) {
+			if(op.isFloat()) out << "l.s\t";
+			else out << "lw\t";
+			out << *opReg << ", "
 			    << op.value << "($sp)\n";
 		} else if(op.isConst()) {
 			if(op.isFloat()) out << "li.s\t";
@@ -378,6 +396,15 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 			out << *opReg << ", "
 			    << op.value << '\n';
 		}
+	} else if(opReg->indirect != nullptr && !isDest) {
+		RegisterTable::RegisterEntry* temp= registers.getUnusedRegister(op);
+
+		if(op.isFloat()) out << "l.s\t";
+		else out << "lw\t";
+		out << *temp << ", "
+		    << *opReg << '\n';
+
+		opReg = temp;
 	}
 
 	return opReg;

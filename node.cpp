@@ -610,6 +610,8 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, lastTemp, Operand{"ITemp", tempTicker});
 			tempTicker++;
 
+			instructions.emplace_back(source, "OFFSET", Operand{"ITemp", tempTicker - 1});
+
 			if(children[0]->etype.floating())
 				return {"FINDR", tempTicker - 1};
 			else 

@@ -43,7 +43,7 @@ RegisterTable RegisterTable::getMIPSRegisters() {
 
 RegisterTable::RegisterEntry* RegisterTable::getUnusedRegister(const Operand& contents) {
 	RegisterEntry::Type t = (contents.isFloat() ? RegisterEntry::FLOAT : RegisterEntry::INT);
-	bool temporary = contents.isTemp() || contents.isConst();
+	bool temporary = contents.isTemp() || contents.isConst() || contents.isIndr();
 
 	// First search for a register matching the temporary-ness
 	for(RegisterEntry& reg : registers) {
@@ -65,6 +65,9 @@ RegisterTable::RegisterEntry* RegisterTable::getUnusedRegister(const Operand& co
 		}
 	}
 
+	std::cout << "About to return nullptr:" << std::endl
+	          << *this << std::endl;
+
 	// TODO - Register spilling
 	return nullptr;
 }
@@ -83,10 +86,6 @@ RegisterTable::RegisterEntry* RegisterTable::findLocation(const Operand& content
 
 	for(RegisterEntry& reg : registers) {
 		if(reg.currentEntry == contents) {
-			if(reg.usedAsTemp) {
-				reg.inUse = false;
-			}
-
 			return &reg;
 		}
 	}
