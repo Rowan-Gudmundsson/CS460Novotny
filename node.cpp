@@ -735,12 +735,12 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 		}
 		case OINCPOST:
 		case OINC: {
-			instructions.emplace_back(source, "ADDI", lhs, Operand{"ICONS", 1}, dest);
+			instructions.emplace_back(source, "ADD", lhs, Operand{"ICONS", 1}, dest);
 			break;
 		}
 		case ODECPOST:
 		case ODEC: {
-			instructions.emplace_back(source, "SUBI", lhs, Operand{"ICONS", 1}, dest);
+			instructions.emplace_back(source, "SUB", lhs, Operand{"ICONS", 1}, dest);
 			break;
 		}
 		// Logic

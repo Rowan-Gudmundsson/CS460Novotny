@@ -350,11 +350,41 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				else out << "add\t";
 				
 				out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "SUB") {
+				if (instruct.op1.isFloat()) out << "sub.s\t";
+				else out << "sub\t";
+				
+				out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "MULT") {
 				if (instruct.op1.isFloat()) out << "mul.s\t";
 				else out << "mul\t";
 
 				out << *destReg << ", " << *op1Reg << ", " << *op2Reg; 
+			} else if (instruct.op == "DIV") {
+				if (instruct.op1.isFloat()) out << "div.s\t";
+				else out << "div\t";
+
+				out << *destReg << ", " << *op1Reg << ", " << *op2Reg; 
+			} else if (instruct.op == "MOD") {
+				out << "rem\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "EQ") {
+				out << "seq\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "NE") {
+				out << "sne\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "LT") {
+				out << "slt\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "GT") {
+				out << "sgt\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "LE") {
+				out << "sle\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "GE") {
+				out << "sge\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "LOR") {
+				out << "or\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "LAND") {
+				out << "and\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+			} else if (instruct.op == "NOT") {
+				out << "not\t" << *destReg << ", " << *op1Reg;
 			} else if (instruct.op != "GLOBAL") {
 				out << "# NOT HANDLING " << instruct.op << std::endl;
 			}
