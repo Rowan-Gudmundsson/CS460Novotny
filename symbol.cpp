@@ -6,23 +6,22 @@ extern int yydebug;
 extern int yyparse;
 #endif
 
-
-const EvalType EvalType::EUNKNOWN = EvalType(CUNKNOWN);
-const EvalType EvalType::EVOID = EvalType(CVOID);
-const EvalType EvalType::ECHAR = EvalType(CCHAR);
-const EvalType EvalType::ESTRING = EvalType(CSTRING);
+const EvalType EvalType::EUNKNOWN  = EvalType(CUNKNOWN);
+const EvalType EvalType::EVOID     = EvalType(CVOID);
+const EvalType EvalType::ECHAR     = EvalType(CCHAR);
+const EvalType EvalType::ESTRING   = EvalType(CSTRING);
 const EvalType EvalType::EUNSIGNED = EvalType(CUNSIGNED);
-const EvalType EvalType::EINT = EvalType(CINT);
-const EvalType EvalType::ELONG = EvalType(CLONG);
-const EvalType EvalType::ESHORT = EvalType(CSHORT);
-const EvalType EvalType::EFLOAT = EvalType(CFLOAT);
-const EvalType EvalType::EDOUBLE = EvalType(CDOUBLE);
+const EvalType EvalType::EINT      = EvalType(CINT);
+const EvalType EvalType::ELONG     = EvalType(CLONG);
+const EvalType EvalType::ESHORT    = EvalType(CSHORT);
+const EvalType EvalType::EFLOAT    = EvalType(CFLOAT);
+const EvalType EvalType::EDOUBLE   = EvalType(CDOUBLE);
 
 std::ostream& operator<<(std::ostream& out, const EvalType& a) {
-	if(a.qualifiers[0].cons) out << "const ";
-	if(a.qualifiers[0].volatil) out << "volatile ";
+	if (a.qualifiers[0].cons) out << "const ";
+	if (a.qualifiers[0].volatil) out << "volatile ";
 
-	switch(a.type) {
+	switch (a.type) {
 		case EvalType::UNKNOWN:
 			out << "unknown";
 			return out;
@@ -30,11 +29,11 @@ std::ostream& operator<<(std::ostream& out, const EvalType& a) {
 			out << "void";
 			return out;
 		case EvalType::CHARACTER:
-			if(!a.sign) out << "unsigned ";
+			if (!a.sign) out << "unsigned ";
 			out << "char";
 			break;
 		case EvalType::INTEGER:
-			if(!a.sign) out << "unsigned ";
+			if (!a.sign) out << "unsigned ";
 			switch (a.length) {
 				case EvalType::SHORT:
 					out << "short ";
@@ -48,7 +47,7 @@ std::ostream& operator<<(std::ostream& out, const EvalType& a) {
 			out << "int";
 			break;
 		case EvalType::FLOATING:
-			switch(a.length) {
+			switch (a.length) {
 				case EvalType::SHORT:
 					out << "float";
 					break;
@@ -66,15 +65,15 @@ std::ostream& operator<<(std::ostream& out, const EvalType& a) {
 	}
 
 	bool needSpace = true;
-	for(unsigned i = 1; i < a.qualifiers.size(); i++) {
-		if(needSpace) out << ' ';
+	for (unsigned i = 1; i < a.qualifiers.size(); i++) {
+		if (needSpace) out << ' ';
 		out << '*';
 		needSpace = false;
-		if(a.qualifiers[i].cons) {
+		if (a.qualifiers[i].cons) {
 			needSpace = true;
 			out << " const";
 		}
-		if(a.qualifiers[i].volatil) {
+		if (a.qualifiers[i].volatil) {
 			needSpace = true;
 			out << " volatile";
 		}
@@ -84,12 +83,12 @@ std::ostream& operator<<(std::ostream& out, const EvalType& a) {
 }
 
 unsigned EvalType::size() const {
-	if(pointer() > 0) {
+	if (pointer() > 0) {
 		// Pointer size
 		return 4;
 	}
 
-	switch(type) {
+	switch (type) {
 		case EvalType::UNKNOWN:
 			return -1;
 		case EvalType::VOID:
@@ -100,7 +99,7 @@ unsigned EvalType::size() const {
 			// TODO - actual different sizes
 			return 4;
 		case EvalType::FLOATING:
-			switch(length) {
+			switch (length) {
 				case EvalType::SHORT:
 					return 4;
 				case EvalType::NORMAL:
@@ -119,7 +118,7 @@ unsigned EvalType::size() const {
  * @param {const SymbolType&} rhs - The right hand side of the operator
  * @return {bool} - the tree of the comparison
  */
-bool Symbol::SymbolType::operator == (const SymbolType& rhs) const {
+bool Symbol::SymbolType::operator==(const SymbolType& rhs) const {
 	return name == rhs.name;
 }
 
@@ -128,7 +127,7 @@ bool Symbol::SymbolType::operator == (const SymbolType& rhs) const {
  * @param {const SymbolType&} rhs - The right hand side of the operator
  * @return {bool} - the tree of the comparison
  */
-bool Symbol::SymbolType::operator < (const SymbolType& rhs) const {
+bool Symbol::SymbolType::operator<(const SymbolType& rhs) const {
 	return name < rhs.name;
 }
 
@@ -137,31 +136,27 @@ bool Symbol::SymbolType::operator < (const SymbolType& rhs) const {
  * @param {const SymbolType&} rhs - The right hand side of the operator
  * @return {bool} - the tree of the comparison
  */
-bool Symbol::SymbolType::operator > (const SymbolType& rhs) const {
+bool Symbol::SymbolType::operator>(const SymbolType& rhs) const {
 	return name > rhs.name;
 }
 
-std::ostream& operator << (std::ostream& out, const Symbol::SymbolType& sym) {
-	if(sym.itype == Symbol::SymbolType::FUNCTION) {
+std::ostream& operator<<(std::ostream& out, const Symbol::SymbolType& sym) {
+	if (sym.itype == Symbol::SymbolType::FUNCTION) {
 		// TODO - figure this out
-		//if(sym.isFunctionDefined) {
+		// if(sym.isFunctionDefined) {
 		//	out << "<" << sym.name << "(), line " << sym.functionDefLine << ">";
 		//} else {
-			out << "<" << sym.name << "()>";
+		out << "<" << sym.name << "()>";
 		//}
-	} else if(sym.itype == Symbol::SymbolType::STRUCT) {
+	} else if (sym.itype == Symbol::SymbolType::STRUCT) {
 		out << "{Struct " << sym.name << "}";
 	} else if (sym.v.isArray) {
 		out << "<" << sym.name;
-		for (auto i : sym.v.arrayDimensions) {
-			out << "[" << i << "]";
-		}
+		for (auto i : sym.v.arrayDimensions) { out << "[" << i << "]"; }
 		out << ", line " << sym.lineNumber << ">";
 	} else if (sym.etype.pointer() > 0) {
 		out << "<" << sym.name << "$^{";
-		for (unsigned i = 0; i < sym.etype.pointer(); i++) {
-			out << "*";
-		}
+		for (unsigned i = 0; i < sym.etype.pointer(); i++) { out << "*"; }
 		out << "}$, line " << sym.lineNumber << ">";
 	} else {
 		out << "<" << sym.name << ", line " << sym.lineNumber << ">";
@@ -193,23 +188,23 @@ Symbol::Symbol(const Symbol& other) : scopeLevel(_scopeLevel), head(nullptr) {
  * @param {const Symbol&} other - The symbol table we assign to this
  * @return {Symbol&} - To allow for A = B = C.
  */
-Symbol& Symbol::operator = (const Symbol& other) {
+Symbol& Symbol::operator=(const Symbol& other) {
 	/* // TODO - This doesn't work - I don't wanna fix it right now
 	Scope* other_conduct = other.head;
 	Scope* this_conduct = head;
 	while(other_conduct != nullptr) {
-		this_conduct = new Scope(other_conduct->tree->copy(), other_conduct->next);
-		other_conduct = other_conduct->next;
-		this_conduct = other_conduct->next;
+	    this_conduct = new Scope(other_conduct->tree->copy(), other_conduct->next);
+	    other_conduct = other_conduct->next;
+	    this_conduct = other_conduct->next;
 	}
 	*/
 	return (*this);
 }
 
-std::ostream& operator << (std::ostream& out, const Symbol& table) {
+std::ostream& operator<<(std::ostream& out, const Symbol& table) {
 	Symbol::Scope* conductor = table.head;
-	unsigned scopeLevel = table._scopeLevel;
-	while(conductor != nullptr) {
+	unsigned scopeLevel      = table._scopeLevel;
+	while (conductor != nullptr) {
 		out << "Scope level: " << scopeLevel << std::endl << *conductor->tree << std::endl;
 		scopeLevel--;
 		conductor = conductor->parent;
@@ -224,15 +219,15 @@ std::ostream& operator << (std::ostream& out, const Symbol& table) {
  */
 unsigned Symbol::pushScope() {
 	if (head == nullptr) {
-		head = new Scope(new BinaryTree<std::string, SymbolType>(), nullptr);
+		head        = new Scope(new BinaryTree<std::string, SymbolType>(), nullptr);
 		_scopeLevel = 0;
 		return true;
 	}
 
 	Scope* tmp = new Scope(new BinaryTree<std::string, SymbolType>(), head);
 
-	if(nextFunction != nullptr) {
-		tmp->func = nextFunction;
+	if (nextFunction != nullptr) {
+		tmp->func    = nextFunction;
 		nextFunction = nullptr;
 	}
 
@@ -246,7 +241,7 @@ unsigned Symbol::pushScope() {
 }
 
 void Symbol::setLastScopeFunction(FunctionType* f) {
-	if(head->children.size() > 0)
+	if (head->children.size() > 0)
 		head->children.back()->func = f;
 	else
 		head->func = f;
@@ -272,17 +267,13 @@ Symbol::SymbolType* Symbol::insert(const std::string& name, unsigned line) {
  * @return {T*} - The address of the tree found, nullptr if nothing.
  */
 Symbol::SymbolType* Symbol::find(std::string key) {
-	if(structScope != nullptr) {
-		return structScope->tree->find(key);
-	}
+	if (structScope != nullptr) { return structScope->tree->find(key); }
 
 	Scope* conductor = head;
 	SymbolType* result;
-	while(conductor != nullptr) {
+	while (conductor != nullptr) {
 		result = conductor->tree->find(key);
-		if (result != nullptr) {
-			return result;
-		}
+		if (result != nullptr) { return result; }
 		conductor = conductor->parent;
 	}
 	return nullptr;
@@ -294,8 +285,10 @@ Symbol::SymbolType* Symbol::find(std::string key) {
  * @return {SymbolType*} - A pointer to the variable or nullptr if it doesnt exist.
  */
 Symbol::SymbolType* Symbol::findInCurrentScope(std::string name) {
-	if(structScope != nullptr) return structScope->tree->find(name);
-	else return head->tree->find(name);
+	if (structScope != nullptr)
+		return structScope->tree->find(name);
+	else
+		return head->tree->find(name);
 }
 
 /**
@@ -309,16 +302,16 @@ unsigned Symbol::popScope() {
 	}
 
 	// If there are no variables in this scope - it is useless
-	if(head->tree->size == 0 && head->children.size() == 0) {
-		Scope* parent = head->parent;
+	if (head->tree->size == 0 && head->children.size() == 0) {
+		Scope* parent               = head->parent;
 		std::vector<Scope*>& pchild = parent->children;
 		pchild.erase(std::find(pchild.begin(), pchild.end(), head));
 		delete head;
-		head = parent;
+		head                 = parent;
 		recentlyDeletedScope = true;
 	} else {
 		recentlyDeletedScope = false;
-		head = head->parent;
+		head                 = head->parent;
 	}
 
 	_scopeLevel--;
@@ -327,7 +320,7 @@ unsigned Symbol::popScope() {
 }
 
 unsigned Symbol::unPopScope() {
-	if(recentlyDeletedScope) return _scopeLevel;
+	if (recentlyDeletedScope) return _scopeLevel;
 
 	head = head->children.back();
 	_scopeLevel++;
@@ -336,42 +329,41 @@ unsigned Symbol::unPopScope() {
 }
 
 void Symbol::popBackToGlobal() {
-	if(head->parent != nullptr) {
-		while(popScope() > 0);
+	if (head->parent != nullptr) {
+		while (popScope() > 0)
+			;
 	}
 }
 
 void Symbol::setCurrentObject(Object* obj) {
-	if(obj == nullptr) structScope = nullptr;
-	else structScope = obj->vars;
+	if (obj == nullptr)
+		structScope = nullptr;
+	else
+		structScope = obj->vars;
 }
 
 void Symbol::calcStructOffsets() {
 	Scope* tmp = head;
 	// Find the root
-	while(tmp->parent != nullptr) {
-		tmp = tmp->parent;
-	}
+	while (tmp->parent != nullptr) { tmp = tmp->parent; }
 
 	calcStructOffsetsFrom(tmp);
 }
 
 void Symbol::calcStructOffsetsFrom(Scope* scope) {
-	if(scope->isStruct) return;
+	if (scope->isStruct) return;
 
 	unsigned offset;
 	unsigned mult;
 
-	for(Symbol::SymbolType& s : *scope->tree) {
-		if(s.itype == Symbol::SymbolType::STRUCT) {
+	for (Symbol::SymbolType& s : *scope->tree) {
+		if (s.itype == Symbol::SymbolType::STRUCT) {
 			offset = 0;
-			for(Symbol::SymbolType& structSym : *s.obj->vars->tree) {
-				if(structSym.itype != Symbol::SymbolType::STRUCT) {
+			for (Symbol::SymbolType& structSym : *s.obj->vars->tree) {
+				if (structSym.itype != Symbol::SymbolType::STRUCT) {
 					structSym._offset = offset;
-					mult = 1;
-					for(unsigned i : structSym.v.arrayDimensions) {
-						mult *= i;
-					}
+					mult              = 1;
+					for (unsigned i : structSym.v.arrayDimensions) { mult *= i; }
 					offset += mult * structSym.etype.size();
 				}
 			}
@@ -379,53 +371,39 @@ void Symbol::calcStructOffsetsFrom(Scope* scope) {
 		}
 	}
 
-	for(Scope* s : scope->children) {
-		calcStructOffsetsFrom(s);
-	}
+	for (Scope* s : scope->children) { calcStructOffsetsFrom(s); }
 }
 
 void Symbol::calcOffsets() {
 	Scope* tmp = head;
 	// Find the root
-	while(tmp->parent != nullptr) {
-		tmp = tmp->parent;
-	}
+	while (tmp->parent != nullptr) { tmp = tmp->parent; }
 
-	for(Scope* s : tmp->children) {
-		calcOffsetsFrom(s, 0);
-	}
+	for (Scope* s : tmp->children) { calcOffsetsFrom(s, 0); }
 }
 
 void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
-	if(scope->isStruct) return;
+	if (scope->isStruct) return;
 
-	for(Symbol::SymbolType& s : *scope->tree) {
-		if(s.itype != Symbol::SymbolType::STRUCT) {
+	for (Symbol::SymbolType& s : *scope->tree) {
+		if (s.itype != Symbol::SymbolType::STRUCT) {
 			s._offset = offset;
 			std::cout << "Offset of " << s << ": " << offset << std::endl;
 			unsigned mult = 1;
-			for(unsigned i : s.v.arrayDimensions) {
-				mult *= i;
-			}
+			for (unsigned i : s.v.arrayDimensions) { mult *= i; }
 			offset += mult * s.etype.size();
 		}
 	}
 
-	for(Scope* s : scope->children) {
-		calcOffsetsFrom(s, offset);
-	}
+	for (Scope* s : scope->children) { calcOffsetsFrom(s, offset); }
 
-	if (scope->func != nullptr) {
-		scope->func->size = offset;
-	}
+	if (scope->func != nullptr) { scope->func->size = offset; }
 }
 
 void Symbol::printStructs(std::ostream& out) {
 	Scope* tmp = head;
 	// Find the root
-	while(tmp->parent != nullptr) {
-		tmp = tmp->parent;
-	}
+	while (tmp->parent != nullptr) { tmp = tmp->parent; }
 
 	int xoffset = 0;
 	printStructsFrom(tmp, out, xoffset, false);
@@ -434,9 +412,9 @@ void Symbol::printStructs(std::ostream& out) {
 void Symbol::printStructsFrom(Scope* s, std::ostream& out, int& xoffset, bool printedPackage) {
 	bool didPrintPackage = printedPackage;
 
-	for(const Symbol::SymbolType& sym : *s->tree) {
-		if(sym.itype == SymbolType::STRUCT) {
-			if(!didPrintPackage && s->func != nullptr) {
+	for (const Symbol::SymbolType& sym : *s->tree) {
+		if (sym.itype == SymbolType::STRUCT) {
+			if (!didPrintPackage && s->func != nullptr) {
 				out << "\t\\begin{package}{" << s->func->name << "}\n";
 				didPrintPackage = true;
 			}
@@ -445,21 +423,15 @@ void Symbol::printStructsFrom(Scope* s, std::ostream& out, int& xoffset, bool pr
 		}
 	}
 
-	for(Scope* sub : s->children) {
-		printStructsFrom(sub, out, xoffset, didPrintPackage);
-	}
+	for (Scope* sub : s->children) { printStructsFrom(sub, out, xoffset, didPrintPackage); }
 
-	if(!printedPackage && didPrintPackage) {
-		out << "\t\\end{package}\n";
-	}
+	if (!printedPackage && didPrintPackage) { out << "\t\\end{package}\n"; }
 }
 
 BinaryTree<std::string, Symbol::SymbolType>& Symbol::getGlobals() {
 	Scope* tmp = head;
 	// Find the root
-	while(tmp->parent != nullptr) {
-		tmp = tmp->parent;
-	}
+	while (tmp->parent != nullptr) { tmp = tmp->parent; }
 
 	return *tmp->tree;
 }
@@ -472,27 +444,21 @@ BinaryTree<std::string, Symbol::SymbolType>& Symbol::getGlobals() {
 bool Symbol::clear() {
 	Scope* tmp = head;
 	// Find the root
-	while(tmp->parent != nullptr) {
-		tmp = tmp->parent;
-	}
+	while (tmp->parent != nullptr) { tmp = tmp->parent; }
 	clearFrom(tmp);
 	return true;
 }
 
 void Symbol::clearFrom(Scope* s) {
-	if(s == nullptr) return;
+	if (s == nullptr) return;
 
-	while(!s->children.empty()) {
-		clearFrom(s->children.front());
-	}
+	while (!s->children.empty()) { clearFrom(s->children.front()); }
 
 	Scope* parent = s->parent;
-	if(parent != nullptr) {
-		if(!parent->children.empty()) {
+	if (parent != nullptr) {
+		if (!parent->children.empty()) {
 			auto i = std::find(parent->children.begin(), parent->children.end(), s);
-			if(i != parent->children.end()) {
-				parent->children.erase(i);
-			}
+			if (i != parent->children.end()) { parent->children.erase(i); }
 		}
 	}
 	delete s->tree;
@@ -512,10 +478,10 @@ std::ostream& Object::print(std::ostream& out, int xoffset) {
 	out << "\t\\begin{class}{" << sym->name << "}{" << xoffset << ", 0}\n";
 
 	out << "\t\t\\attribute{size = " << size << "}\n";
-	for(const Symbol::SymbolType& s : *vars->tree) {
+	for (const Symbol::SymbolType& s : *vars->tree) {
 		out << "\t\t\\attribute{" << s.name << " : " << s.etype << " (" << s.offset << ")}\n";
 	}
-	out <<"\t\\end{class}\n";
+	out << "\t\\end{class}\n";
 
 	return out;
 }

@@ -1,73 +1,63 @@
 #include "node.h"
 
 std::string fixedLength(int value, int digits = 5) {
-    unsigned int uvalue = value;
-    if (value < 0) {
-        uvalue = -uvalue;
-    }
-    std::string result;
-    while (digits-- > 0) {
-        result += ('0' + uvalue % 10);
-        uvalue /= 10;
-    }
-    if (value < 0) {
-        result += '-';
-    }
-    std::reverse(result.begin(), result.end());
-    return result;
+	unsigned int uvalue = value;
+	if (value < 0) { uvalue = -uvalue; }
+	std::string result;
+	while (digits-- > 0) {
+		result += ('0' + uvalue % 10);
+		uvalue /= 10;
+	}
+	if (value < 0) { result += '-'; }
+	std::reverse(result.begin(), result.end());
+	return result;
 }
 
 ConstantNode* evalConst(SyntaxNode* node) {
-	if (!node->isConst) {
-		throw ParserError("Cannot evaluate non-constant expression.");
-	}
+	if (!node->isConst) { throw ParserError("Cannot evaluate non-constant expression."); }
 
-	if (node->type == SyntaxNode::CONSTANT) {
-		return (ConstantNode*)node;
-	}
+	if (node->type == SyntaxNode::CONSTANT) { return (ConstantNode*) node; }
 
-	if (node->type == SyntaxNode::OPERATOR) {
-		return ((OperatorNode*)node)->evalNode();
-	}
+	if (node->type == SyntaxNode::OPERATOR) { return ((OperatorNode*) node)->evalNode(); }
 
 	throw ParserError("Something went horribly awry...");
 }
 
-SyntaxNode::SyntaxNode(const Source& s, Type t, EvalType e, unsigned n...) : type(t), etype(e), line(s.line), source(s.source) {
-	if(n > 0) {
+SyntaxNode::SyntaxNode(const Source& s, Type t, EvalType e, unsigned n...)
+    : type(t), etype(e), line(s.line), source(s.source) {
+	if (n > 0) {
 		va_list args;
 		va_start(args, n);
 
 		children.resize(n);
 
-		for(unsigned i = 0; i < n; i++) {
-			children[i] = va_arg(args, SyntaxNode*);
-		}
+		for (unsigned i = 0; i < n; i++) { children[i] = va_arg(args, SyntaxNode*); }
 
 		va_end(args);
 	}
 }
 
 void SyntaxNode::semanticCheck() {
-	for(SyntaxNode* child : children) {
-		if(child != nullptr) child->semanticCheck();
+	for (SyntaxNode* child : children) {
+		if (child != nullptr) child->semanticCheck();
 	}
 
 	// Compress generic nodes
 	// If a node has generic children, then just grab all of the grandchildren
-	for(unsigned i = 0; i < children.size(); i++) {
-		if(children[i] == nullptr) {
-			if(type == GENERIC) {
+	for (unsigned i = 0; i < children.size(); i++) {
+		if (children[i] == nullptr) {
+			if (type == GENERIC) {
 				children.erase(children.begin() + i);
 				i--;
 			}
-		} else if(children[i]->type == GENERIC) {
+		} else if (children[i]->type == GENERIC) {
 			unsigned size = children[i]->children.size();
-			children.insert(children.begin() + i, children[i]->children.begin(), children[i]->children.end());
+			children.insert(children.begin() + i, children[i]->children.begin(),
+			                children[i]->children.end());
 			delete children[i + size];
 			children.erase(children.begin() + i + size);
 			i--;
-		} else if(children[i]->type == IDENTIFIER && type == GENERIC) {
+		} else if (children[i]->type == IDENTIFIER && type == GENERIC) {
 			delete children[i];
 			children.erase(children.begin() + i);
 			i--;
@@ -75,7 +65,44 @@ void SyntaxNode::semanticCheck() {
 	}
 }
 
-OperatorNode::OperatorNode(const Source& s, EvalType _type, OpType _opType, unsigned n...): SyntaxNode(s, OPERATOR, _type, 0), opType(_opType) {
+void FunctionNode::semanticCheck() {
+	SyntaxNode::semanticCheck();
+
+	// Try and find return statements - make certain they match the function
+	std::queue<SyntaxNode*> check;
+	SyntaxNode* next;
+
+	check.push(this);
+	while (!check.empty()) {
+		next = check.front();
+		check.pop();
+
+		if (next == nullptr) continue;
+
+		for (SyntaxNode* child : next->children) { check.push(child); }
+
+		if (next->type == SyntaxNode::Type::RETURN) {
+			if (next->children.size() == 0) {
+				// Not returning anything - but a non-void funciton
+				if (func->returnType.type != EvalType::VOID)
+					throw ParserError("Missing return value in non-void function", source);
+			} else if (func->returnType.type == EvalType::VOID) {
+				// Returning something but a void function
+				throw ParserError("Attempting to return value from void function", source);
+			} else if (func->returnType != next->children.front()->etype) {
+				// Returning something in a non-void function, but types don't match
+				// So insert a coercion
+				SyntaxNode* ret = next->children.front();
+
+				next->children.front() =
+				    new CoercionNode({line, source}, ret->etype, func->returnType, ret);
+			}
+		}
+	}
+}
+
+OperatorNode::OperatorNode(const Source& s, EvalType _type, OpType _opType, unsigned n...)
+    : SyntaxNode(s, OPERATOR, _type, 0), opType(_opType) {
 	isConst = true;
 	if (n > 0) {
 		va_list args;
@@ -93,19 +120,16 @@ OperatorNode::OperatorNode(const Source& s, EvalType _type, OpType _opType, unsi
 }
 
 ConstantNode* OperatorNode::evalNode() {
-	if (!isConst) {
-		throw ParserError("Cannot evaluate non-constant expression.");
-	}
+	if (!isConst) { throw ParserError("Cannot evaluate non-constant expression."); }
 
-	ConstantNode* lhs = children[0]->type == SyntaxNode::CONSTANT
-		? (ConstantNode*)children[0]
-		: ((OperatorNode*)children[0])->evalNode();
+	ConstantNode* lhs = children[0]->type == SyntaxNode::CONSTANT ?
+	                        (ConstantNode*) children[0] :
+	                        ((OperatorNode*) children[0])->evalNode();
 
-	ConstantNode* rhs = children.size() > 1
-		? children[1]->type == SyntaxNode::CONSTANT
-			? (ConstantNode*)children[1]
-			: ((OperatorNode*)children[1])->evalNode()
-		: nullptr;
+	ConstantNode* rhs = children.size() > 1 ? children[1]->type == SyntaxNode::CONSTANT ?
+	                                          (ConstantNode*) children[1] :
+	                                          ((OperatorNode*) children[1])->evalNode() :
+	                                          nullptr;
 
 	switch (opType) {
 		// Binary Operators
@@ -206,21 +230,21 @@ ConstantNode* OperatorNode::evalNode() {
 		// Logic
 		case OLNOT: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(!lhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (!lhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"!\" on non-integral types.");
 			}
 		}
 		case OLAND: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(lhs->i && rhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (lhs->i && rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"&&\" on non-integral types.");
 			}
 		}
 		case OLOR: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(lhs->i || rhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (lhs->i || rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"||\" on non-integral types.");
 			}
@@ -228,42 +252,42 @@ ConstantNode* OperatorNode::evalNode() {
 		// Comparison
 		case OLESS: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(lhs->i < rhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (lhs->i < rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"<\" on non-integral types.");
 			}
 		}
 		case OGREAT: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(lhs->i > rhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (lhs->i > rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \">\" on non-integral types.");
 			}
 		}
 		case OLEQ: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(lhs->i <= rhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (lhs->i <= rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"<=\" on non-integral types.");
 			}
 		}
 		case OGEQ: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(lhs->i >= rhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (lhs->i >= rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \">=\" on non-integral types.");
 			}
 		}
 		case OEQUAL: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(lhs->i == rhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (lhs->i == rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"==\" on non-integral types.");
 			}
 		}
 		case ONEQ: {
 			if (etype.integral()) {
-				return new ConstantNode({line, source}, etype, (long int)(lhs->i != rhs->i));
+				return new ConstantNode({line, source}, etype, (long int) (lhs->i != rhs->i));
 			} else {
 				throw ParserError("Cannot perform operation of type \"!=\" on non-integral types.");
 			}
@@ -283,37 +307,41 @@ ConstantNode* OperatorNode::evalNode() {
 }
 
 std::ostream& operator<<(std::ostream& out, SyntaxNode::Type t) {
-	#define PROCESS_VAL(p) case(SyntaxNode::Type::p): out << #p; break;
-		switch(t){
-			PROCESS_VAL(GENERIC);
-			PROCESS_VAL(IDENTIFIER);
-			PROCESS_VAL(CONSTANT);
-			PROCESS_VAL(OPERATOR);
-			PROCESS_VAL(DECLARE_AND_INIT);
-			PROCESS_VAL(ASSIGN);
-			PROCESS_VAL(FUNCTION);
-			PROCESS_VAL(CONDITIONAL);
-			PROCESS_VAL(ARRAY);
-			PROCESS_VAL(LOOP);
-			PROCESS_VAL(ACCESS);
-			PROCESS_VAL(COERCION);
-			PROCESS_VAL(FUNCTION_CALL);
-			PROCESS_VAL(STRUCT_ACCESS);
-		}
-	#undef PROCESS_VAL
+#define PROCESS_VAL(p)          \
+	case (SyntaxNode::Type::p): \
+		out << #p;              \
+		break;
+	switch (t) {
+		PROCESS_VAL(GENERIC);
+		PROCESS_VAL(IDENTIFIER);
+		PROCESS_VAL(CONSTANT);
+		PROCESS_VAL(OPERATOR);
+		PROCESS_VAL(DECLARE_AND_INIT);
+		PROCESS_VAL(ASSIGN);
+		PROCESS_VAL(FUNCTION);
+		PROCESS_VAL(CONDITIONAL);
+		PROCESS_VAL(ARRAY);
+		PROCESS_VAL(LOOP);
+		PROCESS_VAL(ACCESS);
+		PROCESS_VAL(COERCION);
+		PROCESS_VAL(FUNCTION_CALL);
+		PROCESS_VAL(STRUCT_ACCESS);
+		PROCESS_VAL(RETURN);
+	}
+#undef PROCESS_VAL
 
 	return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
+std::ostream& operator<<(std::ostream& out, const SyntaxNode* n) {
 	out << "[.{";
 
-	if(n == nullptr) {
+	if (n == nullptr) {
 		out << "\\textbf{nullptr}} ]";
 		return out;
 	}
 
-	switch(n->type) {
+	switch (n->type) {
 		case SyntaxNode::Type::FUNCTION:
 			out << *((FunctionNode*) n);
 			break;
@@ -347,21 +375,19 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode * n) {
 std::ostream& operator<<(std::ostream& out, const SyntaxNode& n) {
 	out << n.type << "} ";
 
-	for(unsigned i = 0; i < n.children.size(); i++) {
-		out << n.children[i];
-	}
+	for (unsigned i = 0; i < n.children.size(); i++) { out << n.children[i]; }
 
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
-	if(n.etype.type == EvalType::CHARACTER) {
-		out << '\'' << (char)(n.i) << '\'';
-	} else if(n.etype == EvalType::ESTRING) {
+	if (n.etype.type == EvalType::CHARACTER) {
+		out << '\'' << (char) (n.i) << '\'';
+	} else if (n.etype == EvalType::ESTRING) {
 		out << '\"' << *n.s << '\"';
-	} else if(n.etype.integral()) {
+	} else if (n.etype.integral()) {
 		out << n.i;
-	} else if(n.etype.floating()) {
+	} else if (n.etype.floating()) {
 		out << n.f;
 	}
 	out << "} ";
@@ -373,7 +399,7 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 	// TODO: Actually do this output
 	out << "\\textbf{";
 
-	switch(n.opType) {
+	switch (n.opType) {
 		case OperatorNode::OpType::OBAND:
 			out << '&';
 			break;
@@ -467,54 +493,44 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 
 	out << "}} ";
 
-	for(unsigned i = 0; i < n.children.size(); i++) {
-		out << n.children[i];
-	}
+	for (unsigned i = 0; i < n.children.size(); i++) { out << n.children[i]; }
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const IdentifierNode& n) {
 	out << *n.sym << " " << n.etype << "} ";
 
-	for(unsigned i = 0; i < n.children.size(); i++) {
-		out << n.children[i];
-	}
+	for (unsigned i = 0; i < n.children.size(); i++) { out << n.children[i]; }
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const CoercionNode& n) {
 	out << "COERCION from: " << n.from << "->" << n.to << "} ";
 
-	for (auto i : n.children) {
-		out << i;
-	}
+	for (auto i : n.children) { out << i; }
 
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
 	out << n.sym->name << "(";
-	// std::cout << *n.sym << std::endl;
+	// std::cout <<* n.sym << std::endl;
 	// std::cout << "defined: " << n.func->defined << std::endl
 	//           << "line: " << n.func->functionDefLine << std::endl
 	//           << "col: " << n.func->functionDefCol << std::endl
 	//           << "params: " << n.func->parameters.size() << std::endl;
-	// std::cout << "Address: " << ((void*) &n.func) << std::endl;
+	// std::cout << "Address: " << ((void*)& n.func) << std::endl;
 
-	for(unsigned i = 0; i < n.func->parameters.size(); i++) {
+	for (unsigned i = 0; i < n.func->parameters.size(); i++) {
 		// std::cout << "Doing the thing" << std::endl;
 		// std::cout << "i: " << i << std::endl;
 		out << n.func->parameters.at(i);
 		// std::cout << n.func->parameters.at(i) << std::endl;
-		if(i < n.func->parameters.size() - 1) {
-			out << ", ";
-		}
+		if (i < n.func->parameters.size() - 1) { out << ", "; }
 	}
 	out << ")} ";
 
-	for(unsigned i = 0; i < n.children.size(); i++) {
-		out << n.children[i];
-	}
+	for (unsigned i = 0; i < n.children.size(); i++) { out << n.children[i]; }
 	return out;
 }
 
@@ -523,15 +539,11 @@ std::ostream& operator<<(std::ostream& out, const FunctionCallNode& n) {
 
 	for (unsigned i = 0; i < n.func->parameters.size(); i++) {
 		out << n.func->parameters[i];
-		if (i < n.func->parameters.size() - 1) {
-			out << ", ";
-		}
+		if (i < n.func->parameters.size() - 1) { out << ", "; }
 	}
 	out << ")} ";
 
-	for(unsigned i = 0; i < n.children.size(); i++) {
-		out << n.children[i];
-	}
+	for (unsigned i = 0; i < n.children.size(); i++) { out << n.children[i]; }
 
 	return out;
 }
@@ -539,15 +551,13 @@ std::ostream& operator<<(std::ostream& out, const FunctionCallNode& n) {
 std::ostream& operator<<(std::ostream& out, const LoopNode& n) {
 	out << (n.pre_check ? "PRE_CHECK_LOOP" : "POST_CHECK_LOOP") << "} ";
 
-	for (unsigned i = 0; i < n.children.size(); i++) {
-		out << n.children[i];
-	}
+	for (unsigned i = 0; i < n.children.size(); i++) { out << n.children[i]; }
 	return out;
 }
 
 void SyntaxNode::clear() {
-	for(SyntaxNode*& c : children) {
-		if(c != nullptr) {
+	for (SyntaxNode*& c : children) {
+		if (c != nullptr) {
 			c->clear();
 			delete c;
 			c = nullptr;
@@ -556,50 +566,49 @@ void SyntaxNode::clear() {
 	children.clear();
 }
 
-Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	switch(type) {
+Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
+                           unsigned& labelTicker, Symbol::FunctionType* func) {
+	switch (type) {
 		case ASSIGN:
 		case DECLARE_AND_INIT: {
-			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker);
-			Operand op1 = children[1]->gen3AC(instructions, tempTicker, labelTicker);
+			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
+			Operand op1  = children[1]->gen3AC(instructions, tempTicker, labelTicker, func);
 			instructions.emplace_back(source, "ASSIGN", op1, dest);
 			return dest;
 		}
 		case ACCESS: {
-			std::string type = children[0]->etype.integral()
-				? "ITemp"
-				: "FTemp";
+			std::string type = children[0]->etype.integral() ? "ITemp" : "FTemp";
 			Symbol::SymbolType* sym;
 			unsigned offset;
 
-			if(children[0]->type == IDENTIFIER) {
-				sym = ((IdentifierNode*) children[0])->sym;
+			if (children[0]->type == IDENTIFIER) {
+				sym    = ((IdentifierNode*) children[0])->sym;
 				offset = sym->offset;
-			} else if(children[0]->type == STRUCT_ACCESS) {
-				sym = ((IdentifierNode*) children[0]->children[1])->sym;
+			} else if (children[0]->type == STRUCT_ACCESS) {
+				sym    = ((IdentifierNode*) children[0]->children[1])->sym;
 				offset = sym->offset + ((IdentifierNode*) children[0]->children[0])->sym->offset;
 			}
 			unsigned blockSize;
 			Operand lastTemp;
 			Operand nextTemp;
 
-			for(unsigned i = 1; i < children.size(); i++) {
+			for (unsigned i = 1; i < children.size(); i++) {
 				blockSize = 1;
-				for(unsigned j = i; j < sym->v.arrayDimensions.size(); j++) {
+				for (unsigned j = i; j < sym->v.arrayDimensions.size(); j++) {
 					blockSize *= sym->v.arrayDimensions[j];
 				}
 
 				nextTemp = Operand{"ITemp", tempTicker};
-				instructions.emplace_back(source,
-					"MULT",
-					children[i]->gen3AC(instructions, tempTicker, labelTicker),
-					Operand{"ICONS", blockSize * sym->etype.size()},
-					nextTemp);
+				instructions.emplace_back(
+				    source, "MULT",
+				    children[i]->gen3AC(instructions, tempTicker, labelTicker, func),
+				    Operand{"ICONS", blockSize * sym->etype.size()}, nextTemp);
 
 				tempTicker++;
 
-				if(i > 1) {
-					instructions.emplace_back(source, "ADD", lastTemp, nextTemp, Operand{"ITemp", tempTicker});
+				if (i > 1) {
+					instructions.emplace_back(source, "ADD", lastTemp, nextTemp,
+					                          Operand{"ITemp", tempTicker});
 					nextTemp = Operand{"ITemp", tempTicker};
 					tempTicker++;
 				}
@@ -607,43 +616,43 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				lastTemp = nextTemp;
 			}
 
-			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, lastTemp, Operand{"ITemp", tempTicker});
+			instructions.emplace_back(source, "ADD", Operand{"ICONS", offset}, lastTemp,
+			                          Operand{"ITemp", tempTicker});
 			tempTicker++;
 
 			instructions.emplace_back(source, "OFFSET", Operand{"ITemp", tempTicker - 1});
 
-			if(children[0]->etype.floating())
+			if (children[0]->etype.floating())
 				return {"FINDR", tempTicker - 1};
-			else 
+			else
 				return {"IINDR", tempTicker - 1};
 		}
 		case GENERIC: {
-			for(SyntaxNode* c : children) {
-				if(c != nullptr) {
-					c->gen3AC(instructions, tempTicker, labelTicker);
-				}
+			for (SyntaxNode* c : children) {
+				if (c != nullptr) { c->gen3AC(instructions, tempTicker, labelTicker, func); }
 			}
 			return {"", ""};
 		}
 		case CONDITIONAL: {
-			Operand cond = children[0]->gen3AC(instructions, tempTicker, labelTicker);
+			Operand cond = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 			std::string nextLabel = "if" + std::to_string(labelTicker);
 			labelTicker++;
 
-			instructions.emplace_back(source, "BREQ", cond, Operand{"ICONS", 0}, Operand{"LABEL", nextLabel});
+			instructions.emplace_back(source, "BREQ", cond, Operand{"ICONS", 0},
+			                          Operand{"LABEL", nextLabel});
 
-			children[1]->gen3AC(instructions, tempTicker, labelTicker);
+			children[1]->gen3AC(instructions, tempTicker, labelTicker, func);
 
 			instructions.emplace_back("\t}", "LABEL", Operand{"LABEL", nextLabel});
 
-			if(children.size() > 2) {
+			if (children.size() > 2) {
 				// Jump to the end once we're don with the first body of the if
 				nextLabel = "if" + std::to_string(labelTicker);
 				instructions.emplace_back("", "BR", Operand{"", ""}, Operand{"LABEL", nextLabel});
 				labelTicker++;
 
 				// The else
-				children[2]->gen3AC(instructions, tempTicker, labelTicker);
+				children[2]->gen3AC(instructions, tempTicker, labelTicker, func);
 
 				instructions.emplace_back("\t}", "LABEL", Operand{"LABEL", nextLabel});
 			}
@@ -651,38 +660,48 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			return {"ERR", "ERR"};
 		}
 		case STRUCT_ACCESS: {
-			if(((IdentifierNode*) children[1])->sym->etype.floating())
-				return {"FLocal", ((IdentifierNode*) children[0])->sym->offset + ((IdentifierNode*) children[1])->sym->offset};
+			if (((IdentifierNode*) children[1])->sym->etype.floating())
+				return {"FLocal", ((IdentifierNode*) children[0])->sym->offset +
+				                      ((IdentifierNode*) children[1])->sym->offset};
 			else
-				return {"ILocal", ((IdentifierNode*) children[0])->sym->offset + ((IdentifierNode*) children[1])->sym->offset};
+				return {"ILocal", ((IdentifierNode*) children[0])->sym->offset +
+				                      ((IdentifierNode*) children[1])->sym->offset};
+		}
+		case RETURN: {
+			if (children.size() > 0) {
+				std::string type = func->returnType.integral() ? "ILocal" : "FLocal";
+				instructions.emplace_back(
+				    source, "ASSIGN",
+				    children[0]->gen3AC(instructions, tempTicker, labelTicker, func),
+				    Operand{type, func->size + 4});
+			}
 		}
 		default: {
-			for(SyntaxNode* c : children) {
-				if(c != nullptr) {
-					c->gen3AC(instructions, tempTicker, labelTicker);
-				}
+			for (SyntaxNode* c : children) {
+				if (c != nullptr) { c->gen3AC(instructions, tempTicker, labelTicker, func); }
 			}
 			return {"ERR", "ERR"};
 		}
 	}
 }
 
-Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
+Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
+                             unsigned& labelTicker, Symbol::FunctionType* func) {
 	Operand rhs, lhs;
 
-	// TODO - The below code is definitely broken, but I'm working on something else right now
+	// TODO - The below code is definitely broken, but I'm working on something
+	// else right now
 
 	// Get tmp register location of rhs
-	lhs = children[0]->gen3AC(instructions, tempTicker, labelTicker);
+	lhs = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 	// If rhs exists get register location of it
 	if (children.size() > 1) {
-		rhs = children[1]->gen3AC(instructions, tempTicker, labelTicker);
+		rhs = children[1]->gen3AC(instructions, tempTicker, labelTicker, func);
 	}
 
 	// We only need one type since we already coerce
-	std::string rhsType = (children[0]->etype.integral() || children[0]->etype.pointer() > 0)
-		? "ITemp"
-		: "FTemp";
+	std::string rhsType =
+	    (children[0]->etype.integral() || children[0]->etype.pointer() > 0) ? "ITemp" : "FTemp";
 
 	Operand dest(rhsType, tempTicker);
 	tempTicker++;
@@ -803,9 +822,10 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	return dest;
 }
 
-Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	if(sym->scopeLevel != 0) {
-		if(sym->etype.floating())
+Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
+                               unsigned& labelTicker, Symbol::FunctionType* func) {
+	if (sym->scopeLevel != 0) {
+		if (sym->etype.floating())
 			return {"FLocal", sym->offset};
 		else
 			return {"ILocal", sym->offset};
@@ -814,29 +834,30 @@ Operand IdentifierNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned
 	}
 }
 
-Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	if((from.integral() && to.integral()) || (from.floating() && to.floating())) {
+Operand CoercionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
+                             unsigned& labelTicker, Symbol::FunctionType* func) {
+	if ((from.integral() && to.integral()) || (from.floating() && to.floating())) {
 		// If we're converting between similar types, just pass up
 		// TODO - maybe in the future actully do something here
-		return children[0]->gen3AC(instructions, tempTicker, labelTicker);
+		return children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 	}
 
-	std::string toType = (to.floating()) ?
-		"FTemp" :
-		"ITemp";
+	std::string toType = (to.floating()) ? "FTemp" : "ITemp";
 
 	Operand dest(toType, tempTicker);
 	tempTicker++;
-	instructions.emplace_back(source, "ASSIGN", children[0]->gen3AC(instructions, tempTicker, labelTicker), dest);
+	instructions.emplace_back(
+	    source, "ASSIGN", children[0]->gen3AC(instructions, tempTicker, labelTicker, func), dest);
 
 	return dest;
 }
 
-Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	if(func->label == "") {
+Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
+                             unsigned& labelTicker, Symbol::FunctionType* funcPtr) {
+	if (func->label == "") {
 		unsigned i = 1;
-		for(const auto& f : sym->functions) {
-			if(&f == func) {
+		for (const auto& f : sym->functions) {
+			if (&f == func) {
 				func->label = sym->name + std::to_string(i);
 				break;
 			}
@@ -848,10 +869,8 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	// TODO (Rowan) - Figure out stack frame size - add as destination
 	instructions.emplace_back(source, "PROCENTRY", Operand{"ICONS", func->size});
 
-	for(SyntaxNode* c : children) {
-		if(c != nullptr) {
-			c->gen3AC(instructions, tempTicker, labelTicker);
-		}
+	for (SyntaxNode* c : children) {
+		if (c != nullptr) { c->gen3AC(instructions, tempTicker, labelTicker, func); }
 	}
 
 	instructions.emplace_back("}", "RETURN");
@@ -859,11 +878,12 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	return {"LABEL", func->label};
 }
 
-Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	if(func->label == "") {
+Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
+                                 unsigned& labelTicker, Symbol::FunctionType* funcPtr) {
+	if (func->label == "") {
 		unsigned i = 1;
-		for(const auto& f : sym->functions) {
-			if(&f == func) {
+		for (const auto& f : sym->functions) {
+			if (&f == func) {
 				func->label = sym->name + std::to_string(i);
 				break;
 			}
@@ -871,38 +891,41 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 		}
 	}
 
-	instructions.emplace_back(source, "ARGS", Operand{"CONS", unsigned(children.size())});
+	instructions.emplace_back(source, "ARGS", Operand{"ICONS", unsigned(children.size())});
 	for (SyntaxNode* i : children) {
-		Operand tmp = i->gen3AC(instructions, tempTicker, labelTicker);
-		instructions.emplace_back(source, "VALOUT", tmp);
+		// int offset = -func->size - func->returnType.size() + ()i->
+		Operand tmp = i->gen3AC(instructions, tempTicker, labelTicker, func);
+		instructions.emplace_back(source, "VALOUT", tmp, Operand{"ICONS", func->size},
+		                          Operand{"ICONS", func->returnType.size()});
 	}
 	instructions.emplace_back(source, "CALL", Operand{"LABEL", func->label});
-	if(func->returnType.floating())
+	if (func->returnType.floating())
 		return {"FLocal", -func->returnType.size()};
 	else
 		return {"ILocal", -func->returnType.size()};
 }
 
-Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
+Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
+                         unsigned& labelTicker, Symbol::FunctionType* func) {
 	// reserves 2 labels, its fine we have plenty even if they dont get used 😃
 	unsigned beginLabel = labelTicker, endLabel = labelTicker + 1;
 	labelTicker += 2;
 	if (children[0] != nullptr) {
-		children[0]->gen3AC(instructions, tempTicker, labelTicker);
+		children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 	}
 	instructions.emplace_back(source, "LABEL", Operand{"LABEL", "LL" + fixedLength(beginLabel)});
 	if (pre_check && children[1] != nullptr) {
-		instructions.emplace_back(source, "BREQ",
-			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker, labelTicker).value},
-			Operand{"ICONS", 0},
-			Operand{"LABEL", "LL" + fixedLength(endLabel)}
-		);
+		instructions.emplace_back(
+		    source, "BREQ",
+		    Operand{"ITemp",
+		            children[1]->gen3AC(instructions, tempTicker, labelTicker, func).value},
+		    Operand{"ICONS", 0}, Operand{"LABEL", "LL" + fixedLength(endLabel)});
 	}
 	if (children[3] != nullptr) {
-		children[3]->gen3AC(instructions, tempTicker, labelTicker);
+		children[3]->gen3AC(instructions, tempTicker, labelTicker, func);
 	}
 	if (children[2] != nullptr) {
-		children[2]->gen3AC(instructions, tempTicker, labelTicker);
+		children[2]->gen3AC(instructions, tempTicker, labelTicker, func);
 	}
 	if (pre_check) {
 		instructions.emplace_back("\t}", "BR");
@@ -912,20 +935,21 @@ Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& temp
 		instructions.emplace_back("", "LABEL", Operand{"LABEL", "LL" + fixedLength(endLabel)});
 	}
 	if (!pre_check && children[1] != nullptr) {
-		instructions.emplace_back("", "BRNE",
-			Operand{"ITemp", children[1]->gen3AC(instructions, tempTicker, labelTicker).value},
-			Operand{"ICONS", 0},
-			Operand{"LABEL", "LL" + fixedLength(beginLabel)}
-		);
+		instructions.emplace_back(
+		    "", "BRNE",
+		    Operand{"ITemp",
+		            children[1]->gen3AC(instructions, tempTicker, labelTicker, func).value},
+		    Operand{"ICONS", 0}, Operand{"LABEL", "LL" + fixedLength(beginLabel)});
 	}
 
 	return {"", ""};
 }
 
-Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker, unsigned& labelTicker) {
-	if(etype.integral()) {
+Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
+                             unsigned& labelTicker, Symbol::FunctionType* func) {
+	if (etype.integral()) {
 		return {"ICONS", (int) i};
-	} else if(etype.floating()) {
+	} else if (etype.floating()) {
 		return {"FCONS", f};
 	} else {
 		return {"String", *s};
@@ -933,10 +957,8 @@ Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 }
 
 std::ostream& operator<<(std::ostream& out, const ThreeAddress& ins) {
-	out << std::left << std::setw(20) << ins.op
-	    << std::setw(20) << ins.op1
-			<< std::setw(20)  << ins.op2
-			<< std::setw(20) << ins.dest;
+	out << std::left << std::setw(20) << ins.op << std::setw(20) << ins.op1 << std::setw(20)
+	    << ins.op2 << std::setw(20) << ins.dest;
 
 	return out;
 }
@@ -945,17 +967,15 @@ std::ostream& operator<<(std::ostream& out, const Operand& op) {
 	unsigned width = out.width();
 	unsigned spaces;
 	out.width(0);
-	if(op.type.size() > 0 || op.value.size() > 0) {
+	if (op.type.size() > 0 || op.value.size() > 0) {
 		std::string o = '(' + op.type + ' ' + op.value + ')';
-		spaces = ((o.size() > width) ? 0 : width - o.size());
+		spaces        = ((o.size() > width) ? 0 : width - o.size());
 		out << o;
 	} else {
 		spaces = width;
 	}
 
-	for(unsigned i = 0; i < spaces; i++) {
-		out << ' ';
-	}
+	for (unsigned i = 0; i < spaces; i++) { out << ' '; }
 
 	return out;
 }

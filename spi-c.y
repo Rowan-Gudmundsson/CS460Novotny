@@ -401,7 +401,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 				std::cout << "Error in constant evaluation: " << e.what() << std::endl;
 			}
 
-			++node->sym->etype;	
+			++node->sym->etype;
 
 			// TODO Figure this shit out
 			// node->children.push_back(new ArrayNode({lineno, currentLine}, EvalType::EUNKNOWN, $3));
@@ -440,9 +440,9 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			throw "Error 3";
 		}
 	}
-	// Passing up a FunctionNode* here, but since it inherits from IdentifierNode, we're good
-	// Probably
 	| direct_declarator LPAREN parameter_type_list RPAREN {
+		// Passing up a FunctionNode* here, but since it inherits from IdentifierNode, we're good
+		// Probably
 		if($1->type == SyntaxNode::Type::IDENTIFIER) {
 			int level = table.unPopScope();
 			IdentifierNode* inode = (IdentifierNode*) $1;
@@ -570,12 +570,12 @@ direct_abstract_declarator
 	;
 
 statement // Node*
-	: labeled_statement { $$ = nullptr; /* TODO */ }
+	: labeled_statement { throw ParserError("Not handling labels"); $$ = nullptr; /* TODO */ }
 	| compound_statement { $$ = $1; }
 	| expression_statement { $$ = $1; }
 	| selection_statement { $$ = $1; }
 	| iteration_statement { $$ = $1; }
-	| jump_statement { $$ = nullptr; /* TODO */ }
+	| jump_statement { $$ = $1; }
 	;
 
 labeled_statement // Node*
@@ -621,21 +621,15 @@ iteration_statement // Node*
 	;
 
 jump_statement // Node*
-	: GOTO identifier SEMI
-	| CONTINUE SEMI
-	| BREAK SEMI
-	| RETURN SEMI
-	| RETURN expression SEMI
+	: GOTO identifier SEMI { throw ParserError("We aren't handling GOTO statements"); }
+	| CONTINUE SEMI { throw ParserError("We aren't handling continue statements yet"); /*TODO: Continue statements */ $$ = nullptr; }
+	| BREAK SEMI { throw ParserError("We aren't handling break statements yet"); /*TODO: Break statements */ $$ = nullptr; }
+	| RETURN SEMI { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::RETURN, EvalType::EVOID, 0); }
+	| RETURN expression SEMI { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::RETURN, EvalType::EVOID, 1, $2); }
 	;
 
 expression // Node*
 	: assignment_expression {
-		/*$$ = new SyntaxNode(SyntaxNode::Type::GENERIC, EvalType::EUNKNOWN, 1, $1);
-		if(parseDLevel > 0) {
-			std::cout << "expression\n"
-			          << "GENERIC\n"
-			          << $1 << std::endl;
-		}*/
 		$$ = $1;
 	}
 	| expression COMMA assignment_expression { $$ = $1; $$->children.push_back($3); }
@@ -1061,7 +1055,7 @@ unary_operator // OperatorNode::OpType
 
 postfix_expression // Node*
 	: primary_expression { $$ = $1; }
-	| postfix_expression LBRACKET expression RBRACKET { 
+	| postfix_expression LBRACKET expression RBRACKET {
 		if($1->type == SyntaxNode::ACCESS) {
 			if(((IdentifierNode*) $1->children[0])->sym->v.arrayDimensions.size() < $1->children.size()) {
 				throw ParserError("Array dimensions not large enough for level of dereference");
@@ -1124,7 +1118,7 @@ postfix_expression // Node*
 			throw ParserError("Attempted to use '.' operator on non-object type.");
 		}
 		table.setCurrentObject($1->etype.obj);
-	} identifier { 
+	} identifier {
 		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $4->etype, 2, $1, $4);
 		table.setCurrentObject(nullptr);
 	}
