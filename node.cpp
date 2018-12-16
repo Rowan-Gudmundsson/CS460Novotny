@@ -44,23 +44,25 @@ void SyntaxNode::semanticCheck() {
 
 	// Compress generic nodes
 	// If a node has generic children, then just grab all of the grandchildren
-	for (unsigned i = 0; i < children.size(); i++) {
-		if (children[i] == nullptr) {
-			if (type == GENERIC) {
+	if (type != Type::CONDITIONAL) {
+		for (unsigned i = 0; i < children.size(); i++) {
+			if (children[i] == nullptr) {
+				if (type == GENERIC) {
+					children.erase(children.begin() + i);
+					i--;
+				}
+			} else if (children[i]->type == GENERIC) {
+				unsigned size = children[i]->children.size();
+				children.insert(children.begin() + i, children[i]->children.begin(),
+				                children[i]->children.end());
+				delete children[i + size];
+				children.erase(children.begin() + i + size);
+				i--;
+			} else if (children[i]->type == IDENTIFIER && type == GENERIC) {
+				delete children[i];
 				children.erase(children.begin() + i);
 				i--;
 			}
-		} else if (children[i]->type == GENERIC) {
-			unsigned size = children[i]->children.size();
-			children.insert(children.begin() + i, children[i]->children.begin(),
-			                children[i]->children.end());
-			delete children[i + size];
-			children.erase(children.begin() + i + size);
-			i--;
-		} else if (children[i]->type == IDENTIFIER && type == GENERIC) {
-			delete children[i];
-			children.erase(children.begin() + i);
-			i--;
 		}
 	}
 }
@@ -712,15 +714,15 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 	switch (opType) {
 		case OBAND: {
-			instructions.emplace_back(source, "AND", rhs, lhs, dest);
+			instructions.emplace_back(source, "AND", lhs, rhs, dest);
 			break;
 		}
 		case OBOR: {
-			instructions.emplace_back(source, "OR", rhs, lhs, dest);
+			instructions.emplace_back(source, "OR", lhs, rhs, dest);
 			break;
 		}
 		case OBXOR: {
-			instructions.emplace_back(source, "XOR", rhs, lhs, dest);
+			instructions.emplace_back(source, "XOR", lhs, rhs, dest);
 			break;
 		}
 		case OBNOT: {
@@ -728,32 +730,32 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			break;
 		}
 		case OLSHIFT: {
-			instructions.emplace_back(source, "SLL", rhs, lhs, dest);
+			instructions.emplace_back(source, "SLL", lhs, rhs, dest);
 			break;
 		}
 		case ORSHIFT: {
-			instructions.emplace_back(source, "SRL", rhs, lhs, dest);
+			instructions.emplace_back(source, "SRL", lhs, rhs, dest);
 			break;
 		}
 		// Arithmetic
 		case OMOD: {
-			instructions.emplace_back(source, "MOD", rhs, lhs, dest);
+			instructions.emplace_back(source, "MOD", lhs, rhs, dest);
 			break;
 		}
 		case ODIV: {
-			instructions.emplace_back(source, "DIV", rhs, lhs, dest);
+			instructions.emplace_back(source, "DIV", lhs, rhs, dest);
 			break;
 		}
 		case OMULT: {
-			instructions.emplace_back(source, "MULT", rhs, lhs, dest);
+			instructions.emplace_back(source, "MULT", lhs, rhs, dest);
 			break;
 		}
 		case OADD: {
-			instructions.emplace_back(source, "ADD", rhs, lhs, dest);
+			instructions.emplace_back(source, "ADD", lhs, rhs, dest);
 			break;
 		}
 		case OSUB: {
-			instructions.emplace_back(source, "SUB", rhs, lhs, dest);
+			instructions.emplace_back(source, "SUB", lhs, rhs, dest);
 			break;
 		}
 		case OINCPOST:
@@ -774,11 +776,11 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			break;
 		}
 		case OLAND: {
-			instructions.emplace_back(source, "LAND", rhs, lhs, dest);
+			instructions.emplace_back(source, "LAND", lhs, rhs, dest);
 			break;
 		}
 		case OLOR: {
-			instructions.emplace_back(source, "LOR", rhs, lhs, dest);
+			instructions.emplace_back(source, "LOR", lhs, rhs, dest);
 			break;
 		}
 		// Comparison
@@ -799,11 +801,11 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			break;
 		}
 		case OEQUAL: {
-			instructions.emplace_back(source, "EQ", rhs, lhs, dest);
+			instructions.emplace_back(source, "EQ", lhs, rhs, dest);
 			break;
 		}
 		case ONEQ: {
-			instructions.emplace_back(source, "NE", rhs, lhs, dest);
+			instructions.emplace_back(source, "NE", lhs, rhs, dest);
 			break;
 		}
 		// Other
