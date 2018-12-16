@@ -1,7 +1,12 @@
 OBS = parser.o scanner.o main.o symbol.o node.o RegisterTable.o
 
 CC = g++
-CFLAGS = -g -Wall -std=c++14 -ferror-limit=5 -DYYDEBUG=1
+
+ifeq ($(OS),Darwin)
+	CFLAGS = -g -Wall -std=c++14 -ferror-limit=5 -DYYDEBUG=1
+else
+	CFLAGS = -g -Wall -std=c++14 -fmax-errors=5 -DYYDEBUG=1
+endif
 
 .DELETE_ON_ERROR:
 .PHONY: all

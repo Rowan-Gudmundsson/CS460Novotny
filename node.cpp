@@ -67,18 +67,28 @@ void SyntaxNode::semanticCheck() {
 	}
 }
 
+void FunctionCallNode::semanticCheck() {
+	if (children.size() > 0) {
+		SyntaxNode* childPtr = children.front();
+		children.clear();
+		for (SyntaxNode* grandChild : childPtr->children) { children.push_back(grandChild); }
+	}
+
+	SyntaxNode::semanticCheck();
+}
+
 void FunctionNode::semanticCheck() {
 	SyntaxNode::semanticCheck();
 
 	// Replace the symbol references for the function to the defined function reference
 	// for (auto& i : sym->functions) {
 	// 	bool notMatched = false;
-	// 	for (unsigned j = 0; j < i.parameters.size(); j++) {
-	// 		if (j > func->parameters.size() - 1) {
+	// 	for (unsigned j = 0; j < i.paramTypes.size(); j++) {
+	// 		if (j > func->paramTypes.size() - 1) {
 	// 			notMatched = true;
 	// 			break;
 	// 		}
-	// 		if (i.parameters[j].first != func->parameters[j].first) {
+	// 		if (i.paramTypes[j].first != func->paramTypes[j].first) {
 	// 			notMatched = true;
 	// 			break;
 	// 		}
@@ -568,15 +578,16 @@ std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
 	// std::cout << "defined: " << n.func->defined << std::endl
 	//           << "line: " << n.func->functionDefLine << std::endl
 	//           << "col: " << n.func->functionDefCol << std::endl
-	//           << "params: " << n.func->parameters.size() << std::endl;
+	//           << "params: " << n.func->paramTypes.size() << std::endl;
 	// std::cout << "Address: " << ((void*)& n.func) << std::endl;
 
-	for (unsigned i = 0; i < n.func->parameters.size(); i++) {
+	for (unsigned i = 0; i < n.func->paramTypes.size(); i++) {
 		// std::cout << "Doing the thing" << std::endl;
 		// std::cout << "i: " << i << std::endl;
-		out << n.func->parameters.at(i).first << " " << n.func->parameters.at(i).second;
-		// std::cout << n.func->parameters.at(i) << std::endl;
-		if (i < n.func->parameters.size() - 1) { out << ", "; }
+		out << n.func->paramTypes.at(i);
+		// << " " << n.func->params.at(i);
+		// std::cout << n.func->paramTypes.at(i) << std::endl;
+		if (i < n.func->paramTypes.size() - 1) { out << ", "; }
 	}
 	out << ")} ";
 
@@ -587,9 +598,10 @@ std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
 std::ostream& operator<<(std::ostream& out, const FunctionCallNode& n) {
 	out << "CALL TO " << n.sym->name << "(";
 
-	for (unsigned i = 0; i < n.func->parameters.size(); i++) {
-		out << n.func->parameters[i].first << " " << n.func->parameters[i].second;
-		if (i < n.func->parameters.size() - 1) { out << ", "; }
+	for (unsigned i = 0; i < n.func->paramTypes.size(); i++) {
+		out << n.func->paramTypes[i];
+		// << " " << n.func->params[i].second;
+		if (i < n.func->paramTypes.size() - 1) { out << ", "; }
 	}
 	out << ")} ";
 
@@ -686,26 +698,26 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		case CONDITIONAL: {
 			Operand cond = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 			std::string nextLabel = "if" + std::to_string(labelTicker);
-			labelTicker++;
+			std::string endLabel  = "if" + std::to_string(labelTicker + 1);
+			labelTicker += 2;
 
 			instructions.emplace_back(source, "BREQ", cond, Operand{"ICONS", 0},
 			                          Operand{"LABEL", nextLabel});
 
 			children[1]->gen3AC(instructions, tempTicker, labelTicker, func);
 
+			instructions.emplace_back(source, "BR", Operand{"", ""}, Operand{"LABEL", endLabel});
+
+			// Label if if fails
+			// Should go to the next else
 			instructions.emplace_back("\t}", "LABEL", Operand{"LABEL", nextLabel});
 
 			if (children.size() > 2) {
-				// Jump to the end once we're don with the first body of the if
-				nextLabel = "if" + std::to_string(labelTicker);
-				instructions.emplace_back("", "BR", Operand{"", ""}, Operand{"LABEL", nextLabel});
-				labelTicker++;
-
 				// The else
 				children[2]->gen3AC(instructions, tempTicker, labelTicker, func);
-
-				instructions.emplace_back("\t}", "LABEL", Operand{"LABEL", nextLabel});
 			}
+
+			instructions.emplace_back("\t}", "LABEL", Operand{"LABEL", endLabel});
 
 			return {"ERR", "ERR"};
 		}
@@ -723,10 +735,11 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				instructions.emplace_back(
 				    source, "ASSIGN",
 				    children[0]->gen3AC(instructions, tempTicker, labelTicker, func),
-				    Operand{type, func->size + 4});
+				    Operand{type, func->localSize + 4});
 			}
 
-			instructions.emplace_back(source, "RETURN");
+			instructions.emplace_back(source, "RETURN", Operand{"ICONS", func->localSize},
+			                          Operand{"ICONS", func->stackSize()}, Operand{"", ""});
 			return {"ERR", "ERR"};
 			break;
 		}
@@ -962,14 +975,15 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 	instructions.emplace_back(source, "LABEL", Operand{"LABEL", func->label});
 	// TODO (Rowan) - Figure out stack frame size - add as destination
-	unsigned stackSize = func->size + func->returnType.size() + 4;
-	instructions.emplace_back(source, "PROCENTRY", Operand{"ICONS", stackSize});
+	instructions.emplace_back(source, "PROCENTRY", Operand{"ICONS", func->stackSize()},
+	                          Operand{"ICONS", func->returnType.size()}, Operand{"", ""});
 
 	for (SyntaxNode* c : children) {
 		if (c != nullptr) { c->gen3AC(instructions, tempTicker, labelTicker, func); }
 	}
 
-	instructions.emplace_back("}", "RETURN");
+	instructions.emplace_back("}", "RETURN", Operand{"ICONS", func->localSize},
+	                          Operand{"ICONS", func->stackSize()}, Operand{"", ""});
 
 	return {"LABEL", func->label};
 }
@@ -987,15 +1001,15 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 		}
 	}
 
-	instructions.emplace_back(source, "ARGS", Operand{"ICONS", unsigned(children.size())});
+	std::string type;
+	SyntaxNode* c;
 	for (unsigned i = 0; i < children.size(); i++) {
-		// if (func->parameters[i].second == nullptr) {
-		// 	throw std::logic_error("We should be catching this before here.");
-		// }
-		// int offset = func->size + func->returnType.size() -
-		//              ((Symbol::SymbolType*) func->parameters[i].second)->offset + 4;
-		// Operand tmp = children[i]->gen3AC(instructions, tempTicker, labelTicker, func);
-		// instructions.emplace_back(source, "VALOUT", tmp, Operand{"ICONS", offset});
+		c           = children[i];
+		type        = c->etype.integral() ? "ILocal" : "FLocal";
+		Operand tmp = c->gen3AC(instructions, tempTicker, labelTicker, func);
+
+		instructions.emplace_back(source, "ASSIGN", tmp,
+		                          Operand{type, func->params[i]->offset - func->stackSize()});
 	}
 	instructions.emplace_back(source, "CALL", Operand{"", ""}, Operand{"LABEL", func->label});
 	if (func->returnType.floating())

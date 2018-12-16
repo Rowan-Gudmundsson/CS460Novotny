@@ -289,9 +289,10 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			    << std::endl;
 
 			if (instruct.op == "PROCENTRY") {
-				out << "subi\t$sp, $sp, " << std::to_string(std::stoi(instruct.op1.value) + 4)
-				    << std::endl;
-				out << "sw\t$ra, " << instruct.op1.value << "($sp)\n";
+				out << "subi\t$sp, $sp, " << instruct.op1.value << std::endl;
+				out << "sw\t$ra, "
+				    << std::stoi(instruct.op1.value) - std::stoi(instruct.op2.value) - 4
+				    << "($sp)\n";
 				continue;
 			} else if (instruct.op == "CALL") {
 				out << "jal\t" << instruct.dest.value << std::endl;
@@ -333,8 +334,9 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				out << "li\t $v0, 10\n"
 				    << "syscall";
 			} else if (instruct.op == "RETURN") {
-				// TODO - this needs more stuff to be done here
-				out << "jr\t $ra";
+				out << "lw\t $ra, " << instruct.op1.value << "($sp)\n"
+				    << "add\t $sp, $sp, " << instruct.op2.value << "\n"
+				    << "jr\t $ra";
 			} else if (instruct.op == "OFFSET") {
 				out << "add\t " << *op1Reg << ", " << *op1Reg << ", $sp";
 				op1Reg->inUse = true;
@@ -478,8 +480,4 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 	}
 
 	return opReg;
-}
-
-std::string getStackframeSize(const std::string& size, const std::string& returnSize) {
-	return std::to_string(std::stoi(size) + std::stoi(returnSize) + 4);
 }

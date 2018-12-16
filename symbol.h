@@ -198,6 +198,8 @@ inline EvalType::Qualifier operator|(TypeQualifier a, TypeQualifier b) {
 
 class Symbol {
 public:
+	class SymbolType;
+
 	struct FunctionType {
 		bool defined = false;
 		unsigned functionDefLine;
@@ -206,10 +208,14 @@ public:
 		Scope* scope;
 
 		std::string name;
-		std::vector<std::pair<EvalType, void*> > parameters;
+		std::vector<EvalType> paramTypes;
+		std::vector<SymbolType*> params;
 		EvalType returnType = EvalType::EVOID;
 		std::string label   = "";
-		unsigned size       = -1;
+		unsigned localSize  = 0;  // Size of the locals part of the stack frame (in bytes)
+
+		// Stack frame is local variables + return address + return variable
+		unsigned stackSize() { return localSize + 4 + returnType.size(); }
 	};
 
 	struct VarType {
