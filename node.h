@@ -238,6 +238,8 @@ public:
 	    : SyntaxNode(s, FUNCTION_CALL, fPtr->returnType, 1, c), func(fPtr), sym(sPtr) {}
 	Symbol::FunctionType* const func;
 	Symbol::SymbolType* const sym;
+
+	void semanticCheck();
 	Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
 	               unsigned& labelTicker, Symbol::FunctionType* func = nullptr);
 };

@@ -29,11 +29,11 @@
 	double fval;
 	char cval;
 	std::string* strval;
-	std::pair<EvalType, void*>* esval;
+	std::pair<EvalType, Symbol::SymbolType*>* esval;
 	EvalType* eval;
 	SyntaxNode* nval;
 	OperatorNode::OpType oval;
-	std::vector<std::pair<EvalType, void*> >* eList;
+	std::pair<std::vector<EvalType>, std::vector<Symbol::SymbolType*> >* eList;
 	TypeQualifier tval;
 	Object::Type suval;
 }
@@ -421,7 +421,7 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 
 			// See if this function already exists
 			for(auto& f : inode->sym->functions) {
-				if(f.parameters.empty()) {
+				if(f.paramTypes.empty()) {
 					fnode = new FunctionNode({lineno, currentLine}, inode, &f);
 					table.setNextScopeFunction(&f);
 					break;
@@ -455,12 +455,14 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 
 			// See if this function already exists
 			for(auto& f : inode->sym->functions) {
-				if(f.parameters == *$3) {
+				if(f.paramTypes == $3->first) {
 					fnode = new FunctionNode({lineno, currentLine}, inode, &f);
 					if(level != 0)
 						table.setLastScopeFunction(&f);
 					else
 						table.setNextScopeFunction(&f);
+
+					f.params = $3->second;
 					break;
 				}
 			}
@@ -469,7 +471,8 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 				// Found a new function
 				Symbol::FunctionType f;
 				f.name = ((IdentifierNode*) $1)->sym->name;
-				f.parameters = *$3;
+				f.paramTypes = $3->first;
+				f.params = $3->second;
 				inode->sym->functions.push_back(f);
 				fnode = new FunctionNode({lineno, currentLine}, inode, &inode->sym->functions.back());
 				if(level != 0)
@@ -477,6 +480,8 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 				else
 					table.setNextScopeFunction(&inode->sym->functions.back());
 			}
+
+			delete $3;
 
 			$$ = fnode;
 			// TODO - set paramters
@@ -502,35 +507,36 @@ type_qualifier_list // TypeQualifier
 	| type_qualifier_list type_qualifier { throw ParserError("Not dealing with this yet"); }
 	;
 
-parameter_type_list // std::vector<std::pair<EvalType, SymbolType*> >*
+parameter_type_list // std::pair<std::vector<EvalType>, std::vector<Symbol::SymbolType*> >*
 	: parameter_list { $$ = $1; table.mode = Symbol::Mode::READ; }
 	| parameter_list COMMA ELIPSIS { throw "We ain't dealing with this shit"; table.mode = Symbol::Mode::READ; }
 	;
 
-parameter_list // std::vector<std::pair<EvalType, voide*> >*
+parameter_list // std::pair<std::vector<EvalType>, std::vector<Symbol::SymbolType*> >*
 	: parameter_declaration {
 		// std::cout << "The thing happened" << std::endl;
-		$$ = new std::vector<std::pair<EvalType, void*> >();
-		$$->push_back(*$1);
+		$$ = new std::pair<std::vector<EvalType>, std::vector<Symbol::SymbolType*>>();
+		$$->first.push_back($1->first);
+		$$->second.push_back($1->second);
 		delete $1;
 	}
 	| parameter_list COMMA parameter_declaration {
 		$$ = $1;
-		$$->push_back(*$3);
+		$$->first.push_back($3->first);
+		$$->second.push_back($3->second);
 		delete $3;
 	}
 	;
 
 // We only need to pass the types up the tree, for prototype matching
-parameter_declaration // std::pair<EvalType, void*>*
+parameter_declaration // std::pair<EvalType*, Symbol::SymbolType*>*
 	: declaration_specifiers declarator {
 		IdentifierNode* tmp = (IdentifierNode*)$2;
 		tmp->sym->etype = *$1;
-		$$ = new std::pair<EvalType, void*>(*$1, (void*)tmp->sym);
-		// $$ = $1;
+		$$ = new std::pair<EvalType, Symbol::SymbolType*>(*$1, tmp->sym);
 	}
 	| declaration_specifiers {
-		$$ = new std::pair<EvalType, void*>(*$1, nullptr);
+		$$ = new std::pair<EvalType, Symbol::SymbolType*>(*$1, nullptr);
 	}
 	| declaration_specifiers abstract_declarator {/* TODO: WTF is abstract */ throw "ahhhhhhhh"; }
 	;
@@ -1083,7 +1089,7 @@ postfix_expression // Node*
 		IdentifierNode* tmp = (IdentifierNode*)$1;
 		$$ = nullptr;
 		for (auto& f : tmp->sym->functions) {
-			if (f.parameters.empty()) {
+			if (f.paramTypes.empty()) {
 				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f);
 			}
 		}
@@ -1103,15 +1109,9 @@ postfix_expression // Node*
 		}
 
 		for (auto& f : tmp->sym->functions) {
-			bool notMatched = false;
-			for (unsigned i = 0; i < f.parameters.size(); i++) {
-				if (f.parameters[i].first != paramTypes[i]) {
-					notMatched = true;
-					break;
-				}
-			}
-			if (!notMatched) {
+			if (f.paramTypes == paramTypes) {
 				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f, $3);
+				break;
 			}
 		}
 		if ($$ == nullptr) {
