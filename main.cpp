@@ -298,7 +298,6 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			// 	out << "sw\t" << *op1Reg << "-"
 			// 	    << getStackframeSize(instruct.op1.value, instruct.op2.value) << "";
 			// }
-
 			RegisterTable::RegisterEntry* op2Reg = findRegister(instruct.op2, registers, out);
 
 			if (op1Reg != nullptr && op1Reg->usedAsTemp) op1Reg->inUse = false;

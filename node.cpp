@@ -675,6 +675,10 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				    children[0]->gen3AC(instructions, tempTicker, labelTicker, func),
 				    Operand{type, func->size + 4});
 			}
+
+			instructions.emplace_back(source, "RETURN");
+			return {"ERR", "ERR"};
+			break;
 		}
 		default: {
 			for (SyntaxNode* c : children) {
