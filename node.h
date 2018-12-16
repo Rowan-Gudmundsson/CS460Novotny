@@ -88,6 +88,14 @@ public:
 	std::vector<SyntaxNode*> children;
 
 	SyntaxNode(const Source& s, Type type, EvalType etype, unsigned numChildren...);
+	SyntaxNode(const SyntaxNode& other)
+	    : type(other.type),
+	      etype(other.etype),
+	      line(other.line),
+	      source(other.source),
+	      isConst(other.isConst) {
+		for (SyntaxNode* c : other.children) { children.push_back(new SyntaxNode(*c)); }
+	}
 
 	// Semanticly check the node
 	// Make certain data types line up, smash unneeded nodes, etc.
@@ -158,6 +166,17 @@ public:
 		ODEC,
 		OINCPOST,
 		ODECPOST,
+		// Arithmetic Assigns
+		OMODEQ,
+		ODIVEQ,
+		OMULTEQ,
+		OADDEQ,
+		OSUBEQ,
+		OLEFTEQ,
+		ORIGHTEQ,
+		OANDEQ,
+		OXOREQ,
+		OOREQ,
 		// Logic
 		OLNOT,
 		OLAND,

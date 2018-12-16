@@ -310,6 +310,14 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			RegisterTable::RegisterEntry* destReg =
 			    findRegister(instruct.dest, registers, out, true);
 
+			RegisterTable::RegisterEntry* indrDestReg;
+			if (instruct.dest.isIndr()) {
+				indrDestReg                  = destReg;
+				destReg                      = registers.getUnusedRegister(instruct.dest);
+				indrDestReg->indirect->inUse = false;
+				destReg->inUse               = false;
+			}
+
 			if (instruct.op == "LABEL") {
 				out << instruct.op1.value << ':';
 				if (op1Reg != nullptr) op1Reg->inUse = false;
@@ -329,9 +337,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 					destReg->inUse = false;
 					destReg        = op1Reg;
 					destReg->inUse = false;
-				} else if (instruct.dest.isIndr()) {
-					destReg->indirect->inUse = false;
-				} else {
+				} else if (!instruct.dest.isIndr()) {
 					if (instruct.dest.isFloat() == instruct.op1.isFloat()) {
 						out << "move\t " << *destReg << ", " << *op1Reg;
 					} else if (instruct.dest.isFloat()) {
@@ -423,7 +429,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				else
 					out << "sw\t ";
 
-				out << *op1Reg << ", " << *destReg << '\n';
+				out << *destReg << ", " << *indrDestReg << '\n';
 			}
 		}
 	} catch (const std::exception& e) {
@@ -433,7 +439,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 
 RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers,
                                            std::ostream& out, bool isDest) {
-	if (op.type.empty()) return nullptr;
+	if (op.type.empty() || op.type == "LABEL") return nullptr;
 
 	RegisterTable::RegisterEntry* opReg = registers.findLocation(op);
 	if (opReg == nullptr) {

@@ -449,6 +449,36 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 		case OperatorNode::OpType::ODEC:
 			out << "--PRE";
 			break;
+		case OperatorNode::OpType::OMODEQ:
+			out << "%=";
+			break;
+		case OperatorNode::OpType::ODIVEQ:
+			out << "/=";
+			break;
+		case OperatorNode::OpType::OMULTEQ:
+			out << "*=";
+			break;
+		case OperatorNode::OpType::OADDEQ:
+			out << "+=";
+			break;
+		case OperatorNode::OpType::OSUBEQ:
+			out << "-=";
+			break;
+		case OperatorNode::OpType::OLEFTEQ:
+			out << "<<=";
+			break;
+		case OperatorNode::OpType::ORIGHTEQ:
+			out << ">>=";
+			break;
+		case OperatorNode::OpType::OANDEQ:
+			out << "&=";
+			break;
+		case OperatorNode::OpType::OXOREQ:
+			out << "^=";
+			break;
+		case OperatorNode::OpType::OOREQ:
+			out << "|=";
+			break;
 		// Logic
 		case OperatorNode::OpType::OLNOT:
 			out << '!';
@@ -770,6 +800,47 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			tempTicker--;
 			break;
 		}
+		// Arithmetic assignment
+		case OMODEQ:
+			instructions.emplace_back(source, "MOD", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case ODIVEQ:
+			instructions.emplace_back(source, "DIV", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OMULTEQ:
+			instructions.emplace_back(source, "MULT", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OADDEQ:
+			instructions.emplace_back(source, "ADD", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OSUBEQ:
+			instructions.emplace_back(source, "SUB", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OLEFTEQ:
+			instructions.emplace_back(source, "SLL", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case ORIGHTEQ:
+			instructions.emplace_back(source, "SRL", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OANDEQ:
+			instructions.emplace_back(source, "AND", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OXOREQ:
+			instructions.emplace_back(source, "XOR", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OOREQ:
+			instructions.emplace_back(source, "OR", lhs, rhs, lhs);
+			tempTicker--;
+			break;
 		// Logic
 		case OLNOT: {
 			instructions.emplace_back(source, "NOT", lhs, dest);
