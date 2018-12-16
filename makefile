@@ -1,7 +1,7 @@
 OBS = parser.o scanner.o main.o symbol.o node.o RegisterTable.o
 
 CC = g++
-CFLAGS = -g -Wall -std=c++14 -DYYDEBUG=1
+CFLAGS = -g -Wall -std=c++14 -ferror-limit=5 -DYYDEBUG=1
 
 .DELETE_ON_ERROR:
 .PHONY: all

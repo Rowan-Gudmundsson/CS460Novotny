@@ -215,7 +215,9 @@ void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned&
 
 	instructions.emplace_back("", "CALL", Operand{"", ""}, Operand{"LABEL", "main1"});
 
-	root->gen3AC(instructions, tempTicker, labelTicker);
+	try {
+		root->gen3AC(instructions, tempTicker, labelTicker);
+	} catch (const std::exception& e) { std::cout << e.what() << std::endl; }
 
 	std::string lastSource = "";
 
@@ -290,14 +292,17 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				    << std::endl;
 				out << "sw\t$ra, " << instruct.op1.value << "($sp)\n";
 				continue;
+			} else if (instruct.op == "CALL") {
+				out << "jal\t" << instruct.dest.value << std::endl;
+				continue;
 			}
 
 			RegisterTable::RegisterEntry* op1Reg = findRegister(instruct.op1, registers, out);
 
-			// if (instruct.op == "VALOUT") {
-			// 	out << "sw\t" << *op1Reg << "-"
-			// 	    << getStackframeSize(instruct.op1.value, instruct.op2.value) << "";
-			// }
+			if (instruct.op == "VALOUT") {
+				out << "sw\t" << *op1Reg << ", -" << instruct.dest.value << "($sp)" << std::endl;
+				continue;
+			}
 
 			RegisterTable::RegisterEntry* op2Reg = findRegister(instruct.op2, registers, out);
 

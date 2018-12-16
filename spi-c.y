@@ -29,10 +29,11 @@
 	double fval;
 	char cval;
 	std::string* strval;
+	std::pair<EvalType, void*>* esval;
 	EvalType* eval;
 	SyntaxNode* nval;
 	OperatorNode::OpType oval;
-	std::vector<EvalType>* eList;
+	std::vector<std::pair<EvalType, void*> >* eList;
 	TypeQualifier tval;
 	Object::Type suval;
 }
@@ -71,7 +72,7 @@
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
-%type <eval> type_specifier declaration_specifiers storage_class_specifier specifier_qualifier_list type_name parameter_declaration pointer struct_or_union_specifier
+%type <eval> type_specifier declaration_specifiers storage_class_specifier specifier_qualifier_list type_name pointer struct_or_union_specifier
 %type <oval> unary_operator assignment_operator
 %type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression struct_declarator struct_declarator_list
 %type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression
@@ -82,6 +83,7 @@
 %type <eList> parameter_list parameter_type_list
 %type <tval> type_qualifier
 %type <suval> struct_or_union
+%type <esval> parameter_declaration
 
 %parse-param {SyntaxNode*& root}
 
@@ -499,15 +501,15 @@ type_qualifier_list // TypeQualifier
 	| type_qualifier_list type_qualifier { throw ParserError("Not dealing with this yet"); }
 	;
 
-parameter_type_list // std::vector<EvalType>*
+parameter_type_list // std::vector<std::pair<EvalType, SymbolType*> >*
 	: parameter_list { $$ = $1; table.mode = Symbol::Mode::READ; }
 	| parameter_list COMMA ELIPSIS { throw "We ain't dealing with this shit"; table.mode = Symbol::Mode::READ; }
 	;
 
-parameter_list // std::vector<EvalType>*
+parameter_list // std::vector<std::pair<EvalType, voide*> >*
 	: parameter_declaration {
 		// std::cout << "The thing happened" << std::endl;
-		$$ = new std::vector<EvalType>();
+		$$ = new std::vector<std::pair<EvalType, void*> >();
 		$$->push_back(*$1);
 		delete $1;
 	}
@@ -519,13 +521,15 @@ parameter_list // std::vector<EvalType>*
 	;
 
 // We only need to pass the types up the tree, for prototype matching
-parameter_declaration // EvalType
+parameter_declaration // std::pair<EvalType, void*>*
 	: declaration_specifiers declarator {
-		((IdentifierNode*) $2)->sym->etype = *$1;
-		$$ = $1;
+		IdentifierNode* tmp = (IdentifierNode*)$2;
+		tmp->sym->etype = *$1;
+		$$ = new std::pair<EvalType, void*>(*$1, (void*)tmp->sym);
+		// $$ = $1;
 	}
 	| declaration_specifiers {
-		$$ = $1;
+		$$ = new std::pair<EvalType, void*>(*$1, nullptr);
 	}
 	| declaration_specifiers abstract_declarator {/* TODO: WTF is abstract */ throw "ahhhhhhhh"; }
 	;
@@ -1105,7 +1109,14 @@ postfix_expression // Node*
 		}
 
 		for (auto& f : tmp->sym->functions) {
-			if (f.parameters == paramTypes) {
+			bool notMatched = false;
+			for (unsigned i = 0; i < f.parameters.size(); i++) {
+				if (f.parameters[i].first != paramTypes[i]) {
+					notMatched = true;
+					break;
+				}
+			}
+			if (!notMatched) {
 				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f, $3);
 			}
 		}

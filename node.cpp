@@ -68,6 +68,24 @@ void SyntaxNode::semanticCheck() {
 void FunctionNode::semanticCheck() {
 	SyntaxNode::semanticCheck();
 
+	// Replace the symbol references for the function to the defined function reference
+	// for (auto& i : sym->functions) {
+	// 	bool notMatched = false;
+	// 	for (unsigned j = 0; j < i.parameters.size(); j++) {
+	// 		if (j > func->parameters.size() - 1) {
+	// 			notMatched = true;
+	// 			break;
+	// 		}
+	// 		if (i.parameters[j].first != func->parameters[j].first) {
+	// 			notMatched = true;
+	// 			break;
+	// 		}
+	// 	}
+	// 	if (!notMatched) {
+	// 		i = *func;
+	// 		std::cout << "Replacing..." << std::endl;
+	// 	}
+	// }
 	// Try and find return statements - make certain they match the function
 	std::queue<SyntaxNode*> check;
 	SyntaxNode* next;
@@ -524,7 +542,7 @@ std::ostream& operator<<(std::ostream& out, const FunctionNode& n) {
 	for (unsigned i = 0; i < n.func->parameters.size(); i++) {
 		// std::cout << "Doing the thing" << std::endl;
 		// std::cout << "i: " << i << std::endl;
-		out << n.func->parameters.at(i);
+		out << n.func->parameters.at(i).first << " " << n.func->parameters.at(i).second;
 		// std::cout << n.func->parameters.at(i) << std::endl;
 		if (i < n.func->parameters.size() - 1) { out << ", "; }
 	}
@@ -538,7 +556,7 @@ std::ostream& operator<<(std::ostream& out, const FunctionCallNode& n) {
 	out << "CALL TO " << n.sym->name << "(";
 
 	for (unsigned i = 0; i < n.func->parameters.size(); i++) {
-		out << n.func->parameters[i];
+		out << n.func->parameters[i].first << " " << n.func->parameters[i].second;
 		if (i < n.func->parameters.size() - 1) { out << ", "; }
 	}
 	out << ")} ";
@@ -867,7 +885,8 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 	instructions.emplace_back(source, "LABEL", Operand{"LABEL", func->label});
 	// TODO (Rowan) - Figure out stack frame size - add as destination
-	instructions.emplace_back(source, "PROCENTRY", Operand{"ICONS", func->size});
+	unsigned stackSize = func->size + func->returnType.size() + 4;
+	instructions.emplace_back(source, "PROCENTRY", Operand{"ICONS", stackSize});
 
 	for (SyntaxNode* c : children) {
 		if (c != nullptr) { c->gen3AC(instructions, tempTicker, labelTicker, func); }
@@ -892,13 +911,16 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 	}
 
 	instructions.emplace_back(source, "ARGS", Operand{"ICONS", unsigned(children.size())});
-	for (SyntaxNode* i : children) {
-		// int offset = -func->size - func->returnType.size() + ()i->
-		Operand tmp = i->gen3AC(instructions, tempTicker, labelTicker, func);
-		instructions.emplace_back(source, "VALOUT", tmp, Operand{"ICONS", func->size},
-		                          Operand{"ICONS", func->returnType.size()});
+	for (unsigned i = 0; i < children.size(); i++) {
+		// if (func->parameters[i].second == nullptr) {
+		// 	throw std::logic_error("We should be catching this before here.");
+		// }
+		// int offset = func->size + func->returnType.size() -
+		//              ((Symbol::SymbolType*) func->parameters[i].second)->offset + 4;
+		// Operand tmp = children[i]->gen3AC(instructions, tempTicker, labelTicker, func);
+		// instructions.emplace_back(source, "VALOUT", tmp, Operand{"ICONS", offset});
 	}
-	instructions.emplace_back(source, "CALL", Operand{"LABEL", func->label});
+	instructions.emplace_back(source, "CALL", Operand{"", ""}, Operand{"LABEL", func->label});
 	if (func->returnType.floating())
 		return {"FLocal", -func->returnType.size()};
 	else

@@ -16,6 +16,8 @@ enum TypeQualifier { TCONST, TVOLATILE };
 struct Object;
 struct Scope;
 
+// class Symbol::SymbolType;
+
 struct EvalType {
 public:
 	enum { UNKNOWN, VOID, CHARACTER, INTEGER, FLOATING, OBJECT } type = UNKNOWN;
@@ -204,7 +206,7 @@ public:
 		Scope* scope;
 
 		std::string name;
-		std::vector<EvalType> parameters;
+		std::vector<std::pair<EvalType, void*> > parameters;
 		EvalType returnType = EvalType::EVOID;
 		std::string label   = "";
 		unsigned size       = -1;
@@ -215,7 +217,6 @@ public:
 		std::vector<int> arrayDimensions;
 	};
 
-	// Var type
 	class SymbolType {
 	private:
 		unsigned _offset = -1;
@@ -257,6 +258,7 @@ public:
 		SymbolType(std::string key, unsigned line, unsigned scope)
 		    : name(key), lineNumber(line), scopeLevel(scope) {}
 	};
+	// Var type
 
 	enum Mode { READ, WRITE } mode = WRITE;
 
