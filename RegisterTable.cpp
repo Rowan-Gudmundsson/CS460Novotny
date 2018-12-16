@@ -24,7 +24,7 @@ RegisterTable RegisterTable::getMIPSRegisters() {
 
 	// Integer saveds
 	for (int i = 0; i < 8; i++) {
-		re.add_register({"$s" + std::to_string(i), RegisterEntry::Type::INT});
+		re.add_register({"$s" + std::to_string(i), false, RegisterEntry::Type::INT});
 	}
 
 	// Float temporaries
@@ -34,7 +34,7 @@ RegisterTable RegisterTable::getMIPSRegisters() {
 
 	// Float saveds
 	for (int i = 20; i < 31; i += 2) {
-		re.add_register({"$f" + std::to_string(i), RegisterEntry::Type::FLOAT});
+		re.add_register({"$f" + std::to_string(i), false, RegisterEntry::Type::FLOAT});
 	}
 
 	return re;

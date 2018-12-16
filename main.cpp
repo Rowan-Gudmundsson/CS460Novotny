@@ -214,6 +214,7 @@ void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned&
 	}
 
 	instructions.emplace_back("", "CALL", Operand{"", ""}, Operand{"LABEL", "main1"});
+	instructions.emplace_back("", "END");
 
 	try {
 		root->gen3AC(instructions, tempTicker, labelTicker);
@@ -315,90 +316,104 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 			RegisterTable::RegisterEntry* destReg =
 			    findRegister(instruct.dest, registers, out, true);
 
+			RegisterTable::RegisterEntry* indrDestReg;
+			if (instruct.dest.isIndr()) {
+				indrDestReg                  = destReg;
+				destReg                      = registers.getUnusedRegister(instruct.dest);
+				indrDestReg->indirect->inUse = false;
+				destReg->inUse               = false;
+			}
+
 			if (instruct.op == "LABEL") {
 				out << instruct.op1.value << ':';
 				if (op1Reg != nullptr) op1Reg->inUse = false;
+			} else if (instruct.op == "CALL") {
+				out << "jal\t " << instruct.dest.value;
+			} else if (instruct.op == "END") {
+				out << "li\t $v0, 10\n"
+				    << "syscall";
+			} else if (instruct.op == "RETURN") {
+				// TODO - this needs more stuff to be done here
+				out << "jr\t $ra";
 			} else if (instruct.op == "OFFSET") {
-				out << "add\t" << *op1Reg << ", " << *op1Reg << ", $sp";
+				out << "add\t " << *op1Reg << ", " << *op1Reg << ", $sp";
 				op1Reg->inUse = true;
 			} else if (instruct.op == "ASSIGN") {
 				if (instruct.dest.isLocal()) {
 					destReg->inUse = false;
 					destReg        = op1Reg;
 					destReg->inUse = false;
-				} else if (instruct.dest.isIndr()) {
-					destReg->indirect->inUse = false;
-				} else {
+				} else if (!instruct.dest.isIndr()) {
 					if (instruct.dest.isFloat() == instruct.op1.isFloat()) {
-						out << "move\t" << *destReg << ", " << *op1Reg;
+						out << "move\t " << *destReg << ", " << *op1Reg;
 					} else if (instruct.dest.isFloat()) {
-						out << "mtc1\t" << *op1Reg << ", " << *destReg;
+						out << "mtc1\t " << *op1Reg << ", " << *destReg;
 					} else {
-						out << "mfc1\t" << *destReg << ", " << *op1Reg;
+						out << "mfc1\t " << *destReg << ", " << *op1Reg;
 					}
 				}
 			} else if (instruct.op == "ADD") {
 				if (instruct.op1.isFloat())
-					out << "add.s\t";
+					out << "add.s\t ";
 				else
-					out << "add\t";
+					out << "add\t ";
 
 				out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "SUB") {
 				if (instruct.op1.isFloat())
-					out << "sub.s\t";
+					out << "sub.s\t ";
 				else
-					out << "sub\t";
+					out << "sub\t ";
 
 				out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "MULT") {
 				if (instruct.op1.isFloat())
-					out << "mul.s\t";
+					out << "mul.s\t ";
 				else
-					out << "mul\t";
+					out << "mul\t ";
 
 				out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "DIV") {
 				if (instruct.op1.isFloat())
-					out << "div.s\t";
+					out << "div.s\t ";
 				else
-					out << "div\t";
+					out << "div\t ";
 
 				out << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "MOD") {
-				out << "rem\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "rem\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "EQ") {
-				out << "seq\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "seq\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "NE") {
-				out << "sne\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "sne\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "LT") {
-				out << "slt\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "slt\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "GT") {
-				out << "sgt\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "sgt\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "LE") {
-				out << "sle\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "sle\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "GE") {
-				out << "sge\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "sge\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "LOR") {
-				out << "or\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "or\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "LAND") {
-				out << "and\t" << *destReg << ", " << *op1Reg << ", " << *op2Reg;
+				out << "and\t " << *destReg << ", " << *op1Reg << ", " << *op2Reg;
 			} else if (instruct.op == "NOT") {
-				out << "not\t" << *destReg << ", " << *op1Reg;
+				out << "not\t " << *destReg << ", " << *op1Reg;
 			} else if (instruct.op == "BR") {
-				out << "b\t" << instruct.dest.value;
+				out << "b\t " << instruct.dest.value;
 			} else if (instruct.op == "BREQ") {
-				out << "beq\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+				out << "beq\t " << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
 			} else if (instruct.op == "BRNE") {
-				out << "bne\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+				out << "bne\t " << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
 			} else if (instruct.op == "BRLT") {
-				out << "blt\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+				out << "blt\t " << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
 			} else if (instruct.op == "BRGT") {
-				out << "bgt\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+				out << "bgt\t " << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
 			} else if (instruct.op == "BRLE") {
-				out << "ble\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+				out << "ble\t " << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
 			} else if (instruct.op == "BRGE") {
-				out << "bge\t" << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
+				out << "bge\t " << *op1Reg << ", " << *op2Reg << ", " << instruct.dest.value;
 			} else if (instruct.op != "GLOBAL") {
 				out << "# NOT HANDLING " << instruct.op << std::endl;
 			}
@@ -407,20 +422,20 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 
 			if (!instruct.dest.type.empty() && instruct.dest.isLocal()) {
 				if (instruct.dest.isFloat())
-					out << "s.s\t";
+					out << "s.s\t ";
 				else
-					out << "sw\t";
+					out << "sw\t ";
 
 				out << *destReg << ", " << instruct.dest.value << "($sp)\n";
 
 				destReg->inUse = false;
 			} else if (!instruct.dest.type.empty() && instruct.dest.isIndr()) {
 				if (instruct.dest.isFloat())
-					out << "s.s\t";
+					out << "s.s\t ";
 				else
-					out << "sw\t";
+					out << "sw\t ";
 
-				out << *op1Reg << ", " << *destReg << '\n';
+				out << *destReg << ", " << *indrDestReg << '\n';
 			}
 		}
 	} catch (const std::exception& e) {
@@ -430,7 +445,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 
 RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers,
                                            std::ostream& out, bool isDest) {
-	if (op.type.empty()) return nullptr;
+	if (op.type.empty() || op.type == "LABEL") return nullptr;
 
 	RegisterTable::RegisterEntry* opReg = registers.findLocation(op);
 	if (opReg == nullptr) {
@@ -439,24 +454,24 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 
 		if (op.isLocal() && !isDest) {
 			if (op.isFloat())
-				out << "l.s\t";
+				out << "l.s\t ";
 			else
-				out << "lw\t";
+				out << "lw\t ";
 			out << *opReg << ", " << op.value << "($sp)\n";
 		} else if (op.isConst()) {
 			if (op.isFloat())
-				out << "li.s\t";
+				out << "li.s\t ";
 			else
-				out << "li\t";
+				out << "li\t ";
 			out << *opReg << ", " << op.value << '\n';
 		}
 	} else if (opReg->indirect != nullptr && !isDest) {
 		RegisterTable::RegisterEntry* temp = registers.getUnusedRegister(op);
 
 		if (op.isFloat())
-			out << "l.s\t";
+			out << "l.s\t ";
 		else
-			out << "lw\t";
+			out << "lw\t ";
 		out << *temp << ", " << *opReg << '\n';
 
 		opReg = temp;

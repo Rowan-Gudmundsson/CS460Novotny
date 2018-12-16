@@ -44,23 +44,25 @@ void SyntaxNode::semanticCheck() {
 
 	// Compress generic nodes
 	// If a node has generic children, then just grab all of the grandchildren
-	for (unsigned i = 0; i < children.size(); i++) {
-		if (children[i] == nullptr) {
-			if (type == GENERIC) {
+	if (type != Type::CONDITIONAL) {
+		for (unsigned i = 0; i < children.size(); i++) {
+			if (children[i] == nullptr) {
+				if (type == GENERIC) {
+					children.erase(children.begin() + i);
+					i--;
+				}
+			} else if (children[i]->type == GENERIC) {
+				unsigned size = children[i]->children.size();
+				children.insert(children.begin() + i, children[i]->children.begin(),
+				                children[i]->children.end());
+				delete children[i + size];
+				children.erase(children.begin() + i + size);
+				i--;
+			} else if (children[i]->type == IDENTIFIER && type == GENERIC) {
+				delete children[i];
 				children.erase(children.begin() + i);
 				i--;
 			}
-		} else if (children[i]->type == GENERIC) {
-			unsigned size = children[i]->children.size();
-			children.insert(children.begin() + i, children[i]->children.begin(),
-			                children[i]->children.end());
-			delete children[i + size];
-			children.erase(children.begin() + i + size);
-			i--;
-		} else if (children[i]->type == IDENTIFIER && type == GENERIC) {
-			delete children[i];
-			children.erase(children.begin() + i);
-			i--;
 		}
 	}
 }
@@ -465,6 +467,36 @@ std::ostream& operator<<(std::ostream& out, const OperatorNode& n) {
 		case OperatorNode::OpType::ODEC:
 			out << "--PRE";
 			break;
+		case OperatorNode::OpType::OMODEQ:
+			out << "%=";
+			break;
+		case OperatorNode::OpType::ODIVEQ:
+			out << "/=";
+			break;
+		case OperatorNode::OpType::OMULTEQ:
+			out << "*=";
+			break;
+		case OperatorNode::OpType::OADDEQ:
+			out << "+=";
+			break;
+		case OperatorNode::OpType::OSUBEQ:
+			out << "-=";
+			break;
+		case OperatorNode::OpType::OLEFTEQ:
+			out << "<<=";
+			break;
+		case OperatorNode::OpType::ORIGHTEQ:
+			out << ">>=";
+			break;
+		case OperatorNode::OpType::OANDEQ:
+			out << "&=";
+			break;
+		case OperatorNode::OpType::OXOREQ:
+			out << "^=";
+			break;
+		case OperatorNode::OpType::OOREQ:
+			out << "|=";
+			break;
 		// Logic
 		case OperatorNode::OpType::OLNOT:
 			out << '!';
@@ -693,6 +725,10 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				    children[0]->gen3AC(instructions, tempTicker, labelTicker, func),
 				    Operand{type, func->size + 4});
 			}
+
+			instructions.emplace_back(source, "RETURN");
+			return {"ERR", "ERR"};
+			break;
 		}
 		default: {
 			for (SyntaxNode* c : children) {
@@ -726,15 +762,15 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 
 	switch (opType) {
 		case OBAND: {
-			instructions.emplace_back(source, "AND", rhs, lhs, dest);
+			instructions.emplace_back(source, "AND", lhs, rhs, dest);
 			break;
 		}
 		case OBOR: {
-			instructions.emplace_back(source, "OR", rhs, lhs, dest);
+			instructions.emplace_back(source, "OR", lhs, rhs, dest);
 			break;
 		}
 		case OBXOR: {
-			instructions.emplace_back(source, "XOR", rhs, lhs, dest);
+			instructions.emplace_back(source, "XOR", lhs, rhs, dest);
 			break;
 		}
 		case OBNOT: {
@@ -742,32 +778,32 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			break;
 		}
 		case OLSHIFT: {
-			instructions.emplace_back(source, "SLL", rhs, lhs, dest);
+			instructions.emplace_back(source, "SLL", lhs, rhs, dest);
 			break;
 		}
 		case ORSHIFT: {
-			instructions.emplace_back(source, "SRL", rhs, lhs, dest);
+			instructions.emplace_back(source, "SRL", lhs, rhs, dest);
 			break;
 		}
 		// Arithmetic
 		case OMOD: {
-			instructions.emplace_back(source, "MOD", rhs, lhs, dest);
+			instructions.emplace_back(source, "MOD", lhs, rhs, dest);
 			break;
 		}
 		case ODIV: {
-			instructions.emplace_back(source, "DIV", rhs, lhs, dest);
+			instructions.emplace_back(source, "DIV", lhs, rhs, dest);
 			break;
 		}
 		case OMULT: {
-			instructions.emplace_back(source, "MULT", rhs, lhs, dest);
+			instructions.emplace_back(source, "MULT", lhs, rhs, dest);
 			break;
 		}
 		case OADD: {
-			instructions.emplace_back(source, "ADD", rhs, lhs, dest);
+			instructions.emplace_back(source, "ADD", lhs, rhs, dest);
 			break;
 		}
 		case OSUB: {
-			instructions.emplace_back(source, "SUB", rhs, lhs, dest);
+			instructions.emplace_back(source, "SUB", lhs, rhs, dest);
 			break;
 		}
 		case OINCPOST:
@@ -782,17 +818,58 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			tempTicker--;
 			break;
 		}
+		// Arithmetic assignment
+		case OMODEQ:
+			instructions.emplace_back(source, "MOD", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case ODIVEQ:
+			instructions.emplace_back(source, "DIV", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OMULTEQ:
+			instructions.emplace_back(source, "MULT", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OADDEQ:
+			instructions.emplace_back(source, "ADD", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OSUBEQ:
+			instructions.emplace_back(source, "SUB", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OLEFTEQ:
+			instructions.emplace_back(source, "SLL", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case ORIGHTEQ:
+			instructions.emplace_back(source, "SRL", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OANDEQ:
+			instructions.emplace_back(source, "AND", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OXOREQ:
+			instructions.emplace_back(source, "XOR", lhs, rhs, lhs);
+			tempTicker--;
+			break;
+		case OOREQ:
+			instructions.emplace_back(source, "OR", lhs, rhs, lhs);
+			tempTicker--;
+			break;
 		// Logic
 		case OLNOT: {
 			instructions.emplace_back(source, "NOT", lhs, dest);
 			break;
 		}
 		case OLAND: {
-			instructions.emplace_back(source, "LAND", rhs, lhs, dest);
+			instructions.emplace_back(source, "LAND", lhs, rhs, dest);
 			break;
 		}
 		case OLOR: {
-			instructions.emplace_back(source, "LOR", rhs, lhs, dest);
+			instructions.emplace_back(source, "LOR", lhs, rhs, dest);
 			break;
 		}
 		// Comparison
@@ -813,11 +890,11 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			break;
 		}
 		case OEQUAL: {
-			instructions.emplace_back(source, "EQ", rhs, lhs, dest);
+			instructions.emplace_back(source, "EQ", lhs, rhs, dest);
 			break;
 		}
 		case ONEQ: {
-			instructions.emplace_back(source, "NE", rhs, lhs, dest);
+			instructions.emplace_back(source, "NE", lhs, rhs, dest);
 			break;
 		}
 		// Other

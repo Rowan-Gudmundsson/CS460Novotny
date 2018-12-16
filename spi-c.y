@@ -289,6 +289,7 @@ init_declarator_list // Node*
 	| init_declarator_list COMMA init_declarator {
 		$$ = $1;
 		$1->children.push_back($3);
+		table.mode = Symbol::Mode::WRITE;
 	}
 	;
 
@@ -656,17 +657,10 @@ assignment_expression // Node*
 				$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::ASSIGN, $1->etype, 2, $1, $3);
 			}
 		} else {
-			// TODO - the left side might not be strictly an IdentifierNode?
-			if($1->type == SyntaxNode::Type::IDENTIFIER) {
-				OperatorNode* temp = new OperatorNode({lineno, currentLine}, to, $2, 2, new IdentifierNode({lineno, currentLine}, ((IdentifierNode*) $1)->sym), $3);
-				if (shouldCoerce) {
-					CoercionNode* coerce = new CoercionNode({lineno, currentLine}, from, to, temp);
-					$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::ASSIGN, to, 2, $1, coerce);
-				} else {
-					$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::ASSIGN, to, 2, $1, temp);
-				}
+			if(shouldCoerce) {
+				$$ = new OperatorNode({lineno, currentLine}, to, $2, 2, $1, new CoercionNode({lineno, currentLine}, from, to, $3));
 			} else {
-				throw "Gotta get that working";
+				$$ = new OperatorNode({lineno, currentLine}, to, $2, 2, $1, $3);
 			}
 		}
 	}
@@ -674,16 +668,16 @@ assignment_expression // Node*
 
 assignment_operator // OperatorNode::OpType
 	: ASSIGN { $$ = OperatorNode::OpType::OTERNARY; }
-	| MUL_ASSIGN { $$ = OperatorNode::OpType::OMULT; }
-	| DIV_ASSIGN { $$ = OperatorNode::OpType::ODIV; }
-	| MOD_ASSIGN { $$ = OperatorNode::OpType::OMOD; }
-	| ADD_ASSIGN { $$ = OperatorNode::OpType::OADD; }
-	| SUB_ASSIGN { $$ = OperatorNode::OpType::OSUB; }
-	| LEFT_ASSIGN { $$ = OperatorNode::OpType::OLSHIFT; }
-	| RIGHT_ASSIGN { $$ = OperatorNode::OpType::ORSHIFT; }
-	| AND_ASSIGN { $$ = OperatorNode::OpType::OBAND; }
-	| XOR_ASSIGN { $$ = OperatorNode::OpType::OBXOR; }
-	| OR_ASSIGN { $$ = OperatorNode::OpType::OBOR; }
+	| MUL_ASSIGN { $$ = OperatorNode::OpType::OMULTEQ; }
+	| DIV_ASSIGN { $$ = OperatorNode::OpType::ODIVEQ; }
+	| MOD_ASSIGN { $$ = OperatorNode::OpType::OMODEQ; }
+	| ADD_ASSIGN { $$ = OperatorNode::OpType::OADDEQ; }
+	| SUB_ASSIGN { $$ = OperatorNode::OpType::OSUBEQ; }
+	| LEFT_ASSIGN { $$ = OperatorNode::OpType::OLEFTEQ; }
+	| RIGHT_ASSIGN { $$ = OperatorNode::OpType::ORIGHTEQ; }
+	| AND_ASSIGN { $$ = OperatorNode::OpType::OANDEQ; }
+	| XOR_ASSIGN { $$ = OperatorNode::OpType::OXOREQ; }
+	| OR_ASSIGN { $$ = OperatorNode::OpType::OOREQ; }
 	;
 
 conditional_expression // Node*
