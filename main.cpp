@@ -326,9 +326,11 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 
 			if (instruct.op == "LABEL") {
 				out << instruct.op1.value << ':';
+				registers.invalidateRegisters(true);
 				if (op1Reg != nullptr) op1Reg->inUse = false;
 			} else if (instruct.op == "CALL") {
 				out << "jal\t " << instruct.dest.value;
+				registers.invalidateRegisters();
 			} else if (instruct.op == "END") {
 				out << "li\t $v0, 10\n"
 				    << "syscall";

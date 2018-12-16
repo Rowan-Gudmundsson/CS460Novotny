@@ -90,3 +90,9 @@ RegisterTable::RegisterEntry* RegisterTable::findLocation(const Operand& content
 
 	return nullptr;
 }
+
+void RegisterTable::invalidateRegisters(bool saved) {
+	for (RegisterTable::RegisterEntry& r : registers) {
+		if (saved || r.temporary) { r.inUse = false; }
+	}
+}
