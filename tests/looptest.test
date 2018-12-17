@@ -1,9 +1,0 @@
-int main() {
-	#REDUCE
-	int i;
-	i++;
-	for (i = 0; i < 12; i++) {
-		int y = 2;
-	}
-	#NOREDUCE
-}

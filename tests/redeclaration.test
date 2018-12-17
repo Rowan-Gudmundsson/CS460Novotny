@@ -1,5 +1,0 @@
-#REDUCE
-void main(void) {
-	int x = 2;
-	int x = 3;
-}

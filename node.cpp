@@ -633,8 +633,8 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 	switch (type) {
 		case ASSIGN:
 		case DECLARE_AND_INIT: {
-			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 			Operand op1  = children[1]->gen3AC(instructions, tempTicker, labelTicker, func);
+			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 			instructions.emplace_back(source, "ASSIGN", op1, dest);
 			return dest;
 		}
@@ -1044,6 +1044,7 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 
 	std::string type;
 	SyntaxNode* c;
+	unsigned offset = 0;
 	for (unsigned i = 0; i < children.size(); i++) {
 		c = children[i];
 		if (c->etype.object()) {
@@ -1054,9 +1055,11 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 			Operand tmp = c->gen3AC(instructions, tempTicker, labelTicker, func);
 
 			instructions.emplace_back(source, "ASSIGN", tmp,
-			                          Operand{type, func->params[i]->offset - func->stackSize()});
+			                          Operand{type, offset - func->stackSize()});
+			offset += func->paramTypes[i].size();
 		}
 	}
+
 	instructions.emplace_back(source, "CALL", Operand{"", ""}, Operand{"LABEL", func->label});
 	if (func->returnType.floating())
 		return {"FLocal", -func->returnType.size()};

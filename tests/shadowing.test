@@ -1,8 +1,0 @@
-#REDUCE
-
-void main(void) {
-	int x = 3;
-	if (x == 3) {
-		int x = 2;
-	}
-}

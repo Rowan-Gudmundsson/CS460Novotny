@@ -71,3 +71,5 @@ debug_parser\.txt
 spi-c.dSYM/
 
 .vscode/
+
+out/

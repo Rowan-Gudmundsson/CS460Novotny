@@ -1,22 +1,37 @@
+void printInt(int i);
+void printFloat(float f);
+void printString(char* s);
+void printChar(char c);
+int readInt();
+float readFloat();
+void readString(char* s, int n);
+char readChar();
+
 int main() {
 	int a[2][2];
 	int b[2][2];
 	int c[2][2];
 	int i, j, k;
 
-	// a = ( 7 3 )
-	//     ( 5 1 )
-	a[0][0] = 7;
-	a[0][1] = 3;
-	a[1][0] = 5;
-	a[1][1] = 1;
+	// Read in matrix a
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < 2; j++) {
+			a[i][j] = readInt();
+			printChar(' ');
+		}
+		printChar('\n');
+	}
 
-	// b = ( 2 6 )
-	//     ( 9 2 )
-	b[0][0] = 2;
-	b[0][1] = 6;
-	b[1][0] = 9;
-	b[1][1] = 2;
+	printChar('\n');
+
+	// Read in matrix b
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < 2; j++) {
+			b[i][j] = readInt();
+			printChar(' ');
+		}
+		printChar('\n');
+	}
 
 	// c = a b
 	for (i = 0; i < 2; i++) {
@@ -26,5 +41,14 @@ int main() {
 		for (j = 0; j < 2; j++) {
 			for (k = 0; k < 2; k++) { c[i][j] += a[i][k] * b[k][j]; }
 		}
+	}
+
+	// Display matrix c
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < 2; j++) {
+			printInt(c[i][j]);
+			printChar(' ');
+		}
+		printChar('\n');
 	}
 }
