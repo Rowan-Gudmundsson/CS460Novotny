@@ -1,59 +1,94 @@
+int readInt();
+void printInt(int);
+void printChar(char);
+
 struct Matrix {
-	int elements[3][3];
-	int rows;
-	int columns;
+	int elements[10][10];
+	int rows, columns;
 };
 
-struct Matrix calc_product(struct Matrix, struct Matrix);
+struct Matrix readMatrix();
+void printMatrix(struct Matrix);
+struct Matrix multiplyMatrices(struct Matrix, struct Matrix);
 
 void main(void) {
 	struct Matrix mat1, mat2, mat3;
-	mat1.rows           = 3;
-	mat1.columns        = 3;
-	mat1.elements[0][0] = 1.0f;
-	mat1.elements[0][1] = 0.0f;
-	mat1.elements[0][2] = 0.0f;
-	mat1.elements[1][0] = 0.0f;
-	mat1.elements[1][1] = 1.0f;
-	mat1.elements[1][2] = 0.0f;
-	mat1.elements[2][0] = 0.0f;
-	mat1.elements[2][1] = 0.0f;
-	mat1.elements[2][2] = 1.0f;
+	int i, j;
 
-	mat2.rows           = 3;
-	mat2.columns        = 3;
-	mat2.elements[0][0] = 1.0f;
-	mat2.elements[0][1] = 2.0f;
-	mat2.elements[0][2] = 3.0f;
-	mat2.elements[1][0] = 2.0f;
-	mat2.elements[1][1] = 3.0f;
-	mat2.elements[1][2] = 4.0f;
-	mat2.elements[2][0] = 3.0f;
-	mat2.elements[2][1] = 4.0f;
-	mat2.elements[2][2] = 5.0f;
+	// Read in matrices
+	mat1 = readMatrix();
+	printChar((char) 10);
+	printChar((char) 10);
+	mat2 = readMatrix();
 
-	mat3 = calc_product(mat1, mat2);
+	// Separate Answer
+	printChar((char) 10);
+	printChar((char) 10);
+
+	printMatrix(multiplyMatrices(mat1, mat2));
 }
 
-struct Matrix calc_product(struct Matrix mat1, struct Matrix mat2) {
-	struct Matrix mat3;
-	int i = 0, j = 0, k = 0;
+struct Matrix readMatrix() {
+	struct Matrix re;
+	int i, j;
 
-	mat3.rows    = mat1.rows;
-	mat3.columns = mat2.columns;
-	for (i = 0; i < mat3.rows; i++) {
-		for (j = 0; j < mat3.columns; j++) { mat3.elements[i][j] = 0.0f; }
+	// Read in dimension
+	re.rows = readInt();
+	printChar('X');
+	re.columns = readInt();
+	printChar((char) 10);
+
+	// Read in Matrix
+	for (i = 0; i < re.rows && i < 10; i++) {
+		for (j = 0; j < re.columns && j < 10; j++) { re.elements[i][j] = readInt(); }
 	}
 
-	if (mat1.columns != mat2.rows) return mat3;
+	return re;
+}
 
-	for (i = 0; i < mat1.rows; i++) {
-		for (j = 0; j < mat2.columns; j++) {
-			for (k = 0; k < mat2.rows; k++) {
-				mat3.elements[i][j] += mat1.elements[i][k] * mat2.elements[k][j];
+void printMatrix(struct Matrix m) {
+	int i, j;
+	for (i = 0; i < m.rows && i < 10; i++) {
+		for (j = 0; j < m.columns && j < 10; j++) { printInt(m.elements[i][j]); }
+	}
+}
+
+struct Matrix multiplyMatrices(struct Matrix m1, struct Matrix m2) {
+	struct Matrix re;
+	int i, j, k;
+
+	if (m1.columns != m2.rows) {
+		printChar('E');
+		printChar('R');
+		printChar('R');
+		printChar('O');
+		printChar('R');
+		printChar(':');
+		printChar(' ');
+		printChar('D');
+		printChar('I');
+		printChar('M');
+		printChar('E');
+		printChar('N');
+		printChar('S');
+		printChar('I');
+		printChar('O');
+		printChar('N');
+		printChar('S');
+		return re;
+	}
+
+	re.rows    = m1.rows;
+	re.columns = m2.columns;
+
+	for (int i = 0; i < m1.rows; i++) {
+		for (int j = 0; j < m2.columns; j++) {
+			re.elements[i][j] = 0;
+			for (int k = 0; k < m2.rows; k++) {
+				re.elements[i][j] += m1.elements[i][k] * m2.elements[k][j];
 			}
 		}
 	}
 
-	return mat3;
+	return re;
 }

@@ -353,7 +353,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
 					destReg->inUse = false;
 					destReg        = op1Reg;
 					destReg->inUse = false;
-				} else if (!instruct.dest.isIndr()) {
+				} else {
 					if (instruct.dest.isFloat() == instruct.op1.isFloat()) {
 						out << "move\t " << *destReg << ", " << *op1Reg;
 					} else if (instruct.dest.isFloat()) {

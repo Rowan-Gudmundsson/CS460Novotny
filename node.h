@@ -254,6 +254,7 @@ public:
 
 	bool pre_check;
 
+	void semanticCheck();
 	Operand gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
 	               unsigned& labelTicker, Symbol::FunctionType* func = nullptr);
 };
