@@ -250,16 +250,24 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 		}
 
 		// DATA section (for global/static variables)
+		unsigned floatTicker  = 0;
+		unsigned stringTicker = 0;
+
 		out << "\t.data\n";
-		for (const ThreeAddress& instruct : instructions) {
+		for (ThreeAddress& instruct : instructions) {
 			if (instruct.op == "GLOBAL") out << instruct.op1.value << ": ";
-			if (instruct.dest.type == "ICONS")
-				out << ".word ";
-			else if (instruct.dest.type == "FCONS")
-				out << ".float ";
-			else
-				break;
-			out << instruct.dest.value << '\n';
+			if (instruct.op1.type == "FCONS") {
+				out << "fp" + std::to_string(floatTicker) << ":\t"
+				    << ".float " << instruct.op1.value << std::endl;
+				instruct.op1.value = "fp" + std::to_string(floatTicker);
+				floatTicker++;
+			}
+			if (instruct.op2.type == "FCONS") {
+				out << "fp" + std::to_string(floatTicker) << ":\t"
+				    << ".float " << instruct.op2.value << std::endl;
+				instruct.op2.value = "fp" + std::to_string(floatTicker);
+				floatTicker++;
+			}
 		}
 
 		std::string prev_source;
@@ -459,7 +467,7 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 			out << *opReg << ", " << op.value << "($sp)\n";
 		} else if (op.isConst()) {
 			if (op.isFloat())
-				out << "li.s\t ";
+				out << "l.s\t ";
 			else
 				out << "li\t ";
 			out << *opReg << ", " << op.value << '\n';

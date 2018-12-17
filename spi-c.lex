@@ -191,7 +191,12 @@ SCOMMENT \/\/.*\n
 	if(lexDLevel) std::cout << "ID: " << yytext << std::endl;
 	std::string varName = yytext;
 	Symbol::SymbolType* idPtr;
-	if (table.mode == Symbol::Mode::READ) {
+	if (table.mode == Symbol::Mode::OBJECT) {
+		idPtr = table.find(varName);
+		if (idPtr == nullptr) {
+			idPtr = table.insert(varName, lineno);
+		}
+	} else if (table.mode == Symbol::Mode::READ) {
 		idPtr = table.find(varName);
 		if (idPtr == nullptr) {
 			throw ScannerError("Undeclared Reference");

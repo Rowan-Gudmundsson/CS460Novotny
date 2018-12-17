@@ -267,8 +267,8 @@ struct_or_union_specifier // EvalType*
 	;
 
 struct_or_union // Object::Type
-	: STRUCT { $$ = Object::STRUCT; table.mode = Symbol::Mode::WRITE; }
-	| UNION { $$ = Object::UNION; table.mode = Symbol::Mode::WRITE; }
+	: STRUCT { $$ = Object::STRUCT; table.mode = Symbol::Mode::OBJECT; }
+	| UNION { $$ = Object::UNION; table.mode = Symbol::Mode::OBJECT; }
 	;
 
 struct_declaration_list // Node*
@@ -1060,20 +1060,29 @@ unary_operator // OperatorNode::OpType
 postfix_expression // Node*
 	: primary_expression { $$ = $1; }
 	| postfix_expression LBRACKET expression RBRACKET {
-		if($1->type == SyntaxNode::ACCESS) {
-			if(((IdentifierNode*) $1->children[0])->sym->v.arrayDimensions.size() < $1->children.size()) {
-				throw ParserError("Array dimensions not large enough for level of dereference");
+		if ($1->type == SyntaxNode::ACCESS) {
+			if ($1->children[0]->type == SyntaxNode::IDENTIFIER) {
+				if(((IdentifierNode*) $1->children[0])->sym->v.arrayDimensions.size() < $1->children.size()) {
+					throw ParserError("Array dimensions not large enough for level of dereference");
+				}
+				$1->children.push_back($3);
+				$$ = $1;
+			} else if ($1->children[0]->type == SyntaxNode::STRUCT_ACCESS) {
+				if (((IdentifierNode*) $1->children[0]->children[1])->sym->v.arrayDimensions.size() < $1->children[0]->children.size()) {
+					throw ParserError("Array dimensions not large enough for level of dereference");
+				}
+
+				$1->children.push_back($3);
+				$$ = $1;
 			}
 
-			$1->children.push_back($3);
-			$$ = $1;
-		} else if($1->type == SyntaxNode::IDENTIFIER) {
+		} else if ($1->type == SyntaxNode::IDENTIFIER) {
 			if(((IdentifierNode*) $1)->sym->v.arrayDimensions.size() == 0) {
 				throw ParserError("Trying to dereference variable of non-pointer type");
 			}
 
 			$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, $1->etype, 2, $1, $3);
-		} else if($1->type == SyntaxNode::STRUCT_ACCESS) {
+		} else if ($1->type == SyntaxNode::STRUCT_ACCESS) {
 			if(((IdentifierNode*) $1->children[1])->sym->v.arrayDimensions.size() == 0) {
 				throw ParserError("Trying to dereference variable of non-pointer type");
 			}

@@ -270,3 +270,7 @@ std::ostream& operator<<(std::ostream& out, const LoopNode& n);
 std::ostream& operator<<(std::ostream& out, const CoercionNode& n);
 
 ConstantNode* evalConst(SyntaxNode*);
+void returnStruct(std::vector<ThreeAddress>& instructions, const EvalType& etype,
+                  unsigned local_offset, unsigned return_offset, const std::string& source);
+void passStruct(std::vector<ThreeAddress>& instructions, const EvalType& etype,
+                unsigned local_offset, unsigned call_offset, const std::string& source);

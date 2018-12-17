@@ -7,8 +7,12 @@ int something = 2;
 
 struct T {
 	int s;
-	float y[4];
+	int w;
+	int z;
+	float y[4][2];
 };
+
+struct T foo(struct T);
 
 int main() {
 	// This is a test
@@ -67,6 +71,7 @@ int main() {
 	blah(q[2] + 3 * 4);
 	blah(z);
 	blah();
+	t = foo(t);
 }
 
 void blah(int y) {
@@ -81,4 +86,9 @@ void blah(char y) {
 		int* a;
 	};
 	char x = 0;
+}
+
+struct T foo(struct T x) {
+	x.s = 3;
+	return x;
 }

@@ -106,7 +106,7 @@ public:
 
 	bool integral() const { return (type == INTEGER) || (type == CHARACTER); }
 	bool floating() const { return type == FLOATING; }
-
+	bool object() const { return type == OBJECT && obj != nullptr; }
 	// Default constructor
 	EvalType() {}
 
@@ -266,7 +266,7 @@ public:
 	};
 	// Var type
 
-	enum Mode { READ, WRITE } mode = WRITE;
+	enum Mode { READ, WRITE, OBJECT } mode = WRITE;
 
 	const unsigned& scopeLevel;
 

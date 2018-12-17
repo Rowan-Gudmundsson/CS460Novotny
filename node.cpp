@@ -731,11 +731,15 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		}
 		case RETURN: {
 			if (children.size() > 0) {
-				std::string type = func->returnType.integral() ? "ILocal" : "FLocal";
-				instructions.emplace_back(
-				    source, "ASSIGN",
-				    children[0]->gen3AC(instructions, tempTicker, labelTicker, func),
-				    Operand{type, func->localSize + 4});
+				Operand tmp = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
+				if (func->returnType.object()) {
+					returnStruct(instructions, func->returnType, std::stoi(tmp.value),
+					             func->localSize + 4, source);
+				} else {
+					std::string type = func->returnType.integral() ? "ILocal" : "FLocal";
+					instructions.emplace_back(source, "ASSIGN", tmp,
+					                          Operand{type, func->localSize + 4});
+				}
 			}
 
 			instructions.emplace_back(source, "RETURN", Operand{"ICONS", func->localSize},
@@ -748,6 +752,29 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				if (c != nullptr) { c->gen3AC(instructions, tempTicker, labelTicker, func); }
 			}
 			return {"ERR", "ERR"};
+		}
+	}
+}
+
+void returnStruct(std::vector<ThreeAddress>& instructions, const EvalType& etype,
+                  unsigned local_offset, unsigned return_offset, const std::string& source) {
+	for (Symbol::SymbolType& s : *etype.obj->vars->tree) {
+		if (s.etype.object()) {
+			returnStruct(instructions, s.etype, local_offset + s.offset, return_offset + s.offset,
+			             source);
+		} else if (s.v.arrayDimensions.size() > 0) {
+			unsigned size    = 0;
+			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
+			for (unsigned i : s.v.arrayDimensions) { size += i; }
+			for (unsigned i = 0; i < size; i++) {
+				unsigned offset = s.offset + i * s.etype.size();
+				instructions.emplace_back(source, "ASSIGN", Operand{type, local_offset + offset},
+				                          Operand{type, return_offset + offset});
+			}
+		} else {
+			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
+			instructions.emplace_back(source, "ASSIGN", Operand{type, local_offset + s.offset},
+			                          Operand{type, return_offset + s.offset});
 		}
 	}
 }
@@ -988,6 +1015,20 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	return {"LABEL", func->label};
 }
 
+void passStruct(std::vector<ThreeAddress>& instructions, const EvalType& etype,
+                unsigned local_offset, unsigned call_offset, const std::string& source) {
+	for (Symbol::SymbolType& s : *etype.obj->vars->tree) {
+		if (s.etype.object()) {
+			passStruct(instructions, s.etype, local_offset + s.offset, call_offset + s.offset,
+			           source);
+		} else {
+			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
+			instructions.emplace_back(source, "ASSIGN", Operand{type, local_offset + s.offset},
+			                          Operand{type, call_offset + s.offset});
+		}
+	}
+}
+
 Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
                                  unsigned& labelTicker, Symbol::FunctionType* funcPtr) {
 	if (func->label == "") {
@@ -1004,12 +1045,17 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 	std::string type;
 	SyntaxNode* c;
 	for (unsigned i = 0; i < children.size(); i++) {
-		c           = children[i];
-		type        = c->etype.integral() ? "ILocal" : "FLocal";
-		Operand tmp = c->gen3AC(instructions, tempTicker, labelTicker, func);
+		c = children[i];
+		if (c->etype.object()) {
+			passStruct(instructions, c->etype, ((IdentifierNode*) c)->sym->offset,
+			           func->params[i]->offset - func->stackSize(), source);
+		} else {
+			type        = c->etype.integral() ? "ILocal" : "FLocal";
+			Operand tmp = c->gen3AC(instructions, tempTicker, labelTicker, func);
 
-		instructions.emplace_back(source, "ASSIGN", tmp,
-		                          Operand{type, func->params[i]->offset - func->stackSize()});
+			instructions.emplace_back(source, "ASSIGN", tmp,
+			                          Operand{type, func->params[i]->offset - func->stackSize()});
+		}
 	}
 	instructions.emplace_back(source, "CALL", Operand{"", ""}, Operand{"LABEL", func->label});
 	if (func->returnType.floating())
