@@ -1,11 +1,12 @@
 OBS = parser.o scanner.o main.o symbol.o node.o RegisterTable.o
 
 CC = g++
+UNAME = $(shell uname)
 
-ifeq ($(OS),Darwin)
-	CFLAGS = -g -Wall -std=c++14 -ferror-limit=5 -DYYDEBUG=1
+ifeq ($(UNAME), Darwin)
+CFLAGS = -g -Wall -std=c++14 -ferror-limit=5 -DYYDEBUG=1
 else
-	CFLAGS = -g -Wall -std=c++14 -fmax-errors=5 -DYYDEBUG=1
+CFLAGS = -g -Wall -std=c++14 -fmax-errors=5 -DYYDEBUG=1
 endif
 
 .DELETE_ON_ERROR:
@@ -53,18 +54,21 @@ symboTest.o: symboTest.cpp symboTest.h
 # CLEAN
 
 .PHONY:
-test: tests/compiler.test tests/redeclaration.test tests/shadowing.test tests/undefined_reference.test spi-c
+test: tests/compiler.c tests/bubble.c tests/factorial_it.c tests/factorial.c tests/matrix.c
 ifeq ($(OS),Windows_NT)
-	-.\spi-c tests/compiler.test > tests/compiler.out
-	-.\spi-c tests/redeclaration.test > tests/redeclaration.out
-	-.\spi-c tests/shadowing.test > tests/shadowing.out
-	-.\spi-c tests/undefined_reference.test > tests/undefined_reference.out
-	-.\symboTest < "symbol table tests/test1" > "symbol table tests/test1.out"
+	-.\spi-c tests/compiler.c -o out/compiler.asm > NUL
+	-.\spi-c tests/bubble.c -o out/bubble.asm > NUL
+	-.\spi-c tests/factorial_it.c -o out/factorial_it.asm > NUL
+	-.\spi-c tests/factorial.c -o out/factorial.asm > NUL
+	-.\spi-c tests/matrix.c -o out/matrix.asm > NUL
+	-.\symboTest < "symbol_table_tests/test1" > "symbol_table_tests/test1.out"
 else
-	-./spi-c tests/compiler.test > tests/compiler.out
-	-./spi-c tests/redeclaration.test > tests/redeclaration.out
-	-./spi-c tests/shadowing.test > tests/shadowing.out
-	-./spi-c tests/undefined_reference.test > tests/undefined_reference.out
+	-./spi-c tests/compiler.c -o out/compiler.asm > /dev/null
+	-./spi-c tests/bubble.c -o out/bubble.asm > /dev/null
+	-./spi-c tests/factorial_it.c -o out/factorial_it.asm > /dev/null
+	-./spi-c tests/factorial.c -o out/factorial.asm > /dev/null
+	-./spi-c tests/matrix.c -o out/matrix.asm > /dev/null
+	-./symboTest < "symbol_table_tests/test1" > "symbol_table_tests/test1.out"
 endif
 
 .PHONY: clean

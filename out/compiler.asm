@@ -2,7 +2,7 @@
 something: .word 4
 	.text
 # * CALL                                                  (LABEL main1)     
-jal	main1
+jal	 main1
 # * END                                                                     
 li	 $v0, 10
 syscall
@@ -17,9 +17,9 @@ syscall
 # | ----------------- ----------------- ----------------- ------------------
 # * LABEL             (LABEL main1)                                         
 main1:
-# * PROCENTRY         (ICONS 908)                                           
-subi	$sp, $sp, 912
-sw	$ra, 908($sp)
+# * PROCENTRY         (ICONS 908)       (ICONS 0)                           
+subi	$sp, $sp, 908
+sw	$ra, 904($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -179,6 +179,17 @@ sw	 $t1, 900($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
+# * 	if (x == 2 || y > z / 2) {
+# ----------------------------
+# | 3 Address Code           |
+# ----------------------------
+# | op                op1               op2               dest
+# | ----------------- ----------------- ----------------- ------------------
+# * BR                                                    (LABEL if1)       
+b	 if1
+# ----------------------------
+# | Original source          |
+# ----------------------------
 # * 	}
 # ----------------------------
 # | 3 Address Code           |
@@ -190,17 +201,6 @@ if0:
 # ----------------------------
 # | Original source          |
 # ----------------------------
-# * 
-# ----------------------------
-# | 3 Address Code           |
-# ----------------------------
-# | op                op1               op2               dest
-# | ----------------- ----------------- ----------------- ------------------
-# * BR                                                    (LABEL if1)       
-b	 if1
-# ----------------------------
-# | Original source          |
-# ----------------------------
 # * 	} else if (1) {
 # ----------------------------
 # | 3 Address Code           |
@@ -208,9 +208,9 @@ b	 if1
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * BREQ              (ICONS 1)         (ICONS 0)         (LABEL if2)       
-li	 $t1, 1
-li	 $t2, 0
-beq	 $t1, $t2, if2
+li	 $t0, 1
+li	 $t1, 0
+beq	 $t0, $t1, if2
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -221,9 +221,20 @@ beq	 $t1, $t2, if2
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * ASSIGN            (ICONS 3)                           (ILocal 896)      
-li	 $t1, 3
+li	 $t0, 3
 
-sw	 $t1, 896($sp)
+sw	 $t0, 896($sp)
+# ----------------------------
+# | Original source          |
+# ----------------------------
+# * 	} else if (1) {
+# ----------------------------
+# | 3 Address Code           |
+# ----------------------------
+# | op                op1               op2               dest
+# | ----------------- ----------------- ----------------- ------------------
+# * BR                                                    (LABEL if3)       
+b	 if3
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -238,17 +249,6 @@ if2:
 # ----------------------------
 # | Original source          |
 # ----------------------------
-# * 
-# ----------------------------
-# | 3 Address Code           |
-# ----------------------------
-# | op                op1               op2               dest
-# | ----------------- ----------------- ----------------- ------------------
-# * BR                                                    (LABEL if3)       
-b	 if3
-# ----------------------------
-# | Original source          |
-# ----------------------------
 # * 		x = 2;
 # ----------------------------
 # | 3 Address Code           |
@@ -256,9 +256,9 @@ b	 if3
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * ASSIGN            (ICONS 2)                           (ILocal 892)      
-li	 $t1, 2
+li	 $t0, 2
 
-sw	 $t1, 892($sp)
+sw	 $t0, 892($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -282,40 +282,42 @@ if1:
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * MOD               (ILocal 892)      (ILocal 896)      (ITemp 12)        
-lw	 $s2, 892($sp)
-lw	 $s3, 896($sp)
-rem	 $t1, $s2, $s3
+lw	 $s0, 892($sp)
+lw	 $s1, 896($sp)
+rem	 $t0, $s0, $s1
 # * ADD               (ILocal 896)      (ILocal 900)      (ITemp 13)        
-lw	 $s4, 900($sp)
-add	 $t2, $s3, $s4
+lw	 $s2, 900($sp)
+add	 $t1, $s1, $s2
 # * MULT              (ITemp 13)        (ICONS 4)         (ITemp 13)        
-li	 $t3, 4
-mul	 $t2, $t2, $t3
+li	 $t2, 4
+mul	 $t1, $t1, $t2
 # * ADD               (ICONS 664)       (ITemp 13)        (ITemp 15)        
-li	 $t3, 664
-add	 $t2, $t3, $t2
+li	 $t2, 664
+add	 $t1, $t2, $t1
 # * OFFSET            (ITemp 15)                                            
-add	 $t2, $t2, $sp
-# * GT                (ITemp 12)        (IINDR 15)        (ITemp 16)        
-lw	 $t3, ($t2)
-sgt	 $t1, $t1, $t3
-# * BREQ              (ITemp 16)        (ICONS 0)         (LABEL if4)       
-li	 $t3, 0
-beq	 $t1, $t3, if4
-# * MULT              (ILocal 892)      (ILocal 896)      (ITemp 17)        
-mul	 $t1, $s2, $s3
-# * MULT              (ITemp 17)        (ICONS 4)         (ITemp 17)        
-li	 $t3, 4
-mul	 $t1, $t1, $t3
-# * ADD               (ICONS 664)       (ITemp 17)        (ITemp 19)        
-li	 $t3, 664
-add	 $t1, $t3, $t1
-# * OFFSET            (ITemp 19)                                            
 add	 $t1, $t1, $sp
+# * GT                (ITemp 12)        (IINDR 15)        (ITemp 16)        
+lw	 $t2, ($t1)
+sgt	 $t0, $t0, $t2
+# * BREQ              (ITemp 16)        (ICONS 0)         (LABEL if4)       
+li	 $t2, 0
+beq	 $t0, $t2, if4
+# * MULT              (ILocal 892)      (ILocal 896)      (ITemp 17)        
+mul	 $t0, $s0, $s1
+# * MULT              (ITemp 17)        (ICONS 4)         (ITemp 17)        
+li	 $t2, 4
+mul	 $t0, $t0, $t2
+# * ADD               (ICONS 664)       (ITemp 17)        (ITemp 19)        
+li	 $t2, 664
+add	 $t0, $t2, $t0
+# * OFFSET            (ITemp 19)                                            
+add	 $t0, $t0, $sp
 # * ASSIGN            (ICONS 42)                          (IINDR 19)        
-li	 $t3, 42
+li	 $t2, 42
 
-sw	 $t3, ($t1)
+sw	 $t2, ($t0)
+# * BR                                                    (LABEL if5)       
+b	 if5
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -327,6 +329,8 @@ sw	 $t3, ($t1)
 # | ----------------- ----------------- ----------------- ------------------
 # * LABEL             (LABEL if4)                                           
 if4:
+# * LABEL             (LABEL if5)                                           
+if5:
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -337,24 +341,24 @@ if4:
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * MULT              (ICONS 2)         (ICONS 20)        (ITemp 20)        
-li	 $t1, 2
-li	 $t3, 20
-mul	 $t1, $t1, $t3
+li	 $t0, 2
+li	 $t1, 20
+mul	 $t0, $t0, $t1
 # * MULT              (ICONS 3)         (ICONS 4)         (ITemp 21)        
-li	 $t3, 3
-li	 $t4, 4
-mul	 $t3, $t3, $t4
+li	 $t1, 3
+li	 $t2, 4
+mul	 $t1, $t1, $t2
 # * ADD               (ITemp 20)        (ITemp 21)        (ITemp 22)        
-add	 $t1, $t1, $t3
+add	 $t0, $t0, $t1
 # * ADD               (ICONS 16)        (ITemp 22)        (ITemp 23)        
-li	 $t3, 16
-add	 $t1, $t3, $t1
+li	 $t1, 16
+add	 $t0, $t1, $t0
 # * OFFSET            (ITemp 23)                                            
-add	 $t1, $t1, $sp
+add	 $t0, $t0, $sp
 # * ASSIGN            (ICONS 3)                           (IINDR 23)        
-li	 $t3, 3
+li	 $t1, 3
 
-sw	 $t3, ($t1)
+sw	 $t1, ($t0)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -365,30 +369,33 @@ sw	 $t3, ($t1)
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * ADD               (ILocal 892)      (ILocal 896)      (ITemp 24)        
-add	 $t1, $s2, $s3
+lw	 $s0, 892($sp)
+lw	 $s1, 896($sp)
+add	 $t0, $s0, $s1
 # * MULT              (ITemp 24)        (ICONS 96)        (ITemp 24)        
-li	 $t3, 96
-mul	 $t1, $t1, $t3
+li	 $t1, 96
+mul	 $t0, $t0, $t1
 # * MULT              (ICONS 2)         (ICONS 16)        (ITemp 26)        
-li	 $t3, 2
-li	 $t4, 16
-mul	 $t3, $t3, $t4
+li	 $t1, 2
+li	 $t2, 16
+mul	 $t1, $t1, $t2
 # * ADD               (ITemp 24)        (ITemp 26)        (ITemp 27)        
-add	 $t1, $t1, $t3
+add	 $t0, $t0, $t1
 # * MULT              (ILocal 900)      (ICONS 4)         (ITemp 28)        
-li	 $t3, 4
-mul	 $t3, $s4, $t3
+lw	 $s2, 900($sp)
+li	 $t1, 4
+mul	 $t1, $s2, $t1
 # * ADD               (ITemp 27)        (ITemp 28)        (ITemp 29)        
-add	 $t1, $t1, $t3
+add	 $t0, $t0, $t1
 # * ADD               (ICONS 56)        (ITemp 29)        (ITemp 30)        
-li	 $t3, 56
-add	 $t1, $t3, $t1
+li	 $t1, 56
+add	 $t0, $t1, $t0
 # * OFFSET            (ITemp 30)                                            
-add	 $t1, $t1, $sp
+add	 $t0, $t0, $sp
 # * ASSIGN            (ICONS 4)                           (IINDR 30)        
-li	 $t3, 4
+li	 $t1, 4
 
-sw	 $t3, ($t1)
+sw	 $t1, ($t0)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -399,72 +406,72 @@ sw	 $t3, ($t1)
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * MULT              (ICONS 0)         (ICONS 64)        (ITemp 31)        
-li	 $t1, 0
-li	 $t3, 64
-mul	 $t1, $t1, $t3
+li	 $t0, 0
+li	 $t1, 64
+mul	 $t0, $t0, $t1
 # * MULT              (ICONS 1)         (ICONS 32)        (ITemp 32)        
-li	 $t3, 1
-li	 $t4, 32
-mul	 $t3, $t3, $t4
+li	 $t1, 1
+li	 $t2, 32
+mul	 $t1, $t1, $t2
 # * ADD               (ITemp 31)        (ITemp 32)        (ITemp 33)        
-add	 $t1, $t1, $t3
+add	 $t0, $t0, $t1
 # * MULT              (ILocal 892)      (ICONS 16)        (ITemp 34)        
-li	 $t3, 16
-mul	 $t3, $s2, $t3
+li	 $t1, 16
+mul	 $t1, $s0, $t1
 # * ADD               (ITemp 33)        (ITemp 34)        (ITemp 35)        
-add	 $t1, $t1, $t3
+add	 $t0, $t0, $t1
 # * MULT              (ICONS 0)         (ICONS 8)         (ITemp 36)        
-li	 $t3, 0
-li	 $t4, 8
-mul	 $t3, $t3, $t4
+li	 $t1, 0
+li	 $t2, 8
+mul	 $t1, $t1, $t2
 # * ADD               (ITemp 35)        (ITemp 36)        (ITemp 37)        
-add	 $t1, $t1, $t3
+add	 $t0, $t0, $t1
 # * MULT              (ICONS 1)         (ICONS 4)         (ITemp 38)        
-li	 $t3, 1
-li	 $t4, 4
-mul	 $t3, $t3, $t4
+li	 $t1, 1
+li	 $t2, 4
+mul	 $t1, $t1, $t2
 # * ADD               (ITemp 37)        (ITemp 38)        (ITemp 39)        
-add	 $t1, $t1, $t3
+add	 $t0, $t0, $t1
 # * ADD               (ICONS 536)       (ITemp 39)        (ITemp 40)        
-li	 $t3, 536
-add	 $t1, $t3, $t1
+li	 $t1, 536
+add	 $t0, $t1, $t0
 # * OFFSET            (ITemp 40)                                            
-add	 $t1, $t1, $sp
+add	 $t0, $t0, $sp
 # * MULT              (ICONS 1)         (ICONS 64)        (ITemp 41)        
-li	 $t3, 1
-li	 $t4, 64
-mul	 $t3, $t3, $t4
+li	 $t1, 1
+li	 $t2, 64
+mul	 $t1, $t1, $t2
 # * MULT              (ICONS 1)         (ICONS 32)        (ITemp 42)        
-li	 $t4, 1
-li	 $t5, 32
-mul	 $t4, $t4, $t5
+li	 $t2, 1
+li	 $t3, 32
+mul	 $t2, $t2, $t3
 # * ADD               (ITemp 41)        (ITemp 42)        (ITemp 43)        
-add	 $t3, $t3, $t4
+add	 $t1, $t1, $t2
 # * MULT              (ILocal 892)      (ICONS 16)        (ITemp 44)        
-li	 $t4, 16
-mul	 $t4, $s2, $t4
+li	 $t2, 16
+mul	 $t2, $s0, $t2
 # * ADD               (ITemp 43)        (ITemp 44)        (ITemp 45)        
-add	 $t3, $t3, $t4
+add	 $t1, $t1, $t2
 # * MULT              (ILocal 896)      (ICONS 8)         (ITemp 46)        
-li	 $t4, 8
-mul	 $t4, $s3, $t4
+li	 $t2, 8
+mul	 $t2, $s1, $t2
 # * ADD               (ITemp 45)        (ITemp 46)        (ITemp 47)        
-add	 $t3, $t3, $t4
+add	 $t1, $t1, $t2
 # * MULT              (ICONS 1)         (ICONS 4)         (ITemp 48)        
-li	 $t4, 1
-li	 $t5, 4
-mul	 $t4, $t4, $t5
+li	 $t2, 1
+li	 $t3, 4
+mul	 $t2, $t2, $t3
 # * ADD               (ITemp 47)        (ITemp 48)        (ITemp 49)        
-add	 $t3, $t3, $t4
+add	 $t1, $t1, $t2
 # * ADD               (ICONS 536)       (ITemp 49)        (ITemp 50)        
-li	 $t4, 536
-add	 $t3, $t4, $t3
+li	 $t2, 536
+add	 $t1, $t2, $t1
 # * OFFSET            (ITemp 50)                                            
-add	 $t3, $t3, $sp
+add	 $t1, $t1, $sp
 # * ASSIGN            (IINDR 50)                          (IINDR 40)        
-lw	 $t4, ($t3)
+lw	 $t2, ($t1)
 
-sw	 $t4, ($t1)
+sw	 $t2, ($t0)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -475,35 +482,36 @@ sw	 $t4, ($t1)
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * ASSIGN            (ICONS 0)                           (ILocal 892)      
-li	 $t1, 0
+li	 $t0, 0
 
-sw	 $t1, 892($sp)
-# * LABEL             (LABEL LL00005)                                       
-LL00005:
+sw	 $t0, 892($sp)
+# * LABEL             (LABEL LL00006)                                       
+LL00006:
 # * LT                (ILocal 892)      (ICONS 4)         (ITemp 51)        
-lw	 $s2, 892($sp)
-li	 $t1, 4
-slt	 $t1, $s2, $t1
-# * BREQ              (ITemp 51)        (ICONS 0)         (LABEL LL00006)   
-li	 $t4, 0
-beq	 $t1, $t4, LL00006
+lw	 $s0, 892($sp)
+li	 $t0, 4
+slt	 $t0, $s0, $t0
+# * BREQ              (ITemp 51)        (ICONS 0)         (LABEL LL00007)   
+li	 $t1, 0
+beq	 $t0, $t1, LL00007
 # * MULT              (ILocal 892)      (ICONS 4)         (ITemp 52)        
-li	 $t1, 4
-mul	 $t1, $s2, $t1
+li	 $t0, 4
+mul	 $t0, $s0, $t0
 # * ADD               (ICONS 664)       (ITemp 52)        (ITemp 53)        
-li	 $t4, 664
-add	 $t1, $t4, $t1
+li	 $t1, 664
+add	 $t0, $t1, $t0
 # * OFFSET            (ITemp 53)                                            
-add	 $t1, $t1, $sp
+add	 $t0, $t0, $sp
 # * MULT              (ILocal 896)      (ILocal 892)      (ITemp 54)        
-mul	 $t4, $s3, $s2
+lw	 $s1, 896($sp)
+mul	 $t1, $s1, $s0
 # * ASSIGN            (ITemp 54)                          (IINDR 53)        
 
-sw	 $t4, ($t1)
+sw	 $t1, ($t0)
 # * ADD               (ILocal 892)      (ICONS 1)         (ILocal 892)      
-li	 $t1, 1
-add	 $s2, $s2, $t1
-sw	 $s2, 892($sp)
+li	 $t0, 1
+add	 $s0, $s0, $t0
+sw	 $s0, 892($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -513,8 +521,8 @@ sw	 $s2, 892($sp)
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * BR                                                    (LABEL LL00005)   
-b	 LL00005
+# * BR                                                    (LABEL LL00006)   
+b	 LL00006
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -524,8 +532,8 @@ b	 LL00005
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * LABEL             (LABEL LL00006)                                       
-LL00006:
+# * LABEL             (LABEL LL00007)                                       
+LL00007:
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -535,12 +543,27 @@ LL00006:
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * ARGS              (ICONS 1)                                             
-li	 $t1, 1
-# NOT HANDLING ARGS
+# * MULT              (ICONS 2)         (ICONS 4)         (ITemp 55)        
+li	 $t0, 2
+li	 $t1, 4
+mul	 $t0, $t0, $t1
+# * ADD               (ICONS 664)       (ITemp 55)        (ITemp 56)        
+li	 $t1, 664
+add	 $t0, $t1, $t0
+# * OFFSET            (ITemp 56)                                            
+add	 $t0, $t0, $sp
+# * MULT              (ICONS 3)         (ICONS 4)         (ITemp 57)        
+li	 $t1, 3
+li	 $t2, 4
+mul	 $t1, $t1, $t2
+# * ADD               (IINDR 56)        (ITemp 57)        (ITemp 58)        
+lw	 $t2, ($t0)
+add	 $t1, $t2, $t1
+# * ASSIGN            (ITemp 58)                          (ILocal -8)       
 
+sw	 $t1, -8($sp)
 # * CALL                                                  (LABEL blah2)     
-jal	blah2
+jal	 blah2
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -550,12 +573,12 @@ jal	blah2
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * ARGS              (ICONS 0)                                             
-li	 $t1, 0
-# NOT HANDLING ARGS
+# * ASSIGN            (ILocal 900)                        (ILocal -8)       
+lw	 $s0, 900($sp)
 
+sw	 $s0, -8($sp)
 # * CALL                                                  (LABEL blah3)     
-jal	blah3
+jal	 blah3
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -565,12 +588,8 @@ jal	blah3
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * ARGS              (ICONS 0)                                             
-li	 $t1, 0
-# NOT HANDLING ARGS
-
 # * CALL                                                  (LABEL blah1)     
-jal	blah1
+jal	 blah1
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -580,7 +599,9 @@ jal	blah1
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * RETURN                                                                  
+# * RETURN            (ICONS 904)       (ICONS 908)                         
+lw	 $ra, 904($sp)
+add	 $sp, $sp, 908
 jr	 $ra
 # ----------------------------
 # | Original source          |
@@ -591,11 +612,11 @@ jr	 $ra
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * LABEL             (LABEL blah4)                                         
-blah4:
-# * PROCENTRY         (ICONS 8)                                             
-subi	$sp, $sp, 12
-sw	$ra, 8($sp)
+# * LABEL             (LABEL blah2)                                         
+blah2:
+# * PROCENTRY         (ICONS 8)         (ICONS 0)                           
+subi	$sp, $sp, 8
+sw	$ra, 4($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -605,13 +626,13 @@ sw	$ra, 8($sp)
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * MULT              (ILocal 0)        (ICONS 2)         (ITemp 55)        
-lw	 $s2, 0($sp)
-li	 $t1, 2
-mul	 $t1, $s2, $t1
-# * ASSIGN            (ITemp 55)                          (ILocal 4)        
+# * MULT              (ILocal 0)        (ICONS 2)         (ITemp 59)        
+lw	 $s0, 0($sp)
+li	 $t0, 2
+mul	 $t0, $s0, $t0
+# * ASSIGN            (ITemp 59)                          (ILocal 4)        
 
-sw	 $t1, 4($sp)
+sw	 $t0, 4($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -621,12 +642,13 @@ sw	 $t1, 4($sp)
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * ARGS              (ICONS 0)                                             
-li	 $t1, 0
-# NOT HANDLING ARGS
+# * ASSIGN            (ILocal 4)                          (ILocal -8)       
+lw	 $s1, 4($sp)
 
-# * CALL                                                  (LABEL blah4)     
-jal	blah4
+sw	 $s1, -8($sp)
+# * CALL                                                  (LABEL blah2)     
+sw	 $s0, 0($sp)
+jal	 blah2
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -636,12 +658,12 @@ jal	blah4
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * ARGS              (ICONS 0)                                             
-li	 $t1, 0
-# NOT HANDLING ARGS
+# * ASSIGN            (ILocal 0)                          (ILocal -8)       
+lw	 $s0, 0($sp)
 
-# * CALL                                                  (LABEL blah4)     
-jal	blah4
+sw	 $s0, -8($sp)
+# * CALL                                                  (LABEL blah2)     
+jal	 blah2
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -651,7 +673,9 @@ jal	blah4
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * RETURN                                                                  
+# * RETURN            (ICONS 4)         (ICONS 8)                           
+lw	 $ra, 4($sp)
+add	 $sp, $sp, 8
 jr	 $ra
 # ----------------------------
 # | Original source          |
@@ -662,11 +686,11 @@ jr	 $ra
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * LABEL             (LABEL blah5)                                         
-blah5:
-# * PROCENTRY         (ICONS 8)                                             
-subi	$sp, $sp, 12
-sw	$ra, 8($sp)
+# * LABEL             (LABEL blah3)                                         
+blah3:
+# * PROCENTRY         (ICONS 8)         (ICONS 0)                           
+subi	$sp, $sp, 8
+sw	$ra, 4($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -677,9 +701,9 @@ sw	$ra, 8($sp)
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * ASSIGN            (ICONS 0)                           (ILocal 4)        
-li	 $t1, 0
+li	 $t0, 0
 
-sw	 $t1, 4($sp)
+sw	 $t0, 4($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -689,5 +713,7 @@ sw	 $t1, 4($sp)
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * RETURN                                                                  
+# * RETURN            (ICONS 4)         (ICONS 8)                           
+lw	 $ra, 4($sp)
+add	 $sp, $sp, 8
 jr	 $ra

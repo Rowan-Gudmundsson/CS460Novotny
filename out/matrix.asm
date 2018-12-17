@@ -16,7 +16,7 @@ syscall
 # | ----------------- ----------------- ----------------- ------------------
 # * LABEL             (LABEL main1)                                         
 main1:
-# * PROCENTRY         (ICONS 60)                                            
+# * PROCENTRY         (ICONS 64)        (ICONS 0)                           
 subi	$sp, $sp, 64
 sw	$ra, 60($sp)
 # ----------------------------
@@ -281,18 +281,19 @@ sw	 $t0, 52($sp)
 # * LABEL             (LABEL LL00002)                                       
 LL00002:
 # * LT                (ILocal 52)       (ICONS 2)         (ITemp 33)        
-lw	 $s1, 52($sp)
+lw	 $s0, 52($sp)
 li	 $t0, 2
-slt	 $t0, $s1, $t0
+slt	 $t0, $s0, $t0
 # * BREQ              (ITemp 33)        (ICONS 0)         (LABEL LL00003)   
 li	 $t1, 0
 beq	 $t0, $t1, LL00003
 # * MULT              (ILocal 48)       (ICONS 8)         (ITemp 34)        
+lw	 $s1, 48($sp)
 li	 $t0, 8
-mul	 $t0, $s0, $t0
+mul	 $t0, $s1, $t0
 # * MULT              (ILocal 52)       (ICONS 4)         (ITemp 35)        
 li	 $t1, 4
-mul	 $t1, $s1, $t1
+mul	 $t1, $s0, $t1
 # * ADD               (ITemp 34)        (ITemp 35)        (ITemp 36)        
 add	 $t0, $t0, $t1
 # * ADD               (ICONS 32)        (ITemp 36)        (ITemp 37)        
@@ -306,8 +307,8 @@ li	 $t1, 0
 sw	 $t1, ($t0)
 # * ADD               (ILocal 52)       (ICONS 1)         (ILocal 52)       
 li	 $t0, 1
-add	 $s1, $s1, $t0
-sw	 $s1, 52($sp)
+add	 $s0, $s0, $t0
+sw	 $s0, 52($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -340,6 +341,7 @@ LL00003:
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * ADD               (ILocal 48)       (ICONS 1)         (ILocal 48)       
+lw	 $s0, 48($sp)
 li	 $t0, 1
 add	 $s0, $s0, $t0
 sw	 $s0, 48($sp)
@@ -403,9 +405,9 @@ sw	 $t0, 52($sp)
 # * LABEL             (LABEL LL00006)                                       
 LL00006:
 # * LT                (ILocal 52)       (ICONS 2)         (ITemp 39)        
-lw	 $s1, 52($sp)
+lw	 $s0, 52($sp)
 li	 $t0, 2
-slt	 $t0, $s1, $t0
+slt	 $t0, $s0, $t0
 # * BREQ              (ITemp 39)        (ICONS 0)         (LABEL LL00007)   
 li	 $t1, 0
 beq	 $t0, $t1, LL00007
@@ -425,18 +427,20 @@ sw	 $t0, 56($sp)
 # * LABEL             (LABEL LL00008)                                       
 LL00008:
 # * LT                (ILocal 56)       (ICONS 2)         (ITemp 40)        
-lw	 $s2, 56($sp)
+lw	 $s0, 56($sp)
 li	 $t0, 2
-slt	 $t0, $s2, $t0
+slt	 $t0, $s0, $t0
 # * BREQ              (ITemp 40)        (ICONS 0)         (LABEL LL00009)   
 li	 $t1, 0
 beq	 $t0, $t1, LL00009
 # * MULT              (ILocal 48)       (ICONS 8)         (ITemp 41)        
+lw	 $s1, 48($sp)
 li	 $t0, 8
-mul	 $t0, $s0, $t0
+mul	 $t0, $s1, $t0
 # * MULT              (ILocal 52)       (ICONS 4)         (ITemp 42)        
+lw	 $s2, 52($sp)
 li	 $t1, 4
-mul	 $t1, $s1, $t1
+mul	 $t1, $s2, $t1
 # * ADD               (ITemp 41)        (ITemp 42)        (ITemp 43)        
 add	 $t0, $t0, $t1
 # * ADD               (ICONS 32)        (ITemp 43)        (ITemp 44)        
@@ -446,10 +450,10 @@ add	 $t0, $t1, $t0
 add	 $t0, $t0, $sp
 # * MULT              (ILocal 48)       (ICONS 8)         (ITemp 45)        
 li	 $t1, 8
-mul	 $t1, $s0, $t1
+mul	 $t1, $s1, $t1
 # * MULT              (ILocal 56)       (ICONS 4)         (ITemp 46)        
 li	 $t2, 4
-mul	 $t2, $s2, $t2
+mul	 $t2, $s0, $t2
 # * ADD               (ITemp 45)        (ITemp 46)        (ITemp 47)        
 add	 $t1, $t1, $t2
 # * ADD               (ICONS 0)         (ITemp 47)        (ITemp 48)        
@@ -459,10 +463,10 @@ add	 $t1, $t2, $t1
 add	 $t1, $t1, $sp
 # * MULT              (ILocal 56)       (ICONS 8)         (ITemp 49)        
 li	 $t2, 8
-mul	 $t2, $s2, $t2
+mul	 $t2, $s0, $t2
 # * MULT              (ILocal 52)       (ICONS 4)         (ITemp 50)        
 li	 $t3, 4
-mul	 $t3, $s1, $t3
+mul	 $t3, $s2, $t3
 # * ADD               (ITemp 49)        (ITemp 50)        (ITemp 51)        
 add	 $t2, $t2, $t3
 # * ADD               (ICONS 16)        (ITemp 51)        (ITemp 52)        
@@ -480,8 +484,8 @@ add	 $t3, $t4, $t3
 sw	 $t3, ($t0)
 # * ADD               (ILocal 56)       (ICONS 1)         (ILocal 56)       
 li	 $t0, 1
-add	 $s2, $s2, $t0
-sw	 $s2, 56($sp)
+add	 $s0, $s0, $t0
+sw	 $s0, 56($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -514,9 +518,10 @@ LL00009:
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * ADD               (ILocal 52)       (ICONS 1)         (ILocal 52)       
+lw	 $s0, 52($sp)
 li	 $t0, 1
-add	 $s1, $s1, $t0
-sw	 $s1, 52($sp)
+add	 $s0, $s0, $t0
+sw	 $s0, 52($sp)
 # ----------------------------
 # | Original source          |
 # ----------------------------
@@ -549,6 +554,7 @@ LL00007:
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
 # * ADD               (ILocal 48)       (ICONS 1)         (ILocal 48)       
+lw	 $s0, 48($sp)
 li	 $t0, 1
 add	 $s0, $s0, $t0
 sw	 $s0, 48($sp)
@@ -583,5 +589,7 @@ LL00005:
 # ----------------------------
 # | op                op1               op2               dest
 # | ----------------- ----------------- ----------------- ------------------
-# * RETURN                                                                  
+# * RETURN            (ICONS 60)        (ICONS 64)                          
+lw	 $ra, 60($sp)
+add	 $sp, $sp, 64
 jr	 $ra

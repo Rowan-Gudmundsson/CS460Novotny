@@ -2,7 +2,7 @@
 int factorial(int n);
 
 int main() {
-	int n = 7;
+	int n = 11;
 	int f = factorial(n);
 }
 
