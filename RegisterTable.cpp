@@ -91,6 +91,14 @@ RegisterTable::RegisterEntry* RegisterTable::findLocation(const Operand& content
 	return nullptr;
 }
 
+void RegisterTable::saveSavedRegisters(std::ostream& out) {
+	for (RegisterEntry& reg : registers) {
+		if (reg.inUse && reg.currentEntry.isLocal()) {
+			out << "sw\t " << reg << ", " << reg.currentEntry.value << "($sp)\n";
+		}
+	}
+}
+
 void RegisterTable::invalidateRegisters(bool saved) {
 	for (RegisterTable::RegisterEntry& r : registers) {
 		if (saved || r.temporary) { r.inUse = false; }

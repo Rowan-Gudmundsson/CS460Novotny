@@ -35,6 +35,7 @@ public:
 
 	RegisterEntry* getUnusedRegister(const Operand& contents);
 	RegisterEntry* findLocation(const Operand& contents);
+	void saveSavedRegisters(std::ostream& out);
 	void invalidateRegisters(bool saved = false);
 	void add_register(const RegisterEntry& r) { registers.push_back(r); }
 

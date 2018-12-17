@@ -295,17 +295,26 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				    << "($sp)\n";
 				continue;
 			} else if (instruct.op == "CALL") {
-				out << "jal\t" << instruct.dest.value << std::endl;
+				registers.saveSavedRegisters(out);
+				out << "jal\t " << instruct.dest.value << '\n';
+				registers.invalidateRegisters(true);
+				continue;
+			} else if (instruct.op == "LABEL") {
+				out << instruct.op1.value << ":\n";
+				registers.invalidateRegisters(true);
+				continue;
+			} else if (instruct.op == "END") {
+				out << "li\t $v0, 10\n"
+				    << "syscall\n";
+				continue;
+			} else if (instruct.op == "RETURN") {
+				out << "lw\t $ra, " << instruct.op1.value << "($sp)\n"
+				    << "add\t $sp, $sp, " << instruct.op2.value << '\n'
+				    << "jr\t $ra\n";
 				continue;
 			}
 
 			RegisterTable::RegisterEntry* op1Reg = findRegister(instruct.op1, registers, out);
-
-			if (instruct.op == "VALOUT") {
-				out << "sw\t" << *op1Reg << ", -" << instruct.dest.value << "($sp)" << std::endl;
-				continue;
-			}
-
 			RegisterTable::RegisterEntry* op2Reg = findRegister(instruct.op2, registers, out);
 
 			if (op1Reg != nullptr && op1Reg->usedAsTemp) op1Reg->inUse = false;
@@ -325,21 +334,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& 
 				destReg->inUse               = false;
 			}
 
-			if (instruct.op == "LABEL") {
-				out << instruct.op1.value << ':';
-				registers.invalidateRegisters(true);
-				if (op1Reg != nullptr) op1Reg->inUse = false;
-			} else if (instruct.op == "CALL") {
-				out << "jal\t " << instruct.dest.value;
-				registers.invalidateRegisters();
-			} else if (instruct.op == "END") {
-				out << "li\t $v0, 10\n"
-				    << "syscall";
-			} else if (instruct.op == "RETURN") {
-				out << "lw\t $ra, " << instruct.op1.value << "($sp)\n"
-				    << "add\t $sp, $sp, " << instruct.op2.value << "\n"
-				    << "jr\t $ra";
-			} else if (instruct.op == "OFFSET") {
+			if (instruct.op == "OFFSET") {
 				out << "add\t " << *op1Reg << ", " << *op1Reg << ", $sp";
 				op1Reg->inUse = true;
 			} else if (instruct.op == "ASSIGN") {
