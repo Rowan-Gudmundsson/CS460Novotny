@@ -51,6 +51,7 @@ std::string treeFileName    = "";
 std::string semTreeFileName = "";
 std::ifstream inFile;
 std::string currentLine;
+std::string libraryFile = "library.asm";
 
 void doCmdArgs(int argc, char** argv);
 void doCmdArgs(int argc, char** argv);
@@ -61,8 +62,9 @@ void helpMenu();
 void outputTreeToFile(SyntaxNode* root, Symbol& table, const std::string& filename);
 void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
             unsigned& labelTicker);
-void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& filename,
+void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
                     unsigned& tempTicker, unsigned& labelTicker);
+void outputLibraryFuncs(std::ostream& outputFile);
 RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& registers,
                                            std::ostream& out, bool isDest = false);
 std::string getStackframeSize(const std::string& size, const std::string& returnSize);

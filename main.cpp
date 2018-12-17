@@ -60,13 +60,22 @@ int main(int argc, char** argv) {
 
 	if (semTreeFileName != "") { outputTreeToFile(root, table, semTreeFileName); }
 
+	// Generate three address code from tree
 	std::vector<ThreeAddress> instructions;
 	unsigned tempTicker = 0, labelTicker = 0;
 	gen3AC(root, instructions, tempTicker, labelTicker);
 
-	try {
-		outputAssembly(instructions, outputFile, tempTicker, labelTicker);
-	} catch (const std::exception& e) { std::cout << e.what() << std::endl; }
+	std::ofstream out(outputFile);
+	if (!out.is_open()) {
+		std::cout << "Could not open output file \"" << outputFile << "\"." << std::endl;
+		return 1;
+	}
+
+	// Generate assembly from three address code
+	outputAssembly(instructions, out, tempTicker, labelTicker);
+
+	// Add library functions onto the bottom
+	outputLibraryFuncs(out);
 
 	if (root != nullptr) {
 		root->clear();
@@ -238,17 +247,11 @@ void gen3AC(SyntaxNode* root, std::vector<ThreeAddress>& instructions, unsigned&
 	}
 }
 
-void outputAssembly(std::vector<ThreeAddress>& instructions, const std::string& filename,
+void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
                     unsigned& tempTicker, unsigned& labelTicker) {
-	std::ofstream out(filename);
 	RegisterTable registers = RegisterTable::getMIPSRegisters();
 
 	try {
-		if (!out.is_open()) {
-			std::cout << "Could not open output file \"" << filename << "\"." << std::endl;
-			return;
-		}
-
 		// DATA section (for global/static variables)
 		out << "\t.data\n";
 		for (const ThreeAddress& instruct : instructions) {
@@ -477,4 +480,10 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 	}
 
 	return opReg;
+}
+
+void outputLibraryFuncs(std::ostream& out) {
+	std::ifstream in(libraryFile);
+
+	while (in.good()) { in >> out.rdbuf(); }
 }
