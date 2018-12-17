@@ -389,7 +389,6 @@ void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
 		if (s.itype != Symbol::SymbolType::STRUCT) {
 			s._offset = offset;
 			std::cout << "Offset of " << s << ": " << offset << std::endl;
-			std::cout << "Function: " << scope->func << std::endl;
 			unsigned mult = 1;
 			for (unsigned i : s.v.arrayDimensions) { mult *= i; }
 			offset += mult * s.etype.size();

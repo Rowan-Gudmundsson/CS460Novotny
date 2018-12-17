@@ -1010,7 +1010,7 @@ multiplicative_expression // Node*
 
 cast_expression // Node*
 	: unary_expression { $$ = $1; }
-	| LPAREN type_name RPAREN cast_expression { $$ = new CoercionNode({lineno, currentLine}, $4->etype, *$2, $4); delete $2; }
+	| LPAREN type_name RPAREN cast_expression { $$ = new CoercionNode({lineno, currentLine}, $4->etype, *$2, $4); delete $2; table.mode = Symbol::READ; }
 	;
 
 unary_expression // Node*

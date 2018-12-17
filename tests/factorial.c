@@ -1,11 +1,10 @@
 void printInt(int i);
+int readInt();
+
 int factorial(int n);
 
 int main() {
-	int n = 11;
-	int f = factorial(n);
-
-	printInt(f);
+	printInt(factorial(readInt()));
 }
 
 int factorial(int n) {

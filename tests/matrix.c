@@ -15,22 +15,14 @@ int main() {
 
 	// Read in matrix a
 	for (i = 0; i < 2; i++) {
-		for (j = 0; j < 2; j++) {
-			a[i][j] = readInt();
-			printChar(' ');
-		}
-		printChar('\n');
+		for (j = 0; j < 2; j++) { a[i][j] = readInt(); }
 	}
 
-	printChar('\n');
+	printChar((char) 10);
 
 	// Read in matrix b
 	for (i = 0; i < 2; i++) {
-		for (j = 0; j < 2; j++) {
-			b[i][j] = readInt();
-			printChar(' ');
-		}
-		printChar('\n');
+		for (j = 0; j < 2; j++) { b[i][j] = readInt(); }
 	}
 
 	// c = a b
@@ -47,8 +39,8 @@ int main() {
 	for (i = 0; i < 2; i++) {
 		for (j = 0; j < 2; j++) {
 			printInt(c[i][j]);
-			printChar(' ');
+			printChar((char) 9);
 		}
-		printChar('\n');
+		printChar((char) 10);
 	}
 }

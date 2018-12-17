@@ -67,37 +67,9 @@ void SyntaxNode::semanticCheck() {
 	}
 }
 
-void FunctionCallNode::semanticCheck() {
-	if (children.size() > 0) {
-		SyntaxNode* childPtr = children.front();
-		children.clear();
-		for (SyntaxNode* grandChild : childPtr->children) { children.push_back(grandChild); }
-	}
-
-	SyntaxNode::semanticCheck();
-}
-
 void FunctionNode::semanticCheck() {
 	SyntaxNode::semanticCheck();
 
-	// Replace the symbol references for the function to the defined function reference
-	// for (auto& i : sym->functions) {
-	// 	bool notMatched = false;
-	// 	for (unsigned j = 0; j < i.paramTypes.size(); j++) {
-	// 		if (j > func->paramTypes.size() - 1) {
-	// 			notMatched = true;
-	// 			break;
-	// 		}
-	// 		if (i.paramTypes[j].first != func->paramTypes[j].first) {
-	// 			notMatched = true;
-	// 			break;
-	// 		}
-	// 	}
-	// 	if (!notMatched) {
-	// 		i = *func;
-	// 		std::cout << "Replacing..." << std::endl;
-	// 	}
-	// }
 	// Try and find return statements - make certain they match the function
 	std::queue<SyntaxNode*> check;
 	SyntaxNode* next;
@@ -129,6 +101,21 @@ void FunctionNode::semanticCheck() {
 			}
 		}
 	}
+}
+
+void FunctionCallNode::semanticCheck() {
+	if (children.size() > 0) {
+		SyntaxNode* childPtr = children.front();
+		children.clear();
+		for (SyntaxNode* grandChild : childPtr->children) { children.push_back(grandChild); }
+	}
+
+	SyntaxNode::semanticCheck();
+}
+
+void LoopNode::semanticCheck() {
+	for (SyntaxNode* child : children)
+		if (child != nullptr) child->semanticCheck();
 }
 
 OperatorNode::OperatorNode(const Source& s, EvalType _type, OpType _opType, unsigned n...)
