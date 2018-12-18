@@ -375,14 +375,15 @@ void Symbol::calcStructOffsetsFrom(Scope* scope) {
 }
 
 void Symbol::calcOffsets() {
-	Scope* tmp = head;
+	Scope* tmp      = head;
+	unsigned offset = 0;
 	// Find the root
 	while (tmp->parent != nullptr) { tmp = tmp->parent; }
 
-	for (Scope* s : tmp->children) { calcOffsetsFrom(s, 0); }
+	for (Scope* s : tmp->children) { calcOffsetsFrom(s, offset); }
 }
 
-void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
+void Symbol::calcOffsetsFrom(Scope* scope, unsigned& offset) {
 	if (scope->isStruct) return;
 
 	for (Symbol::SymbolType& s : *scope->tree) {
@@ -401,6 +402,7 @@ void Symbol::calcOffsetsFrom(Scope* scope, unsigned offset) {
 		scope->func->localSize = offset;
 		unsigned tempOffset    = 0;
 		for (SymbolType* sym : scope->func->params) {
+			if (sym == nullptr) continue;
 			sym->_offset = tempOffset;
 			tempOffset += sym->etype.size();
 		}

@@ -212,10 +212,18 @@ public:
 		std::vector<SymbolType*> params;
 		EvalType returnType = EvalType::EVOID;
 		std::string label   = "";
-		unsigned localSize  = 0;  // Size of the locals part of the stack frame (in bytes)
+		unsigned localSize  = -1;  // Size of the locals part of the stack frame (in bytes)
 
 		// Stack frame is local variables + return address + return variable
-		unsigned stackSize() { return localSize + 4 + returnType.size(); }
+		unsigned stackSize() {
+			if (localSize == -1) calcLocalsFromParams();
+			return localSize + 4 + returnType.size();
+		}
+
+		void calcLocalsFromParams() {
+			localSize = 0;
+			for (EvalType& e : paramTypes) localSize += e.size();
+		}
 	};
 
 	struct VarType {
@@ -324,7 +332,7 @@ private:
 	};
 
 	void calcStructOffsetsFrom(Scope* s);
-	void calcOffsetsFrom(Scope* s, unsigned offset);
+	void calcOffsetsFrom(Scope* s, unsigned& offset);
 	void printStructsFrom(Scope* s, std::ostream& out, int& xoffset, bool printedPackage);
 	void clearFrom(Scope* s);
 
