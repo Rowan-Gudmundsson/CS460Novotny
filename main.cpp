@@ -323,6 +323,48 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
 				    << "add\t $sp, $sp, " << instruct.op2.value << '\n'
 				    << "jr\t $ra\n";
 				continue;
+			} else if (instruct.op == "STRUCT_OUT") {
+				RegisterTable::RegisterEntry* size =
+				    registers.getUnusedRegister(Operand{"ITemp", "struct_size"});
+				RegisterTable::RegisterEntry* counter =
+				    registers.getUnusedRegister(Operand{"ITemp", "struct_counter"});
+				RegisterTable::RegisterEntry* src =
+				    registers.getUnusedRegister(Operand{"ITemp", "struct_src_temp"});
+				RegisterTable::RegisterEntry* dest =
+				    registers.getUnusedRegister(Operand{"ITemp", "struct_dest_temp"});
+				RegisterTable::RegisterEntry* tmp =
+				    registers.getUnusedRegister(Operand{"ITemp", "struct_tmp"});
+
+				size->inUse = false;
+				tmp->inUse  = false;
+				src->inUse  = false;
+				dest->inUse = false;
+
+				std::string beginLabel = "loopl" + std::to_string(labelTicker);
+				std::string endLabel   = "loopl" + std::to_string(labelTicker + 1);
+				labelTicker += 2;
+				if (instruct.op1.isLocal()) {
+					out << "li\t" << *src << ", " << instruct.op1.value << std::endl
+					    << "add\t" << *src << ", " << *src << ", $sp\n";
+				}
+				if (instruct.dest.isLocal()) {
+					out << "li\t" << *dest << ", " << instruct.dest.value << std::endl
+					    << "add\t" << *dest << ", " << *dest << ", $sp\n";
+				}
+				out << "li\t" << *counter << ", 0\n"
+				    << "li\t" << *size << ", " << instruct.op2.value << std::endl
+				    << beginLabel << ":\n"
+				    << "bge\t " << *counter << ", " << *size << ", " << endLabel << std::endl
+				    << "lw\t " << *tmp << ", "
+				    << "(" << *src << ")\n"
+				    << "sw\t " << *tmp << ", "
+				    << "(" << *dest << ")\n"
+				    << "addi\t " << *src << ", " << *src << ", 4\n"
+				    << "addi\t " << *dest << ", " << *dest << ", 4\n"
+				    << "addi\t " << *counter << ", " << *counter << ", 4\n"
+				    << "b\t " << beginLabel << std::endl
+				    << endLabel << ":\n";
+				continue;
 			}
 
 			RegisterTable::RegisterEntry* op1Reg = findRegister(instruct.op1, registers, out);

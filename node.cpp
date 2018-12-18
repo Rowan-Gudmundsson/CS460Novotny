@@ -615,29 +615,6 @@ void SyntaxNode::clear() {
 	children.clear();
 }
 
-void assignStruct(std::vector<ThreeAddress>& instructions, const EvalType& etype,
-                  unsigned source_offset, unsigned dest_offset, const std::string& source) {
-	for (Symbol::SymbolType& s : *etype.obj->vars->tree) {
-		if (s.etype.object()) {
-			assignStruct(instructions, s.etype, source_offset + s.offset, dest_offset + s.offset,
-			             source);
-		} else if (s.v.arrayDimensions.size() > 0) {
-			unsigned size    = 1;
-			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
-			for (unsigned i : s.v.arrayDimensions) { size *= i; }
-			for (unsigned i = 0; i < size; i++) {
-				unsigned offset = s.offset + i * s.etype.size();
-				instructions.emplace_back(source, "ASSIGN", Operand{type, source_offset + offset},
-				                          Operand{type, dest_offset + offset});
-			}
-		} else {
-			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
-			instructions.emplace_back(source, "ASSIGN", Operand{type, source_offset + s.offset},
-			                          Operand{type, dest_offset + s.offset});
-		}
-	}
-}
-
 Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
                            unsigned& labelTicker, Symbol::FunctionType* func) {
 	switch (type) {
@@ -646,8 +623,8 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			Operand op1  = children[1]->gen3AC(instructions, tempTicker, labelTicker, func);
 			Operand dest = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 			if (children[1]->etype.object()) {
-				assignStruct(instructions, children[1]->etype, std::stoi(op1.value),
-				             std::stoi(dest.value), source);
+				instructions.emplace_back(source, "STRUCT_OUT", op1,
+				                          Operand{"ICONS", children[1]->etype.size()}, dest);
 			} else {
 				instructions.emplace_back(source, "ASSIGN", op1, dest);
 			}
@@ -748,8 +725,9 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			if (children.size() > 0) {
 				Operand tmp = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
 				if (func->returnType.object()) {
-					returnStruct(instructions, func->returnType, std::stoi(tmp.value),
-					             func->localSize + 4, source);
+					instructions.emplace_back(source, "STRUCT_OUT", tmp,
+					                          Operand{"ICONS", func->returnType.size()},
+					                          Operand{"ILocal", func->localSize + 4});
 				} else {
 					std::string type = func->returnType.integral() ? "ILocal" : "FLocal";
 					instructions.emplace_back(source, "ASSIGN", tmp,
@@ -767,29 +745,6 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				if (c != nullptr) { c->gen3AC(instructions, tempTicker, labelTicker, func); }
 			}
 			return {"ERR", "ERR"};
-		}
-	}
-}
-
-void returnStruct(std::vector<ThreeAddress>& instructions, const EvalType& etype,
-                  unsigned local_offset, unsigned return_offset, const std::string& source) {
-	for (Symbol::SymbolType& s : *etype.obj->vars->tree) {
-		if (s.etype.object()) {
-			returnStruct(instructions, s.etype, local_offset + s.offset, return_offset + s.offset,
-			             source);
-		} else if (s.v.arrayDimensions.size() > 0) {
-			unsigned size    = 1;
-			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
-			for (unsigned i : s.v.arrayDimensions) { size *= i; }
-			for (unsigned i = 0; i < size; i++) {
-				unsigned offset = s.offset + i * s.etype.size();
-				instructions.emplace_back(source, "ASSIGN", Operand{type, local_offset + offset},
-				                          Operand{type, return_offset + offset});
-			}
-		} else {
-			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
-			instructions.emplace_back(source, "ASSIGN", Operand{type, local_offset + s.offset},
-			                          Operand{type, return_offset + s.offset});
 		}
 	}
 }
@@ -1032,29 +987,6 @@ Operand FunctionNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	return {"LABEL", func->label};
 }
 
-void passStruct(std::vector<ThreeAddress>& instructions, const EvalType& etype,
-                unsigned local_offset, unsigned call_offset, const std::string& source) {
-	for (Symbol::SymbolType& s : *etype.obj->vars->tree) {
-		if (s.etype.object()) {
-			passStruct(instructions, s.etype, local_offset + s.offset, call_offset + s.offset,
-			           source);
-		} else if (s.v.arrayDimensions.size() > 0) {
-			unsigned size    = 1;
-			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
-			for (unsigned i : s.v.arrayDimensions) { size *= i; }
-			for (unsigned i = 0; i < size; i++) {
-				unsigned offset = s.offset + i * s.etype.size();
-				instructions.emplace_back(source, "ASSIGN", Operand{type, local_offset + offset},
-				                          Operand{type, call_offset + offset});
-			}
-		} else {
-			std::string type = s.etype.integral() ? "ILocal" : "FLocal";
-			instructions.emplace_back(source, "ASSIGN", Operand{type, local_offset + s.offset},
-			                          Operand{type, call_offset + s.offset});
-		}
-	}
-}
-
 Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
                                  unsigned& labelTicker, Symbol::FunctionType* funcPtr) {
 	if (func->label == "") {
@@ -1074,9 +1006,9 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 	for (unsigned i = 0; i < children.size(); i++) {
 		c = children[i];
 		if (c->etype.object()) {
-			passStruct(instructions, c->etype,
-			           std::stoi(c->gen3AC(instructions, tempTicker, labelTicker, funcPtr).value),
-			           func->params[i]->offset - func->stackSize(), source);
+			instructions.emplace_back(
+			    source, "STRUCT_OUT", c->gen3AC(instructions, tempTicker, labelTicker, funcPtr),
+			    Operand{"ICONS", c->etype.size()}, Operand{"ILocal", offset - func->stackSize()});
 		} else {
 			type        = c->etype.integral() ? "ILocal" : "FLocal";
 			Operand tmp = c->gen3AC(instructions, tempTicker, labelTicker, func);
