@@ -42,7 +42,8 @@ RegisterTable RegisterTable::getMIPSRegisters() {
 
 RegisterTable::RegisterEntry* RegisterTable::getUnusedRegister(const Operand& contents) {
 	RegisterEntry::Type t = (contents.isFloat() ? RegisterEntry::FLOAT : RegisterEntry::INT);
-	bool temporary        = contents.isTemp() || contents.isConst() || contents.isIndr();
+	bool temporary =
+	    contents.isTemp() || contents.isConst() || contents.isIndr() || contents.isPtr();
 
 	// First search for a register matching the temporary-ness
 	for (RegisterEntry& reg : registers) {

@@ -27,6 +27,7 @@ struct Operand {
 	bool isConst() const { return !type.empty() && !type.compare(1, std::string::npos, "CONS"); }
 	bool isLocal() const { return !type.empty() && !type.compare(1, std::string::npos, "Local"); }
 	bool isIndr() const { return !type.empty() && !type.compare(1, std::string::npos, "INDR"); }
+	bool isPtr() const { return type == "PTR"; }
 
 	bool operator==(const Operand& other) { return (type == other.type) && (value == other.value); }
 };

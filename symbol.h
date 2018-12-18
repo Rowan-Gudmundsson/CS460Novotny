@@ -214,10 +214,11 @@ public:
 		std::string label   = "";
 		unsigned localSize  = -1;  // Size of the locals part of the stack frame (in bytes)
 
-		// Stack frame is local variables + return address + return variable
+		// Stack frame is local variables + return address + address of return value
 		unsigned stackSize() {
 			if (localSize == -1) calcLocalsFromParams();
-			return localSize + 4 + returnType.size();
+			if (localSize < returnType.size()) localSize = returnType.size();
+			return localSize + 4 + 4;
 		}
 
 		void calcLocalsFromParams() {

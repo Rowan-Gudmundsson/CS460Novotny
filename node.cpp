@@ -724,19 +724,30 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 		case RETURN: {
 			if (children.size() > 0) {
 				Operand tmp = children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
-				if (func->returnType.object()) {
-					instructions.emplace_back(source, "STRUCT_OUT", tmp,
-					                          Operand{"ICONS", func->returnType.size()},
+				// If the return type is aready local, we're good
+				if (tmp.isLocal()) {
+					instructions.emplace_back(source, "ASSIGN", Operand{"ICONS", tmp.value},
+					                          Operand{"ITemp", tempTicker});
+					instructions.emplace_back(source, "OFFSET", Operand{"ITemp", tempTicker});
+					instructions.emplace_back(source, "ASSIGN", Operand{"ITemp", tempTicker},
 					                          Operand{"ILocal", func->localSize + 4});
+					tempTicker++;
+
+					// If it's already a ptr op, just copy forward
+				} else if (tmp.isPtr()) {
+					instructions.emplace_back(source, "ASSIGN", Operand{"ILocal", tmp.value},
+					                          Operand{"ILocal", func->localSize + 4});
+					// Otherwise assign to a local and give that address
 				} else {
-					std::string type = func->returnType.integral() ? "ILocal" : "FLocal";
-					instructions.emplace_back(source, "ASSIGN", tmp,
-					                          Operand{type, func->localSize + 4});
+					instructions.emplace_back(source, "ASSIGN", tmp, Operand{"ILocal", 0});
+					instructions.emplace_back(source, "ASSIGN", Operand{"ICONS", 0},
+					                          Operand{"ITemp", tempTicker});
+					instructions.emplace_back(source, "OFFSET", Operand{"ITemp", tempTicker});
+					instructions.emplace_back(source, "ASSIGN", Operand{"ITemp", tempTicker},
+					                          Operand{"ILocal", func->localSize + 4});
 				}
 			}
 
-			instructions.emplace_back(source, "RETURN", Operand{"ICONS", func->localSize},
-			                          Operand{"ICONS", func->stackSize()}, Operand{"", ""});
 			return {"ERR", "ERR"};
 			break;
 		}
@@ -1021,10 +1032,7 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 	}
 
 	instructions.emplace_back(source, "CALL", Operand{"", ""}, Operand{"LABEL", func->label});
-	if (func->returnType.floating())
-		return {"FLocal", -func->returnType.size()};
-	else
-		return {"ILocal", -func->returnType.size()};
+	return {"PTR", -4};
 }
 
 Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
