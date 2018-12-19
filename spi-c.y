@@ -1168,9 +1168,11 @@ unary_expression: postfix_expression { // Node*
 	| unary_operator cast_expression {
 		EvalType _type;
 		switch($1) {
-			case OperatorNode::OBAND:
+			case OperatorNode::OREF:
 				_type = $2->etype;
+				std::cout << "OLD TYPE: " << _type << std::endl;
 				_type.operator++();
+				std::cout << "NEW TYPE: " << _type << std::endl;
 				break;
 			case OperatorNode::ODEREF:
 				_type = $2->etype;
@@ -1270,7 +1272,13 @@ postfix_expression: primary_expression { // Node*
 			paramTypes.push_back(i->etype);
 		}
 
+		std::cout << "PARAM TYPES: ";
+		for (const auto& i : paramTypes) { std::cout << i << "; "; }
+		std::cout << std::endl;
 		for (auto& f : tmp->sym->functions) {
+			std::cout << "FUNCTION TYPES: ";
+			for (const auto& i : f.paramTypes) { std::cout << i << "; "; }
+			std::cout << std::endl;
 			if (f.paramTypes == paramTypes) {
 				$$ = new FunctionCallNode({lineno, currentLine}, tmp->sym, &f, $3);
 				break;
@@ -1290,9 +1298,14 @@ postfix_expression: primary_expression { // Node*
 		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $4->etype, 2, $1, $4);
 		table.setCurrentObject(nullptr);
 	}
-	| postfix_expression PTR_OP identifier {
-		OperatorNode* tmp = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::ODEREF, 1, $1);
-		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $3->etype, 2, tmp, $3);
+	| postfix_expression PTR_OP {
+		if ($1->etype.type != EvalType::OBJECT || $1->etype.pointer() != 1) {
+			throw ParserError("Attempted to use '->' operator on non-object or non pointer type.");
+		}
+		table.setCurrentObject($1->etype.obj);
+	} identifier {
+		OperatorNode* tmp = new OperatorNode({lineno, currentLine}, --($1->etype), OperatorNode::ODEREF, 1, $1);
+		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $4->etype, 2, tmp, $4);
 		table.setCurrentObject(nullptr);
 	}
 	| postfix_expression INC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OINCPOST, 1, $1); }

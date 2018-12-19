@@ -13,15 +13,9 @@ struct Vec3 readVec();
 void writeVec(struct Vec3 v);
 
 void main(void) {
-	// void (*foo)(int) = &printInt;
 	struct Vec3 vec;
-	const char* foo = "Hello world!";
 
-	printString(foo);
-
-	printChar('v');
-	printChar(':');
-	printChar((char) 10);
+	printString("v:\n");
 
 	vec = readVec();
 	writeVec(vec);
@@ -39,11 +33,9 @@ struct Vec3 readVec() {
 void writeVec(struct Vec3 v) {
 	printChar('<');
 	printInt(v.x);
-	printChar(',');
-	printChar(' ');
+	printString(", ");
 	printInt(v.y);
-	printChar(',');
-	printChar(' ');
+	printString(", ");
 	printInt(v.z);
 	printChar('>');
 	printChar((char) 10);

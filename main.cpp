@@ -397,6 +397,8 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
 					destReg->inUse = false;
 					destReg        = op1Reg;
 					destReg->inUse = false;
+				} else if (instruct.dest.isAddr()) {
+					destReg->inUse = false;
 				} else {
 					if (instruct.dest.isFloat() == instruct.op1.isFloat()) {
 						out << "move\t " << *destReg << ", " << *op1Reg;
@@ -490,6 +492,13 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
 					out << "sw\t ";
 
 				out << *destReg << ", " << *indrDestReg << '\n';
+			} else if (!instruct.dest.type.empty() && instruct.dest.isAddr()) {
+				if (instruct.op1.isFloat())
+					out << "s.s\t ";
+				else
+					out << "sw\t ";
+
+				out << *op1Reg << ", (" << *destReg << ")\n";
 			}
 		}
 	} catch (const std::exception& e) {
@@ -506,7 +515,17 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 		opReg = registers.getUnusedRegister(op);
 		if (opReg == nullptr) return nullptr;
 
-		if (op.isLocal() && !isDest) {
+		if (op.isAddr()) {
+			opReg = registers.findLocation(Operand{"ITemp", op.value});
+			if (opReg == nullptr) { throw "Cannot find address register"; }
+			if (!isDest) {
+				if (op.isFloat())
+					out << "l.s\t ";
+				else
+					out << "lw\t ";
+				out << *opReg << ", (" << *opReg << ")\n";
+			}
+		} else if (op.isLocal() && !isDest) {
 			if (op.isFloat())
 				out << "l.s\t ";
 			else

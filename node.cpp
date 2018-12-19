@@ -716,6 +716,9 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 			return {"ERR", "ERR"};
 		}
 		case STRUCT_ACCESS: {
+			if (children[0]->type == SyntaxNode::OPERATOR) {
+				return children[0]->gen3AC(instructions, tempTicker, labelTicker, func);
+			}
 			if (((IdentifierNode*) children[1])->sym->etype.floating())
 				return {"FLocal", ((IdentifierNode*) children[0])->sym->offset +
 				                      ((IdentifierNode*) children[1])->sym->offset};
@@ -948,15 +951,19 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			break;
 		}
 		case ODEREF: {
-			if (lhs.isLocal()) {
-				return Operand{"PTR", lhs.value};
-			} else if (lhs.isIndr()) {
-				instructions.emplace_back(source, "ASSIGN", lhs, Operand{"ITemp", tempTicker});
-				tempTicker++;
-				return Operand{"IINDR", tempTicker - 1};
-			} else {
-				return Operand{lhs.isFloat() ? "FINDR" : "IINDR", lhs.value};
-			}
+			instructions.emplace_back(source, "ASSIGN", lhs, Operand{"ITemp", tempTicker});
+			tempTicker++;
+			std::string type = children[0]->etype.type == EvalType::FLOATING ? "FADDR" : "IADDR";
+			return Operand{type, tempTicker - 1};
+			// if (lhs.isLocal()) {
+			// 	return Operand{"PTR", lhs.value};
+			// } else if (lhs.isIndr()) {
+			// 	instructions.emplace_back(source, "ASSIGN", lhs, Operand{"ITemp", tempTicker});
+			// 	tempTicker++;
+			// 	return Operand{"IINDR", tempTicker - 1};
+			// } else {
+			// 	return Operand{lhs.isFloat() ? "FINDR" : "IINDR", lhs.value};
+			// }
 			break;
 		}
 	}

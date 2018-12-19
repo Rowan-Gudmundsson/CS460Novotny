@@ -2,10 +2,11 @@ void printChar(char);
 void printString(const char* string);
 int readInt();
 void printInt(int);
-
 typedef struct foo {
 	int x;
 } Foo;
+
+void blah(Foo* bar);
 
 int main() {
 	int arr[100];
@@ -14,11 +15,11 @@ int main() {
 	unsigned upperBound, currentIndex;
 	int* j;
 	Foo z;
+	Foo* w;
 
-	j   = &z.x;
-	z.x = 5;
-
-	printInt(*j);
+	z.x = 14;
+	blah(&z);
+	printChar((char) 10);
 
 	printString("# of elements: ");
 
@@ -50,4 +51,8 @@ int main() {
 		printInt(arr[i]);
 		printChar(' ');
 	}
+}
+
+void blah(Foo* bar) {
+	printInt(bar->x);
 }
