@@ -185,7 +185,7 @@ void outputTreeToFile(SyntaxNode* root, Symbol& table, const std::string& filena
 		std::stringstream ss;
 		ss << root;
 		// Sanitize underscores
-		std::string s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+		std::string s = std::regex_replace(ss.str(), std::regex("_|%|&|#"), "\\$&");
 		treeFile << s << std::endl;
 		treeFile << "\n\\end{tikzpicture}\n"
 		         << "\\]\n"
@@ -194,7 +194,7 @@ void outputTreeToFile(SyntaxNode* root, Symbol& table, const std::string& filena
 		         << "\\begin{tikzpicture}\n";
 		ss.str("");
 		table.printStructs(ss);
-		s = std::regex_replace(ss.str(), std::regex("_|%"), "\\$&");
+		s = std::regex_replace(ss.str(), std::regex("_|%|&|#"), "\\$&");
 		treeFile << s << std::endl;
 		treeFile << "\\end{tikzpicture}\n"
 		         << "\\]\n"

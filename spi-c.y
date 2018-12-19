@@ -161,17 +161,17 @@ declaration: declaration_specifiers SEMI { // Node*
 		for (auto i : $2->children) {
 			if (i->type == SyntaxNode::Type::IDENTIFIER) {
 				IdentifierNode* tmp = (IdentifierNode*)i;
-				tmp->etype = tmp_type;
+				tmp->etype |= tmp_type;
 				tmp->sym->etype |= tmp_type;
 				tmp->sym->itype = Symbol::SymbolType::VARIABLE;
 			} else if (i->type == SyntaxNode::Type::DECLARE_AND_INIT) {
 				IdentifierNode* tmp = (IdentifierNode*)i->children[0];
-				tmp->etype = tmp_type;
-				tmp->sym->etype = tmp_type;
+				tmp->etype |= tmp_type;
+				tmp->sym->etype |= tmp_type;
 				tmp->sym->itype = Symbol::SymbolType::VARIABLE;
 			} else if (i->type == SyntaxNode::Type::FUNCTION) {
 				FunctionNode* tmp = (FunctionNode*)i;
-				tmp->etype = tmp_type;
+				tmp->etype |= tmp_type;
 				tmp->func->returnType = tmp_type;
 				tmp->sym->itype = Symbol::SymbolType::FUNCTION;
 			} else {
@@ -442,7 +442,10 @@ declarator: direct_declarator { // Node*
 		$$ = $2;
 		if ($$->type == SyntaxNode::IDENTIFIER) {
 			IdentifierNode* tmp = (IdentifierNode*)$$;
-			tmp->sym->etype =  tmp->sym->etype | *$1;
+			tmp->sym->etype |= *$1;
+			tmp->etype = tmp->sym->etype;
+			std::cout << "POINTER ETYPE: " << *$1 << std::endl;
+			std::cout << "ID TYPE: " << tmp->etype << std::endl;
 		} else {
 			throw "Error pointer";
 		}
@@ -547,6 +550,7 @@ direct_declarator: identifier { // Node*
 				Symbol::FunctionType f;
 				f.name = ((IdentifierNode*) $1)->sym->name;
 				f.paramTypes = $3->first;
+				std::cout << std::endl;
 				f.params = $3->second;
 				inode->sym->functions.push_back(f);
 				fnode = new FunctionNode({lineno, currentLine}, inode, &inode->sym->functions.back());
@@ -570,11 +574,27 @@ direct_declarator: identifier { // Node*
 	}
 	;
 
-pointer // Identifier node
-	: MULT { $$ = new EvalType(); $$->operator++(); }
-	| MULT type_qualifier_list { $$ = new EvalType(); $$->operator++(); /* TODO: figure this out */ }
-	| MULT pointer { $$ = $2; $$->operator++(); }
-	| MULT type_qualifier_list pointer { $$ = $3; $$->operator++(); /* TODO: figure this out */ }
+pointer: MULT { // EvalType*
+		$$ = new EvalType();
+		$$->operator++();
+	}
+	| MULT type_qualifier_list {
+		// TODO: figure this out
+		$$ = new EvalType();
+		$$->operator++();
+
+	}
+	| MULT pointer {
+		$$ = $2;
+		$$->operator++();
+
+	}
+	| MULT type_qualifier_list pointer {
+		// TODO: figure this out
+		$$ = $3;
+		$$->operator++();
+
+	}
 	;
 
 type_qualifier_list // TypeQualifier
@@ -607,8 +627,9 @@ parameter_list // std::pair<std::vector<EvalType>, std::vector<Symbol::SymbolTyp
 parameter_declaration // std::pair<EvalType*, Symbol::SymbolType*>*
 	: declaration_specifiers declarator {
 		IdentifierNode* tmp = (IdentifierNode*)$2;
-		tmp->sym->etype = *$1;
-		$$ = new std::pair<EvalType, Symbol::SymbolType*>(*$1, tmp->sym);
+		tmp->sym->etype = *$1 | tmp->sym->etype;
+		tmp->etype = tmp->sym->etype;
+		$$ = new std::pair<EvalType, Symbol::SymbolType*>(tmp->etype, tmp->sym);
 	}
 	| declaration_specifiers {
 		$$ = new std::pair<EvalType, Symbol::SymbolType*>(*$1, nullptr);
@@ -1112,25 +1133,27 @@ multiplicative_expression // Node*
 	}
 	;
 
-cast_expression // Node*
-	: unary_expression { $$ = $1; }
+cast_expression: unary_expression { // Node*
+		$$ = $1;
+	}
 	| LPAREN type_name {table.mode = Symbol::READ;} RPAREN cast_expression { $$ = new CoercionNode({lineno, currentLine}, $5->etype, *$2, $5); delete $2; }
 	;
 
-unary_expression // Node*
-	: postfix_expression { $$ = $1; }
+unary_expression: postfix_expression { // Node*
+		$$ = $1;
+	}
 	| INC_OP unary_expression { $$ = new OperatorNode({lineno, currentLine}, $2->etype, OperatorNode::OINC, 1, $2); }
 	| DEC_OP unary_expression { $$ = new OperatorNode({lineno, currentLine}, $2->etype, OperatorNode::ODEC, 1, $2); }
 	| unary_operator cast_expression {
 		EvalType _type;
 		switch($1) {
 			case OperatorNode::OBAND:
-				_type = EvalType::EINT;
+				_type = $2->etype;
+				_type.operator++();
 				break;
 			case OperatorNode::ODEREF:
-				throw ParserError("Not handling pointer dereferencing.");
 				_type = $2->etype;
-				--_type;
+				_type.operator--();
 				break;
 			case OperatorNode::OADD:
 				throw ParserError("Not handling the unary '+' operator");
@@ -1161,8 +1184,9 @@ unary_operator // OperatorNode::OpType
 	| LNOT { $$ = OperatorNode::OLNOT; }
 	;
 
-postfix_expression // Node*
-	: primary_expression { $$ = $1; }
+postfix_expression: primary_expression { // Node*
+		$$ = $1;
+	}
 	| postfix_expression LBRACKET expression RBRACKET {
 		if ($1->type == SyntaxNode::ACCESS) {
 			if ($1->children[0]->type == SyntaxNode::IDENTIFIER) {
@@ -1171,6 +1195,7 @@ postfix_expression // Node*
 				}
 				$1->children.push_back($3);
 				$$ = $1;
+				$$->etype.operator--();
 			} else if ($1->children[0]->type == SyntaxNode::STRUCT_ACCESS) {
 				if (((IdentifierNode*) $1->children[0]->children[1])->sym->v.arrayDimensions.size() < $1->children[0]->children.size()) {
 					throw ParserError("Array dimensions not large enough for level of dereference");
@@ -1178,6 +1203,7 @@ postfix_expression // Node*
 
 				$1->children.push_back($3);
 				$$ = $1;
+				$$->etype.operator--();
 			}
 
 		} else if ($1->type == SyntaxNode::IDENTIFIER) {
@@ -1186,6 +1212,7 @@ postfix_expression // Node*
 			}
 
 			$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::ACCESS, $1->etype, 2, $1, $3);
+			$$->etype.operator--();
 		} else if ($1->type == SyntaxNode::STRUCT_ACCESS) {
 			if(((IdentifierNode*) $1->children[1])->sym->v.arrayDimensions.size() == 0) {
 				throw ParserError("Trying to dereference variable of non-pointer type");
@@ -1218,7 +1245,7 @@ postfix_expression // Node*
 		IdentifierNode* tmp = (IdentifierNode*)$1;
 		$$ = nullptr;
 		std::vector<EvalType> paramTypes;
-		for (auto i : $3->children) {
+		for (const auto& i : $3->children) {
 			paramTypes.push_back(i->etype);
 		}
 
@@ -1242,7 +1269,11 @@ postfix_expression // Node*
 		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $4->etype, 2, $1, $4);
 		table.setCurrentObject(nullptr);
 	}
-	| postfix_expression PTR_OP identifier { /* TODO(Rowan) -- Fix later */ $$ = nullptr; throw ParserError("Not handling the '->' operator."); }
+	| postfix_expression PTR_OP identifier {
+		OperatorNode* tmp = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::ODEREF, 1, $1 });
+		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $3->etype, 2, tmp, $3);
+		table.setCurrentObject(nullptr);
+	}
 	| postfix_expression INC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::OINCPOST, 1, $1); }
 	| postfix_expression DEC_OP { $$ = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::ODECPOST, 1, $1); }
 	;

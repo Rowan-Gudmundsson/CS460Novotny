@@ -24,10 +24,10 @@ std::ostream& operator<<(std::ostream& out, const EvalType& a) {
 	switch (a.type) {
 		case EvalType::UNKNOWN:
 			out << "unknown";
-			return out;
+			break;
 		case EvalType::VOID:
 			out << "void";
-			return out;
+			break;
 		case EvalType::CHARACTER:
 			if (!a.sign) out << "unsigned ";
 			out << "char";

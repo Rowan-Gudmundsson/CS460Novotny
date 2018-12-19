@@ -75,13 +75,13 @@ public:
 			}
 		}
 
-		EvalType re(*this);
-		std::cout << *this << " and " << other << std::endl;
+		EvalType re;
 		re.type   = (type == UNKNOWN) ? other.type : type;
 		re.sign   = sign || other.sign;
 		re.length = (length == NORMAL) ? other.length : length;
 		re.obj    = (obj == nullptr) ? other.obj : obj;
 		re.qualifiers.assign(qualifiers.begin(), qualifiers.end());
+
 		re.qualifiers.insert(re.qualifiers.end(), other.qualifiers.begin() + 1,
 		                     other.qualifiers.end());
 

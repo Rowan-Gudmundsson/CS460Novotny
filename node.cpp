@@ -1020,12 +1020,13 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 	unsigned offset = 0;
 	for (unsigned i = 0; i < children.size(); i++) {
 		c = children[i];
+		std::cout << c->type << std::endl;
+		std::cout << c->etype << std::endl;
 		if (c->etype.object()) {
 			instructions.emplace_back(
 			    source, "STRUCT_OUT", c->gen3AC(instructions, tempTicker, labelTicker, funcPtr),
 			    Operand{"ICONS", c->etype.size()}, Operand{"ILocal", offset - func->stackSize()});
 		} else {
-			std::cout << c->etype << std::endl;
 			type        = c->etype.integral() || c->etype.pointer() ? "ILocal" : "FLocal";
 			Operand tmp = c->gen3AC(instructions, tempTicker, labelTicker, func);
 

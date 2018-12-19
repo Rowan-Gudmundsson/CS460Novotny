@@ -1,4 +1,5 @@
 void printChar(char);
+void printString(const char* string);
 int readInt();
 void printInt(int);
 
@@ -6,40 +7,16 @@ int main() {
 	int arr[100];
 	int n, i, swapTemp;
 	unsigned upperBound, currentIndex;
+	int* j;
 
-	printChar('#');
-	printChar(' ');
-	printChar('o');
-	printChar('f');
-	printChar(' ');
-	printChar('e');
-	printChar('l');
-	printChar('e');
-	printChar('m');
-	printChar('e');
-	printChar('n');
-	printChar('t');
-	printChar('s');
-	printChar(':');
-	printChar(' ');
+	j = &n;
+
+	printString("# of elements: ");
 
 	// Read in # of elements
 	n = readInt();
 
-	printChar('i');
-	printChar('n');
-	printChar('p');
-	printChar('u');
-	printChar('t');
-	printChar(' ');
-	printChar('v');
-	printChar('a');
-	printChar('l');
-	printChar('u');
-	printChar('e');
-	printChar('s');
-	printChar(':');
-	printChar((char) 10);
+	printString("input values:\n");
 
 	// Read in values
 	for (i = 0; i < n && i < 100; i++) { arr[i] = readInt(); }
