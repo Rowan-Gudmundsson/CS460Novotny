@@ -2,26 +2,26 @@ int readInt();
 void printInt(int);
 void printChar(char);
 
-struct Matrix {
+typedef struct MatrixStruct {
 	int entries[5][5];
 	unsigned rows;
 	unsigned columns;
-};
+} Matrix;
 
-int determinant(struct Matrix);
-struct Matrix readMatrix();
-void printMatrix(struct Matrix m);
-struct Matrix minor(struct Matrix, int, int);
+int determinant(Matrix);
+Matrix readMatrix();
+void printMatrix(Matrix m);
+Matrix minor(Matrix, int, int);
 
 int main() {
-	struct Matrix m;
+	Matrix m;
 	int i;
 
 	printInt(determinant(readMatrix()));
 }
 
-struct Matrix readMatrix() {
-	struct Matrix m;
+Matrix readMatrix() {
+	Matrix m;
 	int i, j;
 
 	printChar('E');
@@ -79,7 +79,7 @@ struct Matrix readMatrix() {
 	return m;
 }
 
-int determinant(struct Matrix m) {
+int determinant(Matrix m) {
 	unsigned det = 0;
 	int i, j, ticker = 1;
 
@@ -96,7 +96,7 @@ int determinant(struct Matrix m) {
 	return det;
 }
 
-struct Matrix minor(struct Matrix m, int i, int j) {
+Matrix minor(Matrix m, int i, int j) {
 	int a, b;
 	for (a = 0; a < m.rows; a++) {
 		for (b = 0; b < m.columns; b++) {
@@ -119,7 +119,7 @@ struct Matrix minor(struct Matrix m, int i, int j) {
 	return m;
 }
 
-void printMatrix(struct Matrix m) {
+void printMatrix(Matrix m) {
 	int i, j;
 	for (i = 0; i < m.rows && i < 5; i++) {
 		for (j = 0; j < m.columns && j < 5; j++) {

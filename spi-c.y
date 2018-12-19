@@ -158,28 +158,45 @@ declaration: declaration_specifiers SEMI { // Node*
 		*/
 		EvalType tmp_type = *$1;
 
-		for (auto i : $2->children) {
-			if (i->type == SyntaxNode::Type::IDENTIFIER) {
-				IdentifierNode* tmp = (IdentifierNode*)i;
-				tmp->etype = tmp_type;
-				tmp->sym->etype |= tmp_type;
-				tmp->sym->itype = Symbol::SymbolType::VARIABLE;
-			} else if (i->type == SyntaxNode::Type::DECLARE_AND_INIT) {
-				IdentifierNode* tmp = (IdentifierNode*)i->children[0];
-				tmp->etype = tmp_type;
-				tmp->sym->etype = tmp_type;
-				tmp->sym->itype = Symbol::SymbolType::VARIABLE;
-			} else if (i->type == SyntaxNode::Type::FUNCTION) {
-				FunctionNode* tmp = (FunctionNode*)i;
-				tmp->etype = tmp_type;
-				tmp->func->returnType = tmp_type;
-				tmp->sym->itype = Symbol::SymbolType::FUNCTION;
-			} else {
-				std::cout << "Found type: " << i->type << std::endl;
-				throw ParserError("001: Expected type IDENTIFIER, FUNCTION, or DECLARE_AND_INIT");
+		if($1->isTypeDef) {
+			tmp_type.isTypeDef = false;
+			for (auto i : $2->children) {
+				if (i->type == SyntaxNode::Type::IDENTIFIER) {
+					IdentifierNode* tmp = (IdentifierNode*)i;
+					tmp->etype = tmp_type;
+					tmp->sym->etype = tmp_type;
+					tmp->sym->itype = Symbol::SymbolType::TYPEDEF;
+				}  else {
+					std::cout << "Found type: " << i->type << std::endl;
+					throw ParserError("Expected type IDENTIFIER for typedef");
+				}
 			}
+
+			$$ = nullptr;
+		} else {
+			for (auto i : $2->children) {
+				if (i->type == SyntaxNode::Type::IDENTIFIER) {
+					IdentifierNode* tmp = (IdentifierNode*)i;
+					tmp->etype = tmp_type;
+					tmp->sym->etype |= tmp_type;
+					tmp->sym->itype = Symbol::SymbolType::VARIABLE;
+				} else if (i->type == SyntaxNode::Type::DECLARE_AND_INIT) {
+					IdentifierNode* tmp = (IdentifierNode*)i->children[0];
+					tmp->etype = tmp_type;
+					tmp->sym->etype = tmp_type;
+					tmp->sym->itype = Symbol::SymbolType::VARIABLE;
+				} else if (i->type == SyntaxNode::Type::FUNCTION) {
+					FunctionNode* tmp = (FunctionNode*)i;
+					tmp->etype = tmp_type;
+					tmp->func->returnType = tmp_type;
+					tmp->sym->itype = Symbol::SymbolType::FUNCTION;
+				} else {
+					std::cout << "Found type: " << i->type << std::endl;
+					throw ParserError("001: Expected type IDENTIFIER, FUNCTION, or DECLARE_AND_INIT");
+				}
+			}
+			$$ = $2;
 		}
-		$$ = $2;
 	}
 	;
 
@@ -221,23 +238,27 @@ declaration_specifiers: storage_class_specifier { // EvalType*
 
 storage_class_specifier: AUTO { // EvalType*
 		// TODO Actually do this
+		throw ParserError("We don't handle auto");
 		$$ = new EvalType(EvalType::EVOID);
 	}
 	| REGISTER {
 		// TODO Actually do this
+		throw ParserError("We don't handle register");
 		$$ = new EvalType(EvalType::EVOID);
 	}
 	| STATIC {
 		// TODO Actually do this
+		throw ParserError("We don't handle static");
 		$$ = new EvalType(EvalType::EVOID);
 	}
 	| EXTERN {
 		// TODO Actually do this
+		throw ParserError("We don't handle extern");
 		$$ = new EvalType(EvalType::EVOID);
 	}
 	| TYPEDEF {
-		// TODO Actually do this
-		$$ = new EvalType(EvalType::EVOID);
+		$$ = new EvalType();
+		$$->isTypeDef = true;
 	}
 	;
 
@@ -283,8 +304,8 @@ type_specifier: VOID { // EvalType*
 	}
 	| TYPEDEF_NAME {
 		table.mode = Symbol::Mode::WRITE;
-		// TODO Actually do this
-		$$ = new EvalType(EvalType::EVOID);
+		std::cout << yylval.sval->etype << std::endl;
+		$$ = new EvalType(yylval.sval->etype);
 	}
 	;
 

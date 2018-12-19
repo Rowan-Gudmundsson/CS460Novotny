@@ -41,6 +41,8 @@ public:
 		Qualifier(const Qualifier& q) : cons(q.cons), volatil(q.volatil) {}
 	};
 
+	bool isTypeDef = false;
+
 	// There need to be qualifiers for EACH level of indirection
 	// E.g. const int const * * const *
 	std::vector<Qualifier> qualifiers;
@@ -77,10 +79,11 @@ public:
 
 		EvalType re(*this);
 		std::cout << *this << " and " << other << std::endl;
-		re.type   = (type == UNKNOWN) ? other.type : type;
-		re.sign   = sign || other.sign;
-		re.length = (length == NORMAL) ? other.length : length;
-		re.obj    = (obj == nullptr) ? other.obj : obj;
+		re.type      = (type == UNKNOWN) ? other.type : type;
+		re.sign      = sign || other.sign;
+		re.length    = (length == NORMAL) ? other.length : length;
+		re.obj       = (obj == nullptr) ? other.obj : obj;
+		re.isTypeDef = isTypeDef | other.isTypeDef;
 		re.qualifiers.assign(qualifiers.begin(), qualifiers.end());
 		re.qualifiers.insert(re.qualifiers.end(), other.qualifiers.begin() + 1,
 		                     other.qualifiers.end());

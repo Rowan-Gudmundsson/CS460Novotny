@@ -202,6 +202,10 @@ SCOMMENT \/\/.*\n
 			throw ScannerError("Undeclared Reference");
 		}
 
+		if(idPtr->itype == Symbol::SymbolType::TYPEDEF) {
+			yylval.sval = idPtr;
+			RETURN_TOKEN(TYPEDEF_NAME);
+		}
 	} else if (table.mode == Symbol::Mode::WRITE) {
 		idPtr = table.findInCurrentScope(varName);
 		Symbol::SymbolType* shadowIdPtr = table.find(varName);
@@ -211,11 +215,17 @@ SCOMMENT \/\/.*\n
 				// TODO - figure out what to put here, if anything
 				// idPtr->functionDefLine = lineno;
 				// idPtr->functionDefCol = column;
+			} else if(idPtr->itype == Symbol::SymbolType::TYPEDEF) {
+				yylval.sval = idPtr;
+				RETURN_TOKEN(TYPEDEF_NAME);
 			} else {
 				throw ScannerError("Variable redeclaration");
 			}
 		} else if(shadowIdPtr != nullptr && shadowIdPtr->itype == Symbol::SymbolType::STRUCT) {
 			idPtr = shadowIdPtr;
+		} else if(shadowIdPtr != nullptr && shadowIdPtr->itype == Symbol::SymbolType::TYPEDEF) {
+			yylval.sval = shadowIdPtr;
+			RETURN_TOKEN(TYPEDEF_NAME);
 		} else {
 			if (shadowIdPtr != nullptr) {
 				throwWarning("Variable \""s + varName + "\" shadows variable declared on line "s + std::to_string(shadowIdPtr->lineNumber));
