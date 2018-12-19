@@ -398,10 +398,12 @@ std::ostream& operator<<(std::ostream& out, const SyntaxNode& n) {
 }
 
 std::ostream& operator<<(std::ostream& out, const ConstantNode& n) {
-	if (n.etype.type == EvalType::CHARACTER) {
+	if (n.etype == EvalType::ESTRING) {
+		std::cout << "It's a beautiful baby string! " << *n.s << std::endl;
+		out << "\"" << *n.s << "\"";
+	} else if (n.etype.type == EvalType::CHARACTER) {
+		std::cout << "It's a character? " << n.s << std::endl;
 		out << '\'' << (char) (n.i) << '\'';
-	} else if (n.etype == EvalType::ESTRING) {
-		out << '\"' << *n.s << '\"';
 	} else if (n.etype.integral()) {
 		out << n.i;
 	} else if (n.etype.floating()) {
@@ -1023,7 +1025,8 @@ Operand FunctionCallNode::gen3AC(std::vector<ThreeAddress>& instructions, unsign
 			    source, "STRUCT_OUT", c->gen3AC(instructions, tempTicker, labelTicker, funcPtr),
 			    Operand{"ICONS", c->etype.size()}, Operand{"ILocal", offset - func->stackSize()});
 		} else {
-			type        = c->etype.integral() ? "ILocal" : "FLocal";
+			std::cout << c->etype << std::endl;
+			type        = c->etype.integral() || c->etype.pointer() ? "ILocal" : "FLocal";
 			Operand tmp = c->gen3AC(instructions, tempTicker, labelTicker, func);
 
 			instructions.emplace_back(source, "ASSIGN", tmp,
@@ -1079,7 +1082,14 @@ Operand LoopNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& temp
 
 Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& tempTicker,
                              unsigned& labelTicker, Symbol::FunctionType* func) {
-	if (etype.integral()) {
+	if (etype == EvalType::ESTRING) {
+		std::string label = "sconst" + std::to_string(labelTicker);
+		labelTicker++;
+		instructions.insert(instructions.begin(),
+		                    ThreeAddress{source, "GLOBAL", Operand{"LABEL", label},
+		                                 Operand{"SCONS", "\"" + *s + "\""}, Operand{"", ""}});
+		return {"SCONS", label};
+	} else if (etype.integral()) {
 		return {"ICONS", (int) i};
 	} else if (etype.floating()) {
 		std::string label = "fconst" + std::to_string(labelTicker);
@@ -1088,13 +1098,6 @@ Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 		                    ThreeAddress{source, "GLOBAL", Operand{"LABEL", label},
 		                                 Operand{"FCONS", f}, Operand{"", ""}});
 		return {"FCONS", label};
-	} else if (etype.string()) {
-		std::string label = "sconst" + std::to_string(labelTicker);
-		labelTicker++;
-		instructions.insert(instructions.begin(),
-		                    ThreeAddress{source, "GLOBAL", Operand{"LABEL", label},
-		                                 Operand{"SCONS", *s}, Operand{"", ""}});
-		return {"SCONS", label};
 	}
 }
 

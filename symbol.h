@@ -43,7 +43,7 @@ public:
 
 	// There need to be qualifiers for EACH level of indirection
 	// E.g. const int const * * const *
-	std::vector<Qualifier> qualifiers = std::vector<Qualifier>(1);
+	std::vector<Qualifier> qualifiers;
 
 	// Keep track of the level of indirection
 	unsigned pointer() const { return qualifiers.size() - 1; }
@@ -75,15 +75,22 @@ public:
 			}
 		}
 
-		EvalType re;
+		EvalType re(*this);
+		std::cout << *this << " and " << other << std::endl;
 		re.type   = (type == UNKNOWN) ? other.type : type;
 		re.sign   = sign || other.sign;
 		re.length = (length == NORMAL) ? other.length : length;
+		re.obj    = (obj == nullptr) ? other.obj : obj;
 		re.qualifiers.assign(qualifiers.begin(), qualifiers.end());
 		re.qualifiers.insert(re.qualifiers.end(), other.qualifiers.begin() + 1,
 		                     other.qualifiers.end());
 
 		return re;
+	}
+
+	EvalType& operator|=(const EvalType& other) {
+		(*this) = (*this) | other;
+		return *this;
 	}
 
 	bool operator==(const EvalType& other) const {
@@ -109,14 +116,16 @@ public:
 	bool floating() const { return !pointer() && type == FLOATING; }
 	bool object() const { return !pointer() && type == OBJECT && obj != nullptr; }
 	// Default constructor
-	EvalType() {}
+	EvalType() : qualifiers(std::vector<Qualifier>(1)) {}
 
-	EvalType(const EvalType& other)
+	EvalType(const EvalType& other, const TypeQualifier& t)
 	    : type(other.type),
 	      sign(other.sign),
 	      length(other.length),
 	      obj(other.obj),
-	      qualifiers(other.qualifiers) {}
+	      qualifiers(other.qualifiers) {
+		qualifiers.back() = Qualifier(t);
+	}
 
 private:
 	// Certain common types
@@ -134,7 +143,7 @@ private:
 	};
 
 	// Construct a common type
-	EvalType(Common c) {
+	EvalType(Common c) : qualifiers(std::vector<Qualifier>(1)) {
 		switch (c) {
 			case CUNKNOWN:
 				break;

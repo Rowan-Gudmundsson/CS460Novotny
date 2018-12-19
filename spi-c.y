@@ -73,6 +73,7 @@
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
 %type <eval> type_specifier declaration_specifiers storage_class_specifier specifier_qualifier_list type_name pointer struct_or_union_specifier
+%type <eval> direct_abstract_declarator abstract_declarator
 %type <oval> unary_operator assignment_operator
 %type <nval> declarator multiplicative_expression additive_expression shift_expression relational_expression struct_declarator struct_declarator_list
 %type <nval> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression
@@ -90,8 +91,7 @@
 %start translation_unit
 %%
 
-translation_unit // Node*
-	: external_declaration {
+translation_unit: external_declaration { // Node*
 		$$ = root = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EvalType::EUNKNOWN, 1, $1);
 		if(parseDLevel) {
 			std::cout << "Found Root Node: " << $1 << '\n';
@@ -105,8 +105,10 @@ translation_unit // Node*
 	}
 	;
 
-external_declaration // Node*
-	: function_definition { table.mode = Symbol::Mode::READ;  $$ = $1; }
+external_declaration: function_definition { // Node*
+		table.mode = Symbol::Mode::READ;
+		$$ = $1;
+	}
 	| declaration {
 		// Actually there shouldn't be any code generated for a declaration
 		$$ = nullptr;
@@ -115,8 +117,7 @@ external_declaration // Node*
 	}
 	;
 
-function_definition // Node*
-	: declarator compound_statement
+function_definition: declarator compound_statement
 	| declarator declaration_list compound_statement
 	| declaration_specifiers declarator compound_statement {
 		/*
@@ -145,8 +146,7 @@ function_definition // Node*
 	| declaration_specifiers declarator declaration_list compound_statement
 	;
 
-declaration // Node*
-	: declaration_specifiers SEMI {
+declaration: declaration_specifiers SEMI { // Node*
 		// Ignore this
 		// TODO - come back to this maybe? No use AFAIK...
 		$$ = nullptr;
@@ -162,7 +162,7 @@ declaration // Node*
 			if (i->type == SyntaxNode::Type::IDENTIFIER) {
 				IdentifierNode* tmp = (IdentifierNode*)i;
 				tmp->etype = tmp_type;
-				tmp->sym->etype = tmp_type;
+				tmp->sym->etype |= tmp_type;
 				tmp->sym->itype = Symbol::SymbolType::VARIABLE;
 			} else if (i->type == SyntaxNode::Type::DECLARE_AND_INIT) {
 				IdentifierNode* tmp = (IdentifierNode*)i->children[0];
@@ -183,8 +183,7 @@ declaration // Node*
 	}
 	;
 
-declaration_list // Node*
-	: declaration {
+declaration_list: declaration { // Node*
 		table.mode = Symbol::Mode::READ;
 		$$ = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EvalType::EUNKNOWN, 1, $1);
 		if(parseDLevel){
@@ -200,45 +199,104 @@ declaration_list // Node*
 	}
 	;
 
-declaration_specifiers // EvalType
-	: storage_class_specifier { $$ = $1; }
-	| storage_class_specifier declaration_specifiers { $$ = new EvalType(*$1 | *$2); delete $1; delete $2; }
+declaration_specifiers: storage_class_specifier { // EvalType*
+		$$ = $1;
+	}
+	| storage_class_specifier declaration_specifiers {
+		$$ = new EvalType(*$1 | *$2); delete $1; delete $2;
+	}
 	| type_specifier { $$ = $1; }
-	| type_specifier declaration_specifiers { $$ = new EvalType(*$1 | *$2); delete $1; delete $2; }
-	| type_qualifier { throw new ParserError("Please don't use const or volatile"); $$ = new EvalType(EvalType::EUNKNOWN); }
-	| type_qualifier declaration_specifiers { throw new ParserError("Please don't use const or volatile"); $$ = new EvalType(EvalType::EUNKNOWN); }
+	| type_specifier declaration_specifiers {
+		$$ = new EvalType(*$1 | *$2);
+		delete $1;
+		delete $2;
+	}
+	| type_qualifier {
+		$$ = new EvalType(EvalType::EUNKNOWN, $1);
+	}
+	| type_qualifier declaration_specifiers {
+		$$ = new EvalType(*$2, $1);
+	}
 	;
 
-storage_class_specifier // EvalType*
-	: AUTO { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
-	| REGISTER { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
-	| STATIC { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
-	| EXTERN { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
-	| TYPEDEF { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+storage_class_specifier: AUTO { // EvalType*
+		// TODO Actually do this
+		$$ = new EvalType(EvalType::EVOID);
+	}
+	| REGISTER {
+		// TODO Actually do this
+		$$ = new EvalType(EvalType::EVOID);
+	}
+	| STATIC {
+		// TODO Actually do this
+		$$ = new EvalType(EvalType::EVOID);
+	}
+	| EXTERN {
+		// TODO Actually do this
+		$$ = new EvalType(EvalType::EVOID);
+	}
+	| TYPEDEF {
+		// TODO Actually do this
+		$$ = new EvalType(EvalType::EVOID);
+	}
 	;
 
-type_specifier // EvalType*
-	: VOID { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EVOID); }
-	| CHAR { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::ECHAR); }
-	| SHORT { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::ESHORT); }
-	| INT { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EINT); }
-	| LONG { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::ELONG); }
-	| FLOAT { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EFLOAT); }
-	| DOUBLE { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EDOUBLE); }
-	| SIGNED { table.mode = Symbol::Mode::WRITE; throw ParserError("Please doesn't used signed."); }
-	| UNSIGNED { table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EUNSIGNED); }
+type_specifier: VOID { // EvalType*
+		table.mode = Symbol::Mode::WRITE;
+		$$ = new EvalType(EvalType::EVOID);
+	}
+	| CHAR {
+		table.mode = Symbol::Mode::WRITE;
+		$$ = new EvalType(EvalType::ECHAR);
+	}
+	| SHORT {
+		table.mode = Symbol::Mode::WRITE;
+		$$ = new EvalType(EvalType::ESHORT);
+	}
+	| INT {
+		table.mode = Symbol::Mode::WRITE;
+		$$ = new EvalType(EvalType::EINT);
+	}
+	| LONG {
+		table.mode = Symbol::Mode::WRITE;
+		$$ = new EvalType(EvalType::ELONG);
+	}
+	| FLOAT {
+		table.mode = Symbol::Mode::WRITE;
+		$$ = new EvalType(EvalType::EFLOAT);
+	}
+	| DOUBLE {
+		table.mode = Symbol::Mode::WRITE;
+		$$ = new EvalType(EvalType::EDOUBLE);
+	}
+	| SIGNED {
+		table.mode = Symbol::Mode::WRITE;
+		throw ParserError("Please doesn't used signed.");
+	}
+	| UNSIGNED {
+		table.mode = Symbol::Mode::WRITE; $$ = new EvalType(EvalType::EUNSIGNED);
+	}
 	| struct_or_union_specifier { $$ = $1; }
-	| enum_specifier { /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
-	| TYPEDEF_NAME { table.mode = Symbol::Mode::WRITE; /* TODO Actually do this */ $$ = new EvalType(EvalType::EVOID); }
+	| enum_specifier {
+		// TODO Actually do this
+		$$ = new EvalType(EvalType::EVOID);
+	}
+	| TYPEDEF_NAME {
+		table.mode = Symbol::Mode::WRITE;
+		// TODO Actually do this
+		$$ = new EvalType(EvalType::EVOID);
+	}
 	;
 
-type_qualifier // TypeQualifier
-	: CONST { $$ = TCONST; }
-	| VOLATILE { $$ = TVOLATILE; }
+type_qualifier: CONST { // TypeQualifier
+		$$ = TCONST;
+	}
+	| VOLATILE {
+		$$ = TVOLATILE;
+	}
 	;
 
-struct_or_union_specifier // EvalType*
-	: struct_or_union identifier LBRACE struct_declaration_list RBRACE {
+struct_or_union_specifier: struct_or_union identifier LBRACE struct_declaration_list RBRACE { // EvalType*
 		$$ = new EvalType();
 		$$->type = EvalType::OBJECT;
 		$$->obj = new Object(table, ((IdentifierNode*) $2)->sym);
@@ -266,18 +324,25 @@ struct_or_union_specifier // EvalType*
 	}
 	;
 
-struct_or_union // Object::Type
-	: STRUCT { $$ = Object::STRUCT; table.mode = Symbol::Mode::OBJECT; }
-	| UNION { $$ = Object::UNION; table.mode = Symbol::Mode::OBJECT; }
+struct_or_union: STRUCT { // Object::Type
+		$$ = Object::STRUCT;
+		table.mode = Symbol::Mode::OBJECT;
+	}
+	| UNION {
+		$$ = Object::UNION;
+		table.mode = Symbol::Mode::OBJECT;
+	}
 	;
 
-struct_declaration_list // Node*
-	: struct_declaration { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::GENERIC, EvalType::EUNKNOWN, 1, $1); }
-	| struct_declaration_list struct_declaration { $$ = $1; $$->children.push_back($2); }
+struct_declaration_list: struct_declaration { // Node*
+		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::GENERIC, EvalType::EUNKNOWN, 1, $1);
+	}
+	| struct_declaration_list struct_declaration {
+		$$ = $1; $$->children.push_back($2);
+	}
 	;
 
-init_declarator_list // Node*
-	: init_declarator {
+init_declarator_list: init_declarator { // Node*
 		table.mode = Symbol::Mode::WRITE;
 		$$ = new SyntaxNode({0, ""}, SyntaxNode::Type::GENERIC, EvalType::EUNKNOWN, 1, $1);
 		if(parseDLevel){
@@ -293,8 +358,7 @@ init_declarator_list // Node*
 	}
 	;
 
-init_declarator // Node*
-	: declarator {
+init_declarator: declarator { // Node*
 		$$ = $1;
 	}
 	| declarator ASSIGN initializer {
@@ -307,8 +371,7 @@ init_declarator // Node*
 	}
 	;
 
-struct_declaration // Node*
-	: specifier_qualifier_list struct_declarator_list SEMI {
+struct_declaration: specifier_qualifier_list struct_declarator_list SEMI { // Node*
 		$$ = $2;
 
 		// Apply eval types to all variables
@@ -323,42 +386,58 @@ struct_declaration // Node*
 	}
 	;
 
-specifier_qualifier_list // EvalType
-	: type_specifier { $$ = $1; }
-	| type_specifier specifier_qualifier_list { $$ = new EvalType(*$1 | *$2); delete $1; delete $2; }
-	| type_qualifier { throw ParserError("Please don't use const or volatile"); }
-	| type_qualifier specifier_qualifier_list { throw ParserError("Please don't use const or volatile"); }
+specifier_qualifier_list: type_specifier { // EvalType*
+		$$ = $1;
+	}
+	| type_specifier specifier_qualifier_list {
+		$$ = new EvalType(*$1 | *$2);
+		delete $1;
+		delete $2;
+	}
+	| type_qualifier {
+		throw ParserError("Please don't use const or volatile");
+	}
+	| type_qualifier specifier_qualifier_list {
+		throw ParserError("Please don't use const or volatile");
+	}
 	;
 
-struct_declarator_list // Node*
-	: struct_declarator { $$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::GENERIC, EvalType::EUNKNOWN, 1, $1); }
-	| struct_declarator_list COMMA struct_declarator { $$ = $1; $$->children.push_back($3); }
+struct_declarator_list: struct_declarator { // Node*
+		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::Type::GENERIC, EvalType::EUNKNOWN, 1, $1);
+	}
+	| struct_declarator_list COMMA struct_declarator {
+		$$ = $1; $$->children.push_back($3);
+	}
 	;
 
-struct_declarator // Node*
-	: declarator { $$ = $1; }
-	| COLON constant_expression { throw "WE WILL NEVER DO THIS GO BACK TO HELL YOU DEMON"; }
-	| declarator COLON constant_expression { throw "WE WILL NEVER DO THIS GO BACK TO HELL YOU DEMON"; }
+struct_declarator: declarator { // Node*
+		$$ = $1;
+	}
+	| COLON constant_expression {
+		throw "WE WILL NEVER DO THIS GO BACK TO HELL YOU DEMON";
+	}
+	| declarator COLON constant_expression {
+		throw "WE WILL NEVER DO THIS GO BACK TO HELL YOU DEMON";
+	}
 	;
 
-enum_specifier
-	: ENUM LBRACE enumerator_list RBRACE
+enum_specifier: ENUM LBRACE enumerator_list RBRACE
 	| ENUM identifier LBRACE enumerator_list RBRACE
 	| ENUM identifier
 	;
 
-enumerator_list
-	: enumerator
+enumerator_list: enumerator
 	| enumerator_list COMMA enumerator
 	;
 
-enumerator
-	: identifier
+enumerator: identifier
 	| identifier ASSIGN constant_expression
 	;
 
-declarator // Node*
-	: direct_declarator { $$ = $1; table.mode = Symbol::Mode::READ; }
+declarator: direct_declarator { // Node*
+		$$ = $1;
+		table.mode = Symbol::Mode::READ;
+	}
 	| pointer direct_declarator {
 		$$ = $2;
 		if ($$->type == SyntaxNode::IDENTIFIER) {
@@ -371,8 +450,9 @@ declarator // Node*
 	}
 	;
 
-direct_declarator // IdentifierNode* (or FunctionNode*)
-	: identifier { $$ = $1; }
+direct_declarator: identifier { // Node*
+		$$ = $1;
+	}
 	| LPAREN declarator RPAREN { /* Parentheses don't do anything...? */ $$ = $2; }
 	| direct_declarator LBRACKET RBRACKET {
 		$$ = $1;
@@ -382,11 +462,6 @@ direct_declarator // IdentifierNode* (or FunctionNode*)
 			node->sym->v.isArray = true;
 			node->sym->v.arrayDimensions.push_back(-1);
 			++node->sym->etype;
-
-			// TODO Figure this shit out
-			// node->children.push_back(new ArrayNode({lineno, currentLine}, EvalType::EUNKNOWN, $1));
-
-
 		} else {
 			throw "Error 1";
 		}
@@ -538,7 +613,10 @@ parameter_declaration // std::pair<EvalType*, Symbol::SymbolType*>*
 	| declaration_specifiers {
 		$$ = new std::pair<EvalType, Symbol::SymbolType*>(*$1, nullptr);
 	}
-	| declaration_specifiers abstract_declarator {/* TODO: WTF is abstract */ throw "ahhhhhhhh"; }
+	| declaration_specifiers abstract_declarator {
+		$$ = new std::pair<EvalType, Symbol::SymbolType*>(*$1, nullptr);
+
+	}
 	;
 
 identifier_list
@@ -562,22 +640,48 @@ type_name
 	| specifier_qualifier_list abstract_declarator
 	;
 
-abstract_declarator
-	: pointer
-	| direct_abstract_declarator
-	| pointer direct_abstract_declarator
+abstract_declarator: pointer {
+		$$ = new EvalType(EvalType::EUNKNOWN);
+		*$$++;
+	}
+	| direct_abstract_declarator {
+		$$ = new EvalType(*$1);
+		delete $1;
+	}
+	| pointer direct_abstract_declarator {
+		$$ = new EvalType(*$2);
+		delete $2;
+		*$$++;
+	}
 	;
 
-direct_abstract_declarator
-	: LPAREN abstract_declarator RPAREN
-	| LBRACKET RBRACKET
-	| LBRACKET constant_expression RBRACKET
-	| direct_abstract_declarator LBRACKET RBRACKET
-	| direct_abstract_declarator LBRACKET constant_expression RBRACKET
-	| LPAREN RPAREN
-	| LPAREN parameter_type_list RPAREN
-	| direct_abstract_declarator LPAREN RPAREN
-	| direct_abstract_declarator LPAREN parameter_type_list RPAREN
+direct_abstract_declarator: LPAREN abstract_declarator RPAREN { // EvalType*
+
+	}
+	| LBRACKET RBRACKET {
+
+	}
+	| LBRACKET constant_expression RBRACKET {
+
+	}
+	| direct_abstract_declarator LBRACKET RBRACKET {
+
+	}
+	| direct_abstract_declarator LBRACKET constant_expression RBRACKET {
+
+	}
+	| LPAREN RPAREN {
+
+	}
+	| LPAREN parameter_type_list RPAREN {
+
+	}
+	| direct_abstract_declarator LPAREN RPAREN {
+
+	}
+	| direct_abstract_declarator LPAREN parameter_type_list RPAREN {
+
+	}
 	;
 
 statement // Node*

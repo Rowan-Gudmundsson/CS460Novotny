@@ -15,6 +15,12 @@ jr		$ra					# jump to $ra
 
 
 # TODO: printString1
+printString1:
+lw    $a0, -12($sp)
+li    $v0, 4
+syscall
+jr    $ra
+
 
 printChar1:
 lw		$a0, -12($sp)		#

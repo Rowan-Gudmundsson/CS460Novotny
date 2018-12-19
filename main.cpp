@@ -259,7 +259,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
 		out << "\t.data\n";
 		for (ThreeAddress& instruct : instructions) {
 			if (instruct.op == "GLOBAL") {
-				out << instruct.op1.value << ":";
+				out << instruct.op1.value << ":\t";
 				if (instruct.op2.isFloat()) {
 					out << ".float " << instruct.op2.value << std::endl;
 				} else if (instruct.op2.isString()) {
@@ -510,7 +510,9 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 				out << "lw\t ";
 			out << *opReg << ", " << op.value << "($sp)\n";
 		} else if (op.isConst()) {
-			if (op.isFloat())
+			if (op.isString())
+				out << "la\t ";
+			else if (op.isFloat())
 				out << "l.s\t ";
 			else
 				out << "li\t ";
