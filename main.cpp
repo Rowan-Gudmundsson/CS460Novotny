@@ -296,9 +296,7 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
 
 			if (instruct.op == "PROCENTRY") {
 				out << "subi\t$sp, $sp, " << instruct.op1.value << std::endl;
-				out << "sw\t$ra, "
-				    << std::stoi(instruct.op1.value) - std::stoi(instruct.op2.value) - 4
-				    << "($sp)\n";
+				out << "sw\t$ra, " << std::stoi(instruct.op1.value) - 8 << "($sp)\n";
 				continue;
 			} else if (instruct.op == "CALL") {
 				registers.saveSavedRegisters(out);
@@ -339,15 +337,21 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
 				std::string endLabel   = "loopl" + std::to_string(labelTicker + 1);
 				labelTicker += 2;
 				if (instruct.op1.isLocal()) {
-					out << "li\t" << *src << ", " << instruct.op1.value << std::endl
-					    << "add\t" << *src << ", " << *src << ", $sp\n";
+					out << "li\t " << *src << ", " << instruct.op1.value << std::endl
+					    << "add\t " << *src << ", " << *src << ", $sp\n";
+				} else if (instruct.op1.isPtr()) {
+					out << "lw\t " << *src << ", " << instruct.op1.value << "($sp)\n";
 				}
+
 				if (instruct.dest.isLocal()) {
-					out << "li\t" << *dest << ", " << instruct.dest.value << std::endl
-					    << "add\t" << *dest << ", " << *dest << ", $sp\n";
+					out << "li\t " << *dest << ", " << instruct.dest.value << std::endl
+					    << "add\t " << *dest << ", " << *dest << ", $sp\n";
+				} else if (instruct.dest.isPtr()) {
+					out << "lw\t " << *src << ", " << instruct.dest.value << "($sp)\n";
 				}
-				out << "li\t" << *counter << ", 0\n"
-				    << "li\t" << *size << ", " << instruct.op2.value << std::endl
+
+				out << "li\t " << *counter << ", 0\n"
+				    << "li\t " << *size << ", " << instruct.op2.value << std::endl
 				    << beginLabel << ":\n"
 				    << "bge\t " << *counter << ", " << *size << ", " << endLabel << std::endl
 				    << "lw\t " << *tmp << ", "
@@ -511,6 +515,9 @@ RegisterTable::RegisterEntry* findRegister(const Operand& op, RegisterTable& reg
 			else
 				out << "li\t ";
 			out << *opReg << ", " << op.value << '\n';
+		} else if (op.isPtr()) {
+			out << "lw\t " << *opReg << ", " << op.value << "($sp)\n"
+			    << "lw\t " << *opReg << ", (" << *opReg << ")\n";
 		}
 	} else if (opReg->indirect != nullptr && !isDest) {
 		RegisterTable::RegisterEntry* temp = registers.getUnusedRegister(op);
