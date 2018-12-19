@@ -3,13 +3,22 @@ void printString(const char* string);
 int readInt();
 void printInt(int);
 
+typedef struct foo {
+	int x;
+} Foo;
+
 int main() {
 	int arr[100];
+	int* ptrAr[10];
 	int n, i, swapTemp;
 	unsigned upperBound, currentIndex;
 	int* j;
+	Foo z;
 
-	j = &n;
+	j   = &z.x;
+	z.x = 5;
+
+	printInt(*j);
 
 	printString("# of elements: ");
 

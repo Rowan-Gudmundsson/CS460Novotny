@@ -1197,7 +1197,7 @@ unary_expression: postfix_expression { // Node*
 	;
 
 unary_operator // OperatorNode::OpType
-	: BAND { $$ = OperatorNode::OBAND; }
+	: BAND { $$ = OperatorNode::OREF; }
 	| MULT { $$ = OperatorNode::ODEREF; }
 	| ADD { /* https://docs.microsoft.com/en-us/cpp/c-language/unary-arithmetic-operators?view=vs-2017 */ $$ = OperatorNode::OADD; }
 	| SUB { $$ = OperatorNode::OSUB; }
@@ -1291,7 +1291,7 @@ postfix_expression: primary_expression { // Node*
 		table.setCurrentObject(nullptr);
 	}
 	| postfix_expression PTR_OP identifier {
-		OperatorNode* tmp = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::ODEREF, 1, $1 });
+		OperatorNode* tmp = new OperatorNode({lineno, currentLine}, $1->etype, OperatorNode::ODEREF, 1, $1);
 		$$ = new SyntaxNode({lineno, currentLine}, SyntaxNode::STRUCT_ACCESS, $3->etype, 2, tmp, $3);
 		table.setCurrentObject(nullptr);
 	}

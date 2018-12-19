@@ -193,6 +193,7 @@ public:
 		// Other
 		OSIZE,
 		OTERNARY,
+		OREF,
 		ODEREF
 	} opType;
 	OperatorNode(const Source& s, EvalType _type, OpType _opType, unsigned numChildren...);

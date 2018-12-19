@@ -933,9 +933,30 @@ Operand OperatorNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 			throw ParserError("Not dealing with turnary operator.");
 			break;
 		}
+		case OREF: {
+			if (children[0]->type == SyntaxNode::ACCESS ||
+			    children[0]->type == SyntaxNode::STRUCT_ACCESS ||
+			    children[0]->type == SyntaxNode::IDENTIFIER) {
+				if (lhs.isIndr()) return Operand{"ITemp", lhs.value};
+				instructions.emplace_back(source, "OFFSET", Operand{"ITemp", tempTicker},
+				                          Operand{"ICONS", lhs.value}, Operand{"", ""});
+				tempTicker++;
+				return Operand{"ITemp", tempTicker - 1};
+			} else {
+				throw "Cannot provide a reference to this type";
+			}
+			break;
+		}
 		case ODEREF: {
-			// TODO (Rowan) - Actually do this
-			throw ParserError("Not doing dereference yet.");
+			if (lhs.isLocal()) {
+				return Operand{"PTR", lhs.value};
+			} else if (lhs.isIndr()) {
+				instructions.emplace_back(source, "ASSIGN", lhs, Operand{"ITemp", tempTicker});
+				tempTicker++;
+				return Operand{"IINDR", tempTicker - 1};
+			} else {
+				return Operand{lhs.isFloat() ? "FINDR" : "IINDR", lhs.value};
+			}
 			break;
 		}
 	}
