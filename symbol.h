@@ -104,9 +104,10 @@ public:
 
 	unsigned size() const;
 
-	bool integral() const { return (type == INTEGER) || (type == CHARACTER); }
-	bool floating() const { return type == FLOATING; }
-	bool object() const { return type == OBJECT && obj != nullptr; }
+	bool integral() const { return !pointer() && (type == INTEGER) || (type == CHARACTER); }
+	bool string() const { return pointer() == 1 && type == CHARACTER && qualifiers[0].cons; }
+	bool floating() const { return !pointer() && type == FLOATING; }
+	bool object() const { return !pointer() && type == OBJECT && obj != nullptr; }
 	// Default constructor
 	EvalType() {}
 

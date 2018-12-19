@@ -13,6 +13,9 @@ void writeVec(struct Vec3 v);
 
 void main(void) {
 	struct Vec3 vec;
+	float x = 2.0f;
+	int* y;
+	// char* foo = "Hello world!";
 
 	printChar('v');
 	printChar(':');

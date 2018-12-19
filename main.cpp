@@ -258,18 +258,13 @@ void outputAssembly(std::vector<ThreeAddress>& instructions, std::ostream& out,
 
 		out << "\t.data\n";
 		for (ThreeAddress& instruct : instructions) {
-			if (instruct.op == "GLOBAL") out << instruct.op1.value << ": ";
-			if (instruct.op1.type == "FCONS") {
-				out << "fp" + std::to_string(floatTicker) << ":\t"
-				    << ".float " << instruct.op1.value << std::endl;
-				instruct.op1.value = "fp" + std::to_string(floatTicker);
-				floatTicker++;
-			}
-			if (instruct.op2.type == "FCONS") {
-				out << "fp" + std::to_string(floatTicker) << ":\t"
-				    << ".float " << instruct.op2.value << std::endl;
-				instruct.op2.value = "fp" + std::to_string(floatTicker);
-				floatTicker++;
+			if (instruct.op == "GLOBAL") {
+				out << instruct.op1.value << ":";
+				if (instruct.op2.isFloat()) {
+					out << ".float " << instruct.op2.value << std::endl;
+				} else if (instruct.op2.isString()) {
+					out << ".asciiz " << instruct.op2.value << std::endl;
+				}
 			}
 		}
 

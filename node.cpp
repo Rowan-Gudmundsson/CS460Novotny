@@ -1072,9 +1072,19 @@ Operand ConstantNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& 
 	if (etype.integral()) {
 		return {"ICONS", (int) i};
 	} else if (etype.floating()) {
-		return {"FCONS", f};
-	} else {
-		return {"String", *s};
+		std::string label = "fconst" + std::to_string(labelTicker);
+		labelTicker++;
+		instructions.insert(instructions.begin(),
+		                    ThreeAddress{source, "GLOBAL", Operand{"LABEL", label},
+		                                 Operand{"FCONS", f}, Operand{"", ""}});
+		return {"FCONS", label};
+	} else if (etype.string()) {
+		std::string label = "sconst" + std::to_string(labelTicker);
+		labelTicker++;
+		instructions.insert(instructions.begin(),
+		                    ThreeAddress{source, "GLOBAL", Operand{"LABEL", label},
+		                                 Operand{"SCONS", *s}, Operand{"", ""}});
+		return {"SCONS", label};
 	}
 }
 

@@ -15,7 +15,7 @@ struct Matrix multiplyMatrices(struct Matrix, struct Matrix);
 void main(void) {
 	struct Matrix mat1, mat2, mat3;
 	int i, j;
-
+	char* string = "Hello world!";
 	// Read in matrices
 	mat1 = readMatrix();
 	printMatrix(mat1);
@@ -33,7 +33,7 @@ void main(void) {
 struct Matrix readMatrix() {
 	struct Matrix re;
 	int i, j, m;
-
+	float x = 2.0f;
 	printChar('E');
 	printChar('N');
 	printChar('T');
