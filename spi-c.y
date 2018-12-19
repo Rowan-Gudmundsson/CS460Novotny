@@ -1103,6 +1103,7 @@ postfix_expression // Node*
 			}
 		}
 		if ($$ == nullptr) {
+			std::cout << tmp->sym->name << std::endl;
 			throw ParserError("No matching function to call.");
 		}
 	}
@@ -1124,6 +1125,7 @@ postfix_expression // Node*
 			}
 		}
 		if ($$ == nullptr) {
+			std::cout << tmp->sym->name << std::endl;
 			throw ParserError("No matching function to call.");
 		}
 	}

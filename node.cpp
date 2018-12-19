@@ -748,8 +748,10 @@ Operand SyntaxNode::gen3AC(std::vector<ThreeAddress>& instructions, unsigned& te
 				}
 			}
 
+			instructions.emplace_back(source, "RETURN", Operand{"ICONS", func->localSize},
+			                          Operand{"ICONS", func->stackSize()}, Operand{"", ""});
+
 			return {"ERR", "ERR"};
-			break;
 		}
 		default: {
 			for (SyntaxNode* c : children) {
