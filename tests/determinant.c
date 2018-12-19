@@ -2,25 +2,26 @@ int readInt();
 void printInt(int);
 void printChar(char);
 
-struct Matrix {
+typedef struct MatrixStruct {
 	int entries[5][5];
 	unsigned rows;
 	unsigned columns;
-};
+} Matrix;
 
-int determinant(struct Matrix);
-struct Matrix readMatrix();
-struct Matrix minor(struct Matrix, int, int);
+int determinant(Matrix);
+Matrix readMatrix();
+void printMatrix(Matrix m);
+Matrix minor(Matrix, int, int);
 
 int main() {
-	struct Matrix m;
+	Matrix m;
 	int i;
 
 	printInt(determinant(readMatrix()));
 }
 
-struct Matrix readMatrix() {
-	struct Matrix m;
+Matrix readMatrix() {
+	Matrix m;
 	int i, j;
 
 	printChar('E');
@@ -73,45 +74,32 @@ struct Matrix readMatrix() {
 		for (j = 0; j < m.columns && j < 5; j++) { m.entries[i][j] = readInt(); }
 	}
 
+	printMatrix(m);
+
 	return m;
 }
 
-int determinant(struct Matrix m) {
+int determinant(Matrix m) {
 	unsigned det = 0;
 	int i, j, ticker = 1;
-	// printChar('E');
-	// printChar('N');
-	// printChar('T');
-	// printChar('E');
-	// printChar('R');
-	// printChar(':');
-	// printChar(' ');
-	// printInt((int) m.rows);
-	// printChar('X');
-	// printInt((int) m.columns);
-	// printChar((char) 10);
+
 	if (m.rows != m.columns) {
-		// printChar('E');
-		// printChar(':');
-		// printChar(' ');
-		// printInt((int) m.rows);
-		// printChar((char) 10);
 		return 0;
 	} else if (m.rows == 1)
 		return m.entries[0][0];
 
 	for (j = 0; j < m.columns; j++) {
-		det = ticker * m.entries[0][j] * determinant(minor(m, 0, j));
+		det += determinant(minor(m, 0, j)) * ticker * m.entries[0][j];
 		ticker *= 0 - 1;
 	}
 
 	return det;
 }
 
-struct Matrix minor(struct Matrix m, int i, int j) {
+Matrix minor(Matrix m, int i, int j) {
 	int a, b;
-	for (a = 0; a < m.rows - 1; a++) {
-		for (b = 0; b < m.columns - 1; b++) {
+	for (a = 0; a < m.rows; a++) {
+		for (b = 0; b < m.columns; b++) {
 			if (a >= i && b >= j) {
 				m.entries[a][b] = m.entries[a + 1][b + 1];
 			} else if (a >= i) {
@@ -122,8 +110,22 @@ struct Matrix minor(struct Matrix m, int i, int j) {
 		}
 	}
 
+	for (a = 0; a < m.rows; a++) m.entries[a][m.columns - 1] = 0;
+	for (b = 0; b < m.rows; b++) m.entries[m.rows - 1][b] = 0;
+
 	m.columns--;
 	m.rows--;
 
 	return m;
+}
+
+void printMatrix(Matrix m) {
+	int i, j;
+	for (i = 0; i < m.rows && i < 5; i++) {
+		for (j = 0; j < m.columns && j < 5; j++) {
+			printInt(m.entries[i][j]);
+			printChar((char) 9);
+		}
+		printChar((char) 10);
+	}
 }
